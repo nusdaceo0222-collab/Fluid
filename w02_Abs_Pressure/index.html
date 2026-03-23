@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>게이지압력·절대압 시뮬레이터</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --panel: #ffffff;
+      --line: #d7ddea;
+      --text: #1f2a44;
+      --muted: #5d6b8a;
+      --water: #5aa9ff;
+      --water-dark: #2c73d2;
+      --accent: #2449d8;
+      --danger: #e85d5d;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+      background: linear-gradient(180deg, #eef3fb 0%, #f8fbff 100%);
+      color: var(--text);
+    }
+
+    .wrap {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 32px;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 20px;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      box-shadow: 0 8px 24px rgba(27, 52, 111, 0.08);
+      padding: 18px;
+    }
+
+    .controls h2,
+    .viewer h2 {
+      font-size: 20px;
+      margin: 0 0 16px;
+    }
+
+    .control-group {
+      margin-bottom: 18px;
+    }
+
+    .label-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+
+    .value {
+      color: var(--accent);
+      min-width: 96px;
+      text-align: right;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    .row-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-top: 10px;
+    }
+
+    .stat {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+      background: #fbfdff;
+    }
+
+    .stat-title {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .stat-value {
+      font-size: 24px;
+      font-weight: 700;
+    }
+
+    .formula {
+      margin-top: 16px;
+      padding: 14px;
+      border-radius: 16px;
+      background: #f4f8ff;
+      border: 1px dashed #bdd1ff;
+      line-height: 1.8;
+    }
+
+    .scene {
+      display: grid;
+      grid-template-columns: 420px 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .tank-wrap {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 8px 0;
+    }
+
+    svg {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .note {
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .legend {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .swatch {
+      width: 14px;
+      height: 14px;
+      border-radius: 4px;
+      display: inline-block;
+    }
+
+    canvas {
+      width: 100%;
+      max-width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #fff;
+    }
+
+    .footer-note {
+      margin-top: 16px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: #fff8ec;
+      border: 1px solid #f1dba7;
+      color: #7a5a05;
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    @media (max-width: 980px) {
+      .grid { grid-template-columns: 1fr; }
+      .scene { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>게이지압력·절대압 시뮬레이터</h1>
+    <div class="subtitle">
+      정수압 식 <strong>P<sub>g</sub> = ρgh</strong>와 <strong>P<sub>abs</sub> = P<sub>atm</sub> + ρgh</strong>를 바탕으로, 액체 높이와 측정 깊이를 바꾸면서 게이지압력과 절대압의 차이를 동시에 확인할 수 있도록 만든 HTML 시뮬레이터입니다.
+    </div>
+
+    <div class="grid">
+      <div class="card controls">
+        <h2>조작 패널</h2>
+
+        <div class="control-group">
+          <div class="label-row">
+            <span>액체 종류</span>
+            <span class="value" id="liquidName">물</span>
+          </div>
+          <input id="liquidType" type="range" min="0" max="3" step="1" value="0" />
+          <div class="row-2 note">
+            <div>0: 물</div>
+            <div>1: 바닷물</div>
+            <div>2: 기름</div>
+            <div>3: 수은</div>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <div class="label-row">
+            <span>액체 높이</span>
+            <span class="value" id="heightValue">2.00 m</span>
+          </div>
+          <input id="heightSlider" type="range" min="0.2" max="5" step="0.01" value="2" />
+        </div>
+
+        <div class="control-group">
+          <div class="label-row">
+            <span>측정 깊이</span>
+            <span class="value" id="depthValue">1.00 m</span>
+          </div>
+          <input id="depthSlider" type="range" min="0" max="2" step="0.01" value="1" />
+        </div>
+
+        <div class="control-group">
+          <div class="label-row">
+            <span>중력가속도</span>
+            <span class="value" id="gravityValue">9.81 m/s²</span>
+          </div>
+          <input id="gravitySlider" type="range" min="1.6" max="15" step="0.01" value="9.81" />
+        </div>
+
+        <div class="control-group">
+          <div class="label-row">
+            <span>대기압</span>
+            <span class="value" id="atmValue">101.33 kPa</span>
+          </div>
+          <input id="atmSlider" type="range" min="80" max="120" step="0.1" value="101.325" />
+        </div>
+
+        <div class="stat-grid">
+          <div class="stat">
+            <div class="stat-title">밀도 ρ</div>
+            <div class="stat-value" id="densityStat">1000 kg/m³</div>
+          </div>
+          <div class="stat">
+            <div class="stat-title">깊이 h</div>
+            <div class="stat-value" id="hStat">1.00 m</div>
+          </div>
+          <div class="stat">
+            <div class="stat-title">게이지압 P</div>
+            <div class="stat-value" id="pressureStat">9.81 kPa</div>
+          </div>
+          <div class="stat">
+            <div class="stat-title">절대압</div>
+            <div class="stat-value" id="absoluteStat">111.14 kPa</div>
+          </div>
+        </div>
+
+        <div class="formula" id="formulaBox">
+          게이지압: P<sub>g</sub> = ρgh = 1000 × 9.81 × 1.00 = 9810 Pa<br>
+          절대압: P<sub>abs</sub> = P<sub>atm</sub> + ρgh = 101325 + 9810 = 111135 Pa
+        </div>
+
+        <div class="footer-note">
+          게이지압력은 대기압을 0으로 보고 계산한 압력이며, 절대압은 실제 기준압력인 대기압을 포함한 압력입니다. 측정 깊이는 자유수면으로부터 아래 방향 거리이며, 액체 높이보다 깊이가 더 커질 수 없도록 자동 제한됩니다.
+        </div>
+      </div>
+
+      <div class="card viewer">
+        <h2>시각화</h2>
+        <div class="scene">
+          <div class="tank-wrap">
+            <svg viewBox="0 0 360 520" aria-label="유체 탱크 도식">
+              <defs>
+                <linearGradient id="waterGrad" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0%" stop-color="#8fd0ff" />
+                  <stop offset="100%" stop-color="#4e95ff" />
+                </linearGradient>
+                <marker id="arrowBlue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+                  <path d="M 0 0 L 10 5 L 0 10 z" fill="#2449d8"></path>
+                </marker>
+                <marker id="arrowRed" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+                  <path d="M 0 0 L 10 5 L 0 10 z" fill="#e85d5d"></path>
+                </marker>
+              </defs>
+
+              <rect x="85" y="50" width="150" height="380" rx="8" fill="#ffffff" stroke="#23314f" stroke-width="4" />
+              <g id="waterGroup">
+                <rect id="waterRect" x="89" y="278" width="142" height="148" fill="url(#waterGrad)" opacity="0.95" />
+                <line id="surfaceLine" x1="89" y1="278" x2="231" y2="278" stroke="#1f6ed4" stroke-width="4" />
+              </g>
+
+              <g id="scaleGroup"></g>
+
+              <circle id="probe" cx="160" cy="352" r="8" fill="#e85d5d" />
+              <line id="probeLine" x1="160" y1="278" x2="160" y2="352" stroke="#e85d5d" stroke-width="3" stroke-dasharray="8 6" />
+
+              <line id="depthArrow" x1="255" y1="278" x2="255" y2="352" stroke="#e85d5d" stroke-width="3" marker-start="url(#arrowRed)" marker-end="url(#arrowRed)" />
+              <text id="depthLabel" x="268" y="320" font-size="16" fill="#e85d5d" font-weight="700">h = 1.00 m</text>
+
+              <line x1="52" y1="50" x2="52" y2="430" stroke="#23314f" stroke-width="2" marker-start="url(#arrowBlue)" marker-end="url(#arrowBlue)" />
+              <text x="18" y="246" transform="rotate(-90 18,246)" font-size="18" fill="#2449d8" font-weight="700">액체 높이 H</text>
+
+              <text x="108" y="38" font-size="20" fill="#23314f" font-weight="700">탱크</text>
+              <text id="surfaceText" x="242" y="282" font-size="15" fill="#1f6ed4" font-weight="700">자유수면</text>
+              <text x="245" y="418" font-size="15" fill="#23314f">바닥</text>
+            </svg>
+          </div>
+
+          <div>
+            <div class="legend">
+              <span><span class="swatch" style="background:#5aa9ff"></span> 게이지압력 그래프</span>
+              <span><span class="swatch" style="background:#2449d8"></span> 절대압력 그래프</span>
+              <span><span class="swatch" style="background:#e85d5d"></span> 현재 측정점</span>
+            </div>
+            <canvas id="graph" width="520" height="360"></canvas>
+            <div class="note">
+              그래프는 깊이가 증가할수록 게이지압력과 절대압력이 모두 선형적으로 증가함을 보여줍니다. 절대압력 그래프는 게이지압력 그래프보다 항상 대기압만큼 위에 위치합니다. 정지 유체에서는 같은 깊이에서 압력이 동일하며, 압력은 용기 모양이 아니라 <strong>깊이</strong>에 의해 결정됩니다.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const liquids = [
+      { name: '물', rho: 1000 },
+      { name: '바닷물', rho: 1025 },
+      { name: '기름', rho: 850 },
+      { name: '수은', rho: 13600 }
+    ];
+
+    const liquidType = document.getElementById('liquidType');
+    const heightSlider = document.getElementById('heightSlider');
+    const depthSlider = document.getElementById('depthSlider');
+    const gravitySlider = document.getElementById('gravitySlider');
+    const atmSlider = document.getElementById('atmSlider');
+
+    const liquidName = document.getElementById('liquidName');
+    const heightValue = document.getElementById('heightValue');
+    const depthValue = document.getElementById('depthValue');
+    const gravityValue = document.getElementById('gravityValue');
+    const atmValue = document.getElementById('atmValue');
+    const densityStat = document.getElementById('densityStat');
+    const hStat = document.getElementById('hStat');
+    const pressureStat = document.getElementById('pressureStat');
+    const absoluteStat = document.getElementById('absoluteStat');
+    const formulaBox = document.getElementById('formulaBox');
+
+    const waterRect = document.getElementById('waterRect');
+    const surfaceLine = document.getElementById('surfaceLine');
+    const probe = document.getElementById('probe');
+    const probeLine = document.getElementById('probeLine');
+    const depthArrow = document.getElementById('depthArrow');
+    const depthLabel = document.getElementById('depthLabel');
+    const surfaceText = document.getElementById('surfaceText');
+    const scaleGroup = document.getElementById('scaleGroup');
+
+    const canvas = document.getElementById('graph');
+    const ctx = canvas.getContext('2d');
+
+    const tankTop = 50;
+    const tankBottom = 430;
+    const tankHeightPx = tankBottom - tankTop;
+
+    function fmt(num, digits = 2) {
+      return Number(num).toFixed(digits);
+    }
+
+    function updateDepthLimit() {
+      const H = parseFloat(heightSlider.value);
+      depthSlider.max = H;
+      if (parseFloat(depthSlider.value) > H) {
+        depthSlider.value = H;
+      }
+    }
+
+    function drawScale(H) {
+      scaleGroup.innerHTML = '';
+      const n = Math.floor(H) + 1;
+      for (let i = 0; i <= n; i++) {
+        const depth = Math.min(i, H);
+        const y = tankTop + (depth / 5) * tankHeightPx;
+
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', '70');
+        line.setAttribute('x2', '85');
+        line.setAttribute('y1', y);
+        line.setAttribute('y2', y);
+        line.setAttribute('stroke', '#4f5f83');
+        line.setAttribute('stroke-width', '2');
+        scaleGroup.appendChild(line);
+
+        const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        txt.setAttribute('x', '22');
+        txt.setAttribute('y', y + 5);
+        txt.setAttribute('font-size', '14');
+        txt.setAttribute('fill', '#4f5f83');
+        txt.textContent = `${fmt(depth, 0)} m`;
+        scaleGroup.appendChild(txt);
+      }
+    }
+
+    function drawGraph(H, rho, g, hCurrent, atm) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const pad = { left: 64, right: 24, top: 24, bottom: 52 };
+      const w = canvas.width - pad.left - pad.right;
+      const h = canvas.height - pad.top - pad.bottom;
+      const maxGauge = rho * g * H;
+      const maxAbs = atm + maxGauge;
+
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = '#d6ddeb';
+
+      for (let i = 0; i <= 5; i++) {
+        const y = pad.top + (h / 5) * i;
+        ctx.beginPath();
+        ctx.moveTo(pad.left, y);
+        ctx.lineTo(pad.left + w, y);
+        ctx.stroke();
+      }
+
+      for (let i = 0; i <= 5; i++) {
+        const x = pad.left + (w / 5) * i;
+        ctx.beginPath();
+        ctx.moveTo(x, pad.top);
+        ctx.lineTo(x, pad.top + h);
+        ctx.stroke();
+      }
+
+      ctx.strokeStyle = '#1f2a44';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(pad.left, pad.top);
+      ctx.lineTo(pad.left, pad.top + h);
+      ctx.lineTo(pad.left + w, pad.top + h);
+      ctx.stroke();
+
+      ctx.fillStyle = '#44506d';
+      ctx.font = '14px Segoe UI';
+      ctx.fillText('깊이 h (m)', pad.left + w / 2 - 28, canvas.height - 16);
+
+      ctx.save();
+      ctx.translate(18, pad.top + h / 2 + 20);
+      ctx.rotate(-Math.PI / 2);
+      ctx.fillText('압력 P (kPa)', 0, 0);
+      ctx.restore();
+
+      ctx.fillStyle = '#5d6b8a';
+      for (let i = 0; i <= 5; i++) {
+        const depth = (H / 5) * i;
+        const x = pad.left + (w / 5) * i;
+        ctx.fillText(fmt(depth, 1), x - 10, pad.top + h + 20);
+      }
+
+      for (let i = 0; i <= 5; i++) {
+        const p = (maxAbs / 5) * (5 - i) / 1000;
+        const y = pad.top + (h / 5) * i;
+        ctx.fillText(fmt(p, 1), 14, y + 4);
+      }
+
+      ctx.strokeStyle = '#5aa9ff';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(pad.left, pad.top + h);
+      ctx.lineTo(pad.left + w, pad.top + h - (maxGauge / maxAbs) * h);
+      ctx.stroke();
+
+      ctx.strokeStyle = '#2449d8';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(pad.left, pad.top + h - (atm / maxAbs) * h);
+      ctx.lineTo(pad.left + w, pad.top);
+      ctx.stroke();
+
+      const currentGauge = rho * g * hCurrent;
+      const currentAbs = atm + currentGauge;
+      const px = pad.left + (hCurrent / H) * w;
+      const pyGauge = pad.top + h - (currentGauge / maxAbs) * h;
+      const pyAbs = pad.top + h - (currentAbs / maxAbs) * h;
+
+      ctx.strokeStyle = '#e85d5d';
+      ctx.setLineDash([6, 6]);
+      ctx.beginPath();
+      ctx.moveTo(px, pad.top + h);
+      ctx.lineTo(px, pyAbs);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.fillStyle = '#e85d5d';
+      ctx.beginPath();
+      ctx.arc(px, pyGauge, 5.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(px, pyAbs, 5.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.font = 'bold 13px Segoe UI';
+      ctx.fillText(`게이지 ${fmt(currentGauge / 1000, 2)} kPa`, Math.min(px + 10, canvas.width - 150), Math.max(pyGauge - 8, 18));
+      ctx.fillText(`절대 ${fmt(currentAbs / 1000, 2)} kPa`, Math.min(px + 10, canvas.width - 150), Math.max(pyAbs - 8, 34));
+    }
+
+    function update() {
+      updateDepthLimit();
+
+      const liquid = liquids[parseInt(liquidType.value, 10)];
+      const H = parseFloat(heightSlider.value);
+      const h = parseFloat(depthSlider.value);
+      const g = parseFloat(gravitySlider.value);
+      const atm = parseFloat(atmSlider.value) * 1000;
+
+      const P = liquid.rho * g * h;
+      const Pabs = atm + P;
+
+      liquidName.textContent = liquid.name;
+      heightValue.textContent = `${fmt(H)} m`;
+      depthValue.textContent = `${fmt(h)} m`;
+      gravityValue.textContent = `${fmt(g)} m/s²`;
+      atmValue.textContent = `${fmt(atm / 1000)} kPa`;
+      densityStat.textContent = `${liquid.rho.toLocaleString()} kg/m³`;
+      hStat.textContent = `${fmt(h)} m`;
+      pressureStat.textContent = `${fmt(P / 1000)} kPa`;
+      absoluteStat.textContent = `${fmt(Pabs / 1000)} kPa`;
+      formulaBox.innerHTML = `게이지압: P<sub>g</sub> = ρgh = ${liquid.rho.toLocaleString()} × ${fmt(g)} × ${fmt(h)} = ${Math.round(P).toLocaleString()} Pa<br>절대압: P<sub>abs</sub> = P<sub>atm</sub> + ρgh = ${Math.round(atm).toLocaleString()} + ${Math.round(P).toLocaleString()} = ${Math.round(Pabs).toLocaleString()} Pa`;
+
+      const waterHeight = (H / 5) * tankHeightPx;
+      const waterTop = tankBottom - waterHeight;
+      const probeY = waterTop + (h / 5) * tankHeightPx;
+
+      waterRect.setAttribute('y', waterTop);
+      waterRect.setAttribute('height', waterHeight);
+      surfaceLine.setAttribute('y1', waterTop);
+      surfaceLine.setAttribute('y2', waterTop);
+      surfaceText.setAttribute('y', waterTop + 4);
+
+      probe.setAttribute('cy', probeY);
+      probeLine.setAttribute('y1', waterTop);
+      probeLine.setAttribute('y2', probeY);
+      depthArrow.setAttribute('y1', waterTop);
+      depthArrow.setAttribute('y2', probeY);
+      depthLabel.setAttribute('y', (waterTop + probeY) / 2 + 4);
+      depthLabel.textContent = `h = ${fmt(h)} m`;
+
+      drawScale(H);
+      drawGraph(H, liquid.rho, g, h, atm);
+    }
+
+    [liquidType, heightSlider, depthSlider, gravitySlider, atmSlider].forEach(el => {
+      el.addEventListener('input', update);
+    });
+
+    update();
+  </script>
+</body>
+</html>
