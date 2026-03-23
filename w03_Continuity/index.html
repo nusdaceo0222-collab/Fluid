@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>연속방정식 시뮬레이터</title>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --panel: #ffffff;
+      --line: #d8e0ee;
+      --text: #1f2a44;
+      --muted: #60708f;
+      --accent: #2449d8;
+      --accent-soft: #eef3ff;
+      --water: #5aa9ff;
+      --water-dark: #2c73d2;
+      --warn-bg: #fff8ec;
+      --warn-line: #f1dba7;
+      --warn-text: #7a5a05;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+      background: linear-gradient(180deg, #eef3fb 0%, #f8fbff 100%);
+      color: var(--text);
+    }
+
+    .wrap {
+      max-width: 1220px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 32px;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      line-height: 1.7;
+      margin-bottom: 20px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      gap: 20px;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      box-shadow: 0 8px 24px rgba(27, 52, 111, 0.08);
+      padding: 18px;
+    }
+
+    h2 {
+      margin: 0 0 16px;
+      font-size: 20px;
+    }
+
+    .control-group {
+      margin-bottom: 18px;
+    }
+
+    .label-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+
+    .value {
+      color: var(--accent);
+      text-align: right;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-top: 10px;
+    }
+
+    .stat {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+      background: #fbfdff;
+    }
+
+    .stat-title {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .stat-value {
+      font-size: 24px;
+      font-weight: 800;
+      word-break: break-word;
+    }
+
+    .formula {
+      margin-top: 16px;
+      padding: 14px;
+      border-radius: 16px;
+      background: #f4f8ff;
+      border: 1px dashed #bdd1ff;
+      line-height: 1.8;
+    }
+
+    .note-box {
+      margin-top: 16px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: var(--warn-bg);
+      border: 1px solid var(--warn-line);
+      color: var(--warn-text);
+      line-height: 1.7;
+      font-size: 14px;
+    }
+
+    .legend {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .swatch {
+      width: 14px;
+      height: 14px;
+      border-radius: 4px;
+      display: inline-block;
+      margin-right: 6px;
+      vertical-align: -2px;
+    }
+
+    .viewer-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 18px;
+    }
+
+    svg {
+      width: 100%;
+      height: auto;
+      display: block;
+      background: #fbfdff;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+    }
+
+    canvas {
+      width: 100%;
+      max-width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: #fff;
+    }
+
+    .caption {
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 14px;
+    }
+
+    @media (max-width: 980px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>연속방정식 시뮬레이터</h1>
+    <div class="subtitle">
+      비압축성 유체의 연속방정식 <strong>Q = A₁V₁ = A₂V₂</strong>를 바탕으로, 관의 직경이 달라질 때 유속과 유량이 어떻게 변하는지 확인하는 HTML 시뮬레이터입니다.
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h2>조작 패널</h2>
+
+        <div class="control-group">
+          <div class="label-row">
+            <span>상류 직경 D₁</span>
+            <span class="value" id="d1Value">0.30 m</span>
+          </div>
+          <input id="d1Slider" type="range" min="0.10" max="0.60" step="0.01" value="0.30" />
+        </div>
+
+        <div class="control-group">
+          <div class="label-row">
+            <span>하류 직경 D₂</span>
+            <span class="value" id="d2Value">0.15 m</span>
+          </div>
+          <input id="d2Slider" type="range" min="0.05" max="0.60" step="0.01" value="0.15" />
+        </div>
+
+        <div class="control-group">
+          <div class="label-row">
+            <span>상류 유속 V₁</span>
+            <span class="value" id="v1Value">2.00 m/s</span>
+          </div>
+          <input id="v1Slider" type="range" min="0.20" max="10.00" step="0.01" value="2.00" />
+        </div>
+
+        <div class="control-group">
+          <div class="label-row">
+            <span>애니메이션 속도</span>
+            <span class="value" id="speedValue">1.0 ×</span>
+          </div>
+          <input id="speedSlider" type="range" min="0.2" max="3" step="0.1" value="1" />
+        </div>
+
+        <div class="stat-grid">
+          <div class="stat">
+            <div class="stat-title">면적 A₁</div>
+            <div class="stat-value" id="a1Stat">0.0707 m²</div>
+          </div>
+          <div class="stat">
+            <div class="stat-title">면적 A₂</div>
+            <div class="stat-value" id="a2Stat">0.0177 m²</div>
+          </div>
+          <div class="stat">
+            <div class="stat-title">유속 V₂</div>
+            <div class="stat-value" id="v2Stat">8.00 m/s</div>
+          </div>
+          <div class="stat">
+            <div class="stat-title">유량 Q</div>
+            <div class="stat-value" id="qStat">0.1414 m³/s</div>
+          </div>
+        </div>
+
+        <div class="formula" id="formulaBox">
+          A₁V₁ = A₂V₂<br>
+          0.0707 × 2.00 = 0.0177 × 8.00
+        </div>
+
+        <div class="note-box">
+          관이 좁아지면 같은 유량을 유지하기 위해 유속이 증가합니다. 비압축성, 정상유동 가정에서 연속방정식이 성립합니다.
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>시각화</h2>
+
+        <div class="legend">
+          <span><span class="swatch" style="background:#5aa9ff"></span>유체 흐름</span>
+          <span><span class="swatch" style="background:#2449d8"></span>관 중심선/치수</span>
+          <span><span class="swatch" style="background:#ff8c42"></span>입자 이동</span>
+        </div>
+
+        <div class="viewer-grid">
+          <svg viewBox="0 0 900 360" aria-label="연속방정식 관로 도식">
+            <defs>
+              <linearGradient id="flowGrad" x1="0" x2="1" y1="0" y2="0">
+                <stop offset="0%" stop-color="#b7dcff" />
+                <stop offset="100%" stop-color="#5aa9ff" />
+              </linearGradient>
+              <marker id="arrowBlue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#2449d8"></path>
+              </marker>
+            </defs>
+
+            <path id="pipeOuter" d="M 70 90 L 280 90 L 430 130 L 760 130 L 760 230 L 430 230 L 280 270 L 70 270 Z" fill="#f7faff" stroke="#24324f" stroke-width="4" />
+            <path id="flowPath" d="M 72 110 L 275 110 L 428 145 L 758 145 L 758 215 L 428 215 L 275 250 L 72 250 Z" fill="url(#flowGrad)" opacity="0.95" />
+
+            <line x1="70" y1="180" x2="760" y2="180" stroke="#2449d8" stroke-width="2" stroke-dasharray="8 7" />
+
+            <g id="particles"></g>
+
+            <line x1="120" y1="110" x2="120" y2="250" stroke="#2449d8" stroke-width="3" marker-start="url(#arrowBlue)" marker-end="url(#arrowBlue)" />
+            <text id="d1Label" x="86" y="187" font-size="18" fill="#2449d8" font-weight="700">D₁</text>
+
+            <line x1="640" y1="145" x2="640" y2="215" stroke="#2449d8" stroke-width="3" marker-start="url(#arrowBlue)" marker-end="url(#arrowBlue)" />
+            <text id="d2Label" x="606" y="187" font-size="18" fill="#2449d8" font-weight="700">D₂</text>
+
+            <line x1="180" y1="70" x2="340" y2="70" stroke="#2449d8" stroke-width="3" marker-start="url(#arrowBlue)" marker-end="url(#arrowBlue)" />
+            <text x="215" y="58" font-size="18" fill="#2449d8" font-weight="700">상류 구간</text>
+
+            <line x1="520" y1="95" x2="700" y2="95" stroke="#2449d8" stroke-width="3" marker-start="url(#arrowBlue)" marker-end="url(#arrowBlue)" />
+            <text x="560" y="82" font-size="18" fill="#2449d8" font-weight="700">하류 구간</text>
+
+            <text id="v1SvgLabel" x="150" y="295" font-size="19" fill="#24324f" font-weight="700">V₁ = 2.00 m/s</text>
+            <text id="v2SvgLabel" x="560" y="245" font-size="19" fill="#24324f" font-weight="700">V₂ = 8.00 m/s</text>
+            <text id="qSvgLabel" x="330" y="325" font-size="20" fill="#24324f" font-weight="800">Q = 0.1414 m³/s</text>
+          </svg>
+
+          <canvas id="graph" width="820" height="320"></canvas>
+          <div class="caption">
+            그래프는 단면적이 줄어들수록 유속이 커지는 관계를 보여줍니다. 같은 유량 조건에서 <strong>V ∝ 1/A</strong> 관계가 나타납니다. 원형 관에서는 <strong>A = πD²/4</strong>를 사용합니다.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const d1Slider = document.getElementById('d1Slider');
+    const d2Slider = document.getElementById('d2Slider');
+    const v1Slider = document.getElementById('v1Slider');
+    const speedSlider = document.getElementById('speedSlider');
+
+    const d1Value = document.getElementById('d1Value');
+    const d2Value = document.getElementById('d2Value');
+    const v1Value = document.getElementById('v1Value');
+    const speedValue = document.getElementById('speedValue');
+
+    const a1Stat = document.getElementById('a1Stat');
+    const a2Stat = document.getElementById('a2Stat');
+    const v2Stat = document.getElementById('v2Stat');
+    const qStat = document.getElementById('qStat');
+    const formulaBox = document.getElementById('formulaBox');
+
+    const d1Label = document.getElementById('d1Label');
+    const d2Label = document.getElementById('d2Label');
+    const v1SvgLabel = document.getElementById('v1SvgLabel');
+    const v2SvgLabel = document.getElementById('v2SvgLabel');
+    const qSvgLabel = document.getElementById('qSvgLabel');
+    const flowPath = document.getElementById('flowPath');
+    const pipeOuter = document.getElementById('pipeOuter');
+    const particlesGroup = document.getElementById('particles');
+
+    const canvas = document.getElementById('graph');
+    const ctx = canvas.getContext('2d');
+
+    const particles = [];
+    const particleCount = 18;
+    let globalSpeedFactor = 1;
+    let d1 = 0.30;
+    let d2 = 0.15;
+    let v1 = 2.00;
+    let v2 = 8.00;
+    let q = 0.1414;
+
+    function fmt(num, digits = 2) {
+      return Number(num).toFixed(digits);
+    }
+
+    function area(d) {
+      return Math.PI * d * d / 4;
+    }
+
+    function sectionHeightPx(d) {
+      return 140 * (d / 0.30);
+    }
+
+    function updatePipeShape() {
+      const h1 = sectionHeightPx(d1);
+      const h2 = sectionHeightPx(d2);
+      const c = 180;
+      const y1t = c - h1 / 2;
+      const y1b = c + h1 / 2;
+      const y2t = c - h2 / 2;
+      const y2b = c + h2 / 2;
+
+      pipeOuter.setAttribute('d', `M 70 ${y1t - 20} L 280 ${y1t - 20} L 430 ${y2t - 15} L 760 ${y2t - 15} L 760 ${y2b + 15} L 430 ${y2b + 15} L 280 ${y1b + 20} L 70 ${y1b + 20} Z`);
+      flowPath.setAttribute('d', `M 72 ${y1t} L 275 ${y1t} L 428 ${y2t} L 758 ${y2t} L 758 ${y2b} L 428 ${y2b} L 275 ${y1b} L 72 ${y1b} Z`);
+
+      d1Label.setAttribute('x', 86);
+      d1Label.setAttribute('y', c + 7);
+      d2Label.setAttribute('x', 606);
+      d2Label.setAttribute('y', c + 7);
+
+      document.querySelector('line[x1="120"]').setAttribute('y1', y1t);
+      document.querySelector('line[x1="120"]').setAttribute('y2', y1b);
+      document.querySelector('line[x1="640"]').setAttribute('y1', y2t);
+      document.querySelector('line[x1="640"]').setAttribute('y2', y2b);
+    }
+
+    function yCenterRange(x) {
+      const c = 180;
+      const h1 = sectionHeightPx(d1);
+      const h2 = sectionHeightPx(d2);
+      let h;
+      if (x <= 275) {
+        h = h1;
+      } else if (x >= 428) {
+        h = h2;
+      } else {
+        const t = (x - 275) / (428 - 275);
+        h = h1 + (h2 - h1) * t;
+      }
+      return { top: c - h / 2, bottom: c + h / 2 };
+    }
+
+    function velocityAtX(x) {
+      if (x <= 275) return v1;
+      if (x >= 428) return v2;
+      const t = (x - 275) / (428 - 275);
+      return v1 + (v2 - v1) * t;
+    }
+
+    function initParticles() {
+      particles.length = 0;
+      for (let i = 0; i < particleCount; i++) {
+        particles.push({
+          x: 80 + i * 38,
+          offsetSeed: Math.random(),
+          r: 5 + Math.random() * 1.8
+        });
+      }
+    }
+
+    function drawParticles() {
+      particlesGroup.innerHTML = '';
+      particles.forEach((p, idx) => {
+        const band = yCenterRange(p.x);
+        const amp = Math.max((band.bottom - band.top) * 0.28, 8);
+        const y = 180 + Math.sin((p.x * 0.03) + p.offsetSeed * 6 + performance.now() * 0.0012) * amp;
+        const cy = Math.min(Math.max(y, band.top + p.r), band.bottom - p.r);
+
+        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circle.setAttribute('cx', p.x);
+        circle.setAttribute('cy', cy);
+        circle.setAttribute('r', p.r);
+        circle.setAttribute('fill', '#ff8c42');
+        circle.setAttribute('opacity', '0.95');
+        particlesGroup.appendChild(circle);
+      });
+    }
+
+    function animate() {
+      particles.forEach(p => {
+        p.x += velocityAtX(p.x) * 0.7 * globalSpeedFactor;
+        if (p.x > 755) p.x = 78;
+      });
+      drawParticles();
+      requestAnimationFrame(animate);
+    }
+
+    function drawGraph() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const pad = { left: 68, right: 24, top: 24, bottom: 48 };
+      const w = canvas.width - pad.left - pad.right;
+      const h = canvas.height - pad.top - pad.bottom;
+
+      const minD = 0.05;
+      const maxD = 0.60;
+      const maxV = Math.max(v2 * 1.2, 10);
+
+      ctx.strokeStyle = '#d6ddeb';
+      ctx.lineWidth = 1;
+      for (let i = 0; i <= 5; i++) {
+        const y = pad.top + (h / 5) * i;
+        ctx.beginPath();
+        ctx.moveTo(pad.left, y);
+        ctx.lineTo(pad.left + w, y);
+        ctx.stroke();
+      }
+      for (let i = 0; i <= 5; i++) {
+        const x = pad.left + (w / 5) * i;
+        ctx.beginPath();
+        ctx.moveTo(x, pad.top);
+        ctx.lineTo(x, pad.top + h);
+        ctx.stroke();
+      }
+
+      ctx.strokeStyle = '#1f2a44';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(pad.left, pad.top);
+      ctx.lineTo(pad.left, pad.top + h);
+      ctx.lineTo(pad.left + w, pad.top + h);
+      ctx.stroke();
+
+      ctx.fillStyle = '#44506d';
+      ctx.font = '14px Segoe UI';
+      ctx.fillText('하류 직경 D₂ (m)', pad.left + w / 2 - 40, canvas.height - 14);
+      ctx.save();
+      ctx.translate(18, pad.top + h / 2 + 18);
+      ctx.rotate(-Math.PI / 2);
+      ctx.fillText('하류 유속 V₂ (m/s)', 0, 0);
+      ctx.restore();
+
+      ctx.fillStyle = '#5d6b8a';
+      for (let i = 0; i <= 5; i++) {
+        const dv = minD + ((maxD - minD) / 5) * i;
+        const x = pad.left + (w / 5) * i;
+        ctx.fillText(fmt(dv, 2), x - 10, pad.top + h + 20);
+      }
+      for (let i = 0; i <= 5; i++) {
+        const vv = maxV * (5 - i) / 5;
+        const y = pad.top + (h / 5) * i;
+        ctx.fillText(fmt(vv, 1), 14, y + 4);
+      }
+
+      ctx.strokeStyle = '#5aa9ff';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      for (let i = 0; i <= 120; i++) {
+        const d = minD + (maxD - minD) * (i / 120);
+        const area1 = area(d1);
+        const area2 = area(d);
+        const vv = area1 * v1 / area2;
+        const x = pad.left + ((d - minD) / (maxD - minD)) * w;
+        const y = pad.top + h - (vv / maxV) * h;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+
+      const px = pad.left + ((d2 - minD) / (maxD - minD)) * w;
+      const py = pad.top + h - (v2 / maxV) * h;
+      ctx.setLineDash([6, 6]);
+      ctx.strokeStyle = '#ff8c42';
+      ctx.beginPath();
+      ctx.moveTo(px, pad.top + h);
+      ctx.lineTo(px, py);
+      ctx.moveTo(pad.left, py);
+      ctx.lineTo(px, py);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = '#ff8c42';
+      ctx.beginPath();
+      ctx.arc(px, py, 5.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.font = 'bold 13px Segoe UI';
+      ctx.fillText(`D₂=${fmt(d2,2)} m, V₂=${fmt(v2,2)} m/s`, Math.min(px + 10, canvas.width - 180), Math.max(py - 10, 22));
+    }
+
+    function update() {
+      d1 = parseFloat(d1Slider.value);
+      d2 = parseFloat(d2Slider.value);
+      v1 = parseFloat(v1Slider.value);
+      globalSpeedFactor = parseFloat(speedSlider.value);
+
+      const A1 = area(d1);
+      const A2 = area(d2);
+      q = A1 * v1;
+      v2 = q / A2;
+
+      d1Value.textContent = `${fmt(d1, 2)} m`;
+      d2Value.textContent = `${fmt(d2, 2)} m`;
+      v1Value.textContent = `${fmt(v1, 2)} m/s`;
+      speedValue.textContent = `${fmt(globalSpeedFactor, 1)} ×`;
+
+      a1Stat.textContent = `${fmt(A1, 4)} m²`;
+      a2Stat.textContent = `${fmt(A2, 4)} m²`;
+      v2Stat.textContent = `${fmt(v2, 2)} m/s`;
+      qStat.textContent = `${fmt(q, 4)} m³/s`;
+
+      formulaBox.innerHTML = `Q = A₁V₁ = A₂V₂<br>${fmt(A1, 4)} × ${fmt(v1, 2)} = ${fmt(A2, 4)} × ${fmt(v2, 2)} = ${fmt(q, 4)} m³/s`;
+
+      d1Label.textContent = `D₁ = ${fmt(d1, 2)} m`;
+      d2Label.textContent = `D₂ = ${fmt(d2, 2)} m`;
+      v1SvgLabel.textContent = `V₁ = ${fmt(v1, 2)} m/s`;
+      v2SvgLabel.textContent = `V₂ = ${fmt(v2, 2)} m/s`;
+      qSvgLabel.textContent = `Q = ${fmt(q, 4)} m³/s`;
+
+      updatePipeShape();
+      drawGraph();
+    }
+
+    [d1Slider, d2Slider, v1Slider, speedSlider].forEach(el => el.addEventListener('input', update));
+
+    initParticles();
+    update();
+    animate();
+  </script>
+</body>
+</html>
