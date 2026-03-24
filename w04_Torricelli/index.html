@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>토리첼리의 정리 시뮬레이터</title>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --panel: #ffffff;
+      --line: #d8e0ee;
+      --text: #1f2a44;
+      --muted: #60708f;
+      --accent: #2449d8;
+      --water: #5aa9ff;
+      --water-dark: #2c73d2;
+      --orange: #ff8c42;
+      --green: #21a366;
+      --warn-bg: #fff8ec;
+      --warn-line: #f1dba7;
+      --warn-text: #7a5a05;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+      background: linear-gradient(180deg, #eef3fb 0%, #f8fbff 100%);
+      color: var(--text);
+    }
+    .wrap {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: 32px;
+    }
+    .subtitle {
+      color: var(--muted);
+      line-height: 1.75;
+      margin-bottom: 20px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 410px 1fr;
+      gap: 20px;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      box-shadow: 0 8px 24px rgba(27, 52, 111, 0.08);
+      padding: 18px;
+    }
+    h2 {
+      margin: 0 0 16px;
+      font-size: 20px;
+    }
+    .control-group { margin-bottom: 18px; }
+    .label-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+    .value { color: var(--accent); }
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+    .button-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin: 4px 0 14px;
+    }
+    button {
+      border: none;
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-weight: 700;
+      cursor: pointer;
+      background: var(--accent);
+      color: white;
+    }
+    button.secondary {
+      background: white;
+      color: var(--accent);
+      border: 1px solid #bfd0ff;
+    }
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-top: 10px;
+    }
+    .stat {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+      background: #fbfdff;
+    }
+    .stat-title {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .stat-value {
+      font-size: 24px;
+      font-weight: 800;
+      word-break: break-word;
+    }
+    .formula {
+      margin-top: 16px;
+      padding: 14px;
+      border-radius: 16px;
+      background: #f4f8ff;
+      border: 1px dashed #bdd1ff;
+      line-height: 1.9;
+      font-size: 15px;
+    }
+    .note-box {
+      margin-top: 16px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: var(--warn-bg);
+      border: 1px solid var(--warn-line);
+      color: var(--warn-text);
+      line-height: 1.7;
+      font-size: 14px;
+    }
+    .legend {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .swatch {
+      width: 14px;
+      height: 14px;
+      border-radius: 4px;
+      display: inline-block;
+      margin-right: 6px;
+      vertical-align: -2px;
+    }
+    .viewer-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 18px;
+    }
+    svg {
+      width: 100%;
+      height: auto;
+      display: block;
+      background: #fbfdff;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+    }
+    canvas {
+      width: 100%;
+      max-width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: #fff;
+    }
+    .caption {
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 14px;
+    }
+    @media (max-width: 1000px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>토리첼리의 정리 시뮬레이터</h1>
+    <div class="subtitle">
+      자유수면과 분출구 사이 수두를 <strong>h</strong>라 하면, 이상적인 유출 속도는 <strong>u = √(2gh)</strong>입니다. 또한 원통형 탱크에서는 <strong>A₁ dh/dt = -A₂u</strong>를 이용해 수면 하강 시간을 계산할 수 있습니다.
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h2>조작 패널</h2>
+
+        <div class="control-group">
+          <div class="label-row">
+            <span>탱크 직경 D</span>
+            <span class="value" id="DValue">1.00 m</span>
+          </div>
+          <input id="DSlider" type="range" min="0.40" max="2.00" step="0.01" value="1.00" />
+        </div>
+
+        <div class="control-group">
+          <div class="label-row">
+            <span>분출구 직경 d</span>
+            <span class="value" id="dValue">0.10 m</span>
+          </div>
+          <input id="dSlider" type="range" min="0.02" max="0.30" step="0.005" value="0.10" />
+        </div>
+
+        <div class="control-group">
+          <div class="label-row">
+            <span>초기 수면높이 h₀</span>
+            <span class="value" id="h0Value">2.00 m</span>
+          </div>
+          <input id="h0Slider" type="range" min="0.50" max="4.00" step="0.01" value="2.00" />
+        </div>
+
+        <div class="control-group">
+          <div class="label-row">
+            <span>목표 수면높이 h_f</span>
+            <span class="value" id="hfValue">0.50 m</span>
+          </div>
+          <input id="hfSlider" type="range" min="0.05" max="3.50" step="0.01" value="0.50" />
+        </div>
+
+        <div class="control-group">
+          <div class="label-row">
+            <span>현재 수면높이 h(t)</span>
+            <span class="value" id="hValue">2.00 m</span>
+          </div>
+          <input id="hSlider" type="range" min="0.05" max="4.00" step="0.01" value="2.00" />
+        </div>
+
+        <div class="control-group">
+          <div class="label-row">
+            <span>중력가속도 g</span>
+            <span class="value" id="gValue">9.81 m/s²</span>
+          </div>
+          <input id="gSlider" type="range" min="1.60" max="15.00" step="0.01" value="9.81" />
+        </div>
+
+        <div class="button-row">
+          <button id="playBtn">배수 시작</button>
+          <button id="pauseBtn" class="secondary">일시정지</button>
+          <button id="resetBtn" class="secondary">초기화</button>
+        </div>
+
+        <div class="stat-grid">
+          <div class="stat">
+            <div class="stat-title">탱크 단면 A₁</div>
+            <div class="stat-value" id="A1Stat">0.7854 m²</div>
+          </div>
+          <div class="stat">
+            <div class="stat-title">분출구 단면 A₂</div>
+            <div class="stat-value" id="A2Stat">0.0079 m²</div>
+          </div>
+          <div class="stat">
+            <div class="stat-title">분출 속도 u</div>
+            <div class="stat-value" id="uStat">6.26 m/s</div>
+          </div>
+          <div class="stat">
+            <div class="stat-title">유량 Q</div>
+            <div class="stat-value" id="QStat">0.0491 m³/s</div>
+          </div>
+          <div class="stat">
+            <div class="stat-title">경과 시간 t</div>
+            <div class="stat-value" id="tStat">0.0 s</div>
+          </div>
+          <div class="stat">
+            <div class="stat-title">h₀→h_f 시간</div>
+            <div class="stat-value" id="TdrainStat">37.9 s</div>
+          </div>
+        </div>
+
+        <div class="formula" id="formulaBox">
+          u = √(2gh) = √(2×9.81×2.00) = 6.26 m/s<br>
+          t = (2A₁/(A₂√(2g))) (√h₀ - √h_f)
+        </div>
+
+        <div class="note-box" id="noteBox">
+          이상유체 가정에서는 수면이 높을수록 분출 속도가 큽니다. 시간이 지날수록 h가 감소하므로 u와 Q도 점점 감소합니다.
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>시각화</h2>
+        <div class="legend">
+          <span><span class="swatch" style="background:#5aa9ff"></span>탱크 내 물</span>
+          <span><span class="swatch" style="background:#ff8c42"></span>분출 제트</span>
+          <span><span class="swatch" style="background:#2449d8"></span>치수/높이</span>
+          <span><span class="swatch" style="background:#21a366"></span>시간-수면높이 그래프</span>
+        </div>
+
+        <div class="viewer-grid">
+          <svg viewBox="0 0 980 520" aria-label="토리첼리의 정리 시각화">
+            <defs>
+              <linearGradient id="waterGradT" x1="0" x2="0" y1="0" y2="1">
+                <stop offset="0%" stop-color="#b7dcff" />
+                <stop offset="100%" stop-color="#5aa9ff" />
+              </linearGradient>
+              <marker id="arrowBlueT" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#2449d8"></path>
+              </marker>
+            </defs>
+
+            <ellipse cx="250" cy="90" rx="150" ry="28" fill="#ffffff" stroke="#24324f" stroke-width="4" />
+            <path d="M 100 90 L 100 420 Q 250 470 400 420 L 400 90" fill="none" stroke="#24324f" stroke-width="4" />
+            <ellipse cx="250" cy="420" rx="150" ry="28" fill="#f7faff" stroke="#24324f" stroke-width="4" />
+
+            <g id="waterGroup">
+              <path id="waterBody" d="M 105 160 L 105 420 Q 250 456 395 420 L 395 160 Q 250 182 105 160 Z" fill="url(#waterGradT)" opacity="0.95" />
+              <ellipse id="waterSurface" cx="250" cy="160" rx="145" ry="24" fill="#cde7ff" stroke="#1f6ed4" stroke-width="3" />
+            </g>
+
+            <rect id="orifice" x="395" y="330" width="34" height="18" rx="4" fill="#24324f" />
+            <path id="jetPath" d="M 429 339 C 470 340, 520 360, 590 410" fill="none" stroke="#ff8c42" stroke-width="10" stroke-linecap="round" />
+            <g id="jetDrops"></g>
+
+            <line id="hArrow" x1="470" y1="160" x2="470" y2="339" stroke="#2449d8" stroke-width="3" marker-start="url(#arrowBlueT)" marker-end="url(#arrowBlueT)" />
+            <text id="hLabel" x="485" y="255" font-size="22" fill="#2449d8" font-weight="700">h = 2.00 m</text>
+
+            <line x1="120" y1="40" x2="380" y2="40" stroke="#2449d8" stroke-width="3" marker-start="url(#arrowBlueT)" marker-end="url(#arrowBlueT)" />
+            <text id="DLabel" x="195" y="28" font-size="22" fill="#2449d8" font-weight="700">D = 1.00 m</text>
+
+            <line x1="430" y1="315" x2="430" y2="363" stroke="#2449d8" stroke-width="3" marker-start="url(#arrowBlueT)" marker-end="url(#arrowBlueT)" />
+            <text id="dLabel" x="445" y="345" font-size="22" fill="#2449d8" font-weight="700">d = 0.10 m</text>
+
+            <text id="timeLabel" x="115" y="130" font-size="22" fill="#24324f" font-weight="700">t = 0.0 s</text>
+            <text id="uLabel" x="600" y="365" font-size="22" fill="#24324f" font-weight="700">u = 6.26 m/s</text>
+            <text id="QLabel" x="600" y="400" font-size="22" fill="#24324f" font-weight="700">Q = 0.0491 m³/s</text>
+            <text id="hfLabel" x="95" y="460" font-size="22" fill="#24324f" font-weight="700">h_f = 0.50 m</text>
+          </svg>
+
+          <canvas id="graph" width="900" height="330"></canvas>
+          <div class="caption">
+            그래프는 시간에 따라 수면높이 h(t)가 감소하는 과정을 보여줍니다. 토리첼리의 정리에서 분출 속도는 h의 제곱근에 비례하므로, 수면이 낮아질수록 배수 속도도 느려집니다.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const DSlider = document.getElementById('DSlider');
+    const dSlider = document.getElementById('dSlider');
+    const h0Slider = document.getElementById('h0Slider');
+    const hfSlider = document.getElementById('hfSlider');
+    const hSlider = document.getElementById('hSlider');
+    const gSlider = document.getElementById('gSlider');
+
+    const DValue = document.getElementById('DValue');
+    const dValue = document.getElementById('dValue');
+    const h0Value = document.getElementById('h0Value');
+    const hfValue = document.getElementById('hfValue');
+    const hValue = document.getElementById('hValue');
+    const gValue = document.getElementById('gValue');
+
+    const A1Stat = document.getElementById('A1Stat');
+    const A2Stat = document.getElementById('A2Stat');
+    const uStat = document.getElementById('uStat');
+    const QStat = document.getElementById('QStat');
+    const tStat = document.getElementById('tStat');
+    const TdrainStat = document.getElementById('TdrainStat');
+    const formulaBox = document.getElementById('formulaBox');
+    const noteBox = document.getElementById('noteBox');
+
+    const waterBody = document.getElementById('waterBody');
+    const waterSurface = document.getElementById('waterSurface');
+    const jetPath = document.getElementById('jetPath');
+    const jetDrops = document.getElementById('jetDrops');
+    const hArrow = document.getElementById('hArrow');
+    const hLabel = document.getElementById('hLabel');
+    const DLabel = document.getElementById('DLabel');
+    const dLabel = document.getElementById('dLabel');
+    const timeLabel = document.getElementById('timeLabel');
+    const uLabel = document.getElementById('uLabel');
+    const QLabel = document.getElementById('QLabel');
+    const hfLabel = document.getElementById('hfLabel');
+
+    const playBtn = document.getElementById('playBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const resetBtn = document.getElementById('resetBtn');
+
+    const canvas = document.getElementById('graph');
+    const ctx = canvas.getContext('2d');
+
+    let D = 1.0, d = 0.10, h0 = 2.0, hf = 0.5, h = 2.0, g = 9.81;
+    let t = 0;
+    let animating = false;
+    let lastFrame = null;
+    let history = [];
+    let droplets = [];
+
+    function fmt(num, digits = 2) { return Number(num).toFixed(digits); }
+    function area(diam) { return Math.PI * diam * diam / 4; }
+    function clamp(x, a, b) { return Math.min(Math.max(x, a), b); }
+    function totalDrainTime() {
+      const A1 = area(D), A2 = area(d);
+      if (hf >= h0) return 0;
+      return (2 * A1 / (A2 * Math.sqrt(2 * g))) * (Math.sqrt(h0) - Math.sqrt(hf));
+    }
+    function timeToHeight(hcur) {
+      const A1 = area(D), A2 = area(d);
+      return (2 * A1 / (A2 * Math.sqrt(2 * g))) * (Math.sqrt(h0) - Math.sqrt(hcur));
+    }
+    function velocity(hcur) {
+      return Math.sqrt(Math.max(2 * g * hcur, 0));
+    }
+    function flowRate(hcur) {
+      return area(d) * velocity(hcur);
+    }
+
+    function syncLimits() {
+      hfSlider.max = Math.max(h0 - 0.01, 0.05);
+      if (parseFloat(hfSlider.value) >= h0) hfSlider.value = Math.max(h0 - 0.01, 0.05);
+
+      hSlider.max = h0;
+      hSlider.min = 0.05;
+      if (parseFloat(hSlider.value) > h0) hSlider.value = h0;
+      if (parseFloat(hSlider.value) < 0.05) hSlider.value = 0.05;
+    }
+
+    function updateFromControls(resetTime = false) {
+      D = parseFloat(DSlider.value);
+      d = parseFloat(dSlider.value);
+      h0 = parseFloat(h0Slider.value);
+      syncLimits();
+      hf = parseFloat(hfSlider.value);
+      g = parseFloat(gSlider.value);
+
+      if (resetTime) {
+        h = h0;
+        hSlider.value = h0;
+        t = 0;
+        history = [{ t: 0, h: h0 }];
+      } else {
+        h = parseFloat(hSlider.value);
+        h = clamp(h, 0.05, h0);
+        hSlider.value = h;
+        t = timeToHeight(h);
+        history = buildHistoryUpToCurrent();
+      }
+      updateAll();
+    }
+
+    function buildHistoryUpToCurrent() {
+      const T = totalDrainTime();
+      const n = 80;
+      const arr = [];
+      const tcur = timeToHeight(h);
+      for (let i = 0; i <= n; i++) {
+        const tt = tcur * i / n;
+        const s = Math.sqrt(h0) - (area(d) * Math.sqrt(2 * g) / (2 * area(D))) * tt;
+        const hh = Math.max(s * s, 0);
+        arr.push({ t: tt, h: hh });
+      }
+      return arr;
+    }
+
+    function updateWaterShape() {
+      const yTop = 120;
+      const yBottom = 420;
+      const maxH = 4.0;
+      const waterY = yBottom - (h / maxH) * 260;
+      const surfaceRy = 24;
+
+      waterSurface.setAttribute('cy', waterY);
+      waterBody.setAttribute('d', `M 105 ${waterY} L 105 420 Q 250 456 395 420 L 395 ${waterY} Q 250 ${waterY + 22} 105 ${waterY} Z`);
+
+      hArrow.setAttribute('y1', waterY);
+      hArrow.setAttribute('y2', 339);
+      hLabel.setAttribute('y', (waterY + 339) / 2 + 6);
+      hLabel.textContent = `h = ${fmt(h, 2)} m`;
+    }
+
+    function updateJet() {
+      const u = velocity(h);
+      const extent = 130 + u * 16;
+      const drop = 25 + u * 7;
+      jetPath.setAttribute('d', `M 429 339 C ${460 + u*2} 338, ${500 + u*4} ${340 + drop*0.3}, ${429 + extent} ${339 + drop}`);
+      jetDrops.innerHTML = '';
+      for (let i = 0; i < 7; i++) {
+        const tt = i / 6;
+        const x = 429 + extent * tt;
+        const y = 339 + drop * tt * tt;
+        const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        c.setAttribute('cx', x);
+        c.setAttribute('cy', y);
+        c.setAttribute('r', 3 + (1 - tt) * 2);
+        c.setAttribute('fill', '#ff8c42');
+        c.setAttribute('opacity', 0.85);
+        jetDrops.appendChild(c);
+      }
+    }
+
+    function drawGraph() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const pad = { left: 70, right: 25, top: 28, bottom: 50 };
+      const w = canvas.width - pad.left - pad.right;
+      const hpx = canvas.height - pad.top - pad.bottom;
+      const Tmax = Math.max(totalDrainTime(), 1);
+      const Hmax = Math.max(h0, 0.5);
+
+      ctx.strokeStyle = '#d6ddeb';
+      ctx.lineWidth = 1;
+      for (let i = 0; i <= 5; i++) {
+        const y = pad.top + i * hpx / 5;
+        ctx.beginPath();
+        ctx.moveTo(pad.left, y);
+        ctx.lineTo(pad.left + w, y);
+        ctx.stroke();
+      }
+      for (let i = 0; i <= 6; i++) {
+        const x = pad.left + i * w / 6;
+        ctx.beginPath();
+        ctx.moveTo(x, pad.top);
+        ctx.lineTo(x, pad.top + hpx);
+        ctx.stroke();
+      }
+
+      ctx.strokeStyle = '#1f2a44';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(pad.left, pad.top);
+      ctx.lineTo(pad.left, pad.top + hpx);
+      ctx.lineTo(pad.left + w, pad.top + hpx);
+      ctx.stroke();
+
+      ctx.fillStyle = '#44506d';
+      ctx.font = '14px Segoe UI';
+      ctx.fillText('시간 t (s)', pad.left + w / 2 - 25, canvas.height - 14);
+      ctx.save();
+      ctx.translate(20, pad.top + hpx / 2 + 20);
+      ctx.rotate(-Math.PI / 2);
+      ctx.fillText('수면높이 h (m)', 0, 0);
+      ctx.restore();
+
+      for (let i = 0; i <= 6; i++) {
+        const tt = Tmax * i / 6;
+        const x = pad.left + i * w / 6;
+        ctx.fillText(fmt(tt, 1), x - 12, pad.top + hpx + 20);
+      }
+      for (let i = 0; i <= 5; i++) {
+        const hh = Hmax * (5 - i) / 5;
+        const y = pad.top + i * hpx / 5;
+        ctx.fillText(fmt(hh, 2), 24, y + 4);
+      }
+
+      ctx.strokeStyle = '#21a366';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      for (let i = 0; i <= 120; i++) {
+        const tt = Tmax * i / 120;
+        const s = Math.sqrt(h0) - (area(d) * Math.sqrt(2 * g) / (2 * area(D))) * tt;
+        const hh = Math.max(s * s, 0);
+        const x = pad.left + (tt / Tmax) * w;
+        const y = pad.top + hpx - (hh / Hmax) * hpx;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+
+      const xCur = pad.left + (t / Tmax) * w;
+      const yCur = pad.top + hpx - (h / Hmax) * hpx;
+      ctx.setLineDash([6, 6]);
+      ctx.strokeStyle = '#ff8c42';
+      ctx.beginPath();
+      ctx.moveTo(xCur, pad.top + hpx);
+      ctx.lineTo(xCur, yCur);
+      ctx.moveTo(pad.left, yCur);
+      ctx.lineTo(xCur, yCur);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = '#ff8c42';
+      ctx.beginPath();
+      ctx.arc(xCur, yCur, 6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.font = 'bold 13px Segoe UI';
+      ctx.fillText(`t=${fmt(t,1)} s, h=${fmt(h,2)} m`, Math.min(xCur + 10, canvas.width - 170), Math.max(yCur - 10, 24));
+    }
+
+    function updateAll() {
+      const A1 = area(D);
+      const A2 = area(d);
+      const u = velocity(h);
+      const Q = flowRate(h);
+      const T = totalDrainTime();
+
+      DValue.textContent = `${fmt(D, 2)} m`;
+      dValue.textContent = `${fmt(d, 2)} m`;
+      h0Value.textContent = `${fmt(h0, 2)} m`;
+      hfValue.textContent = `${fmt(hf, 2)} m`;
+      hValue.textContent = `${fmt(h, 2)} m`;
+      gValue.textContent = `${fmt(g, 2)} m/s²`;
+
+      A1Stat.textContent = `${fmt(A1, 4)} m²`;
+      A2Stat.textContent = `${fmt(A2, 4)} m²`;
+      uStat.textContent = `${fmt(u, 2)} m/s`;
+      QStat.textContent = `${fmt(Q, 4)} m³/s`;
+      tStat.textContent = `${fmt(t, 1)} s`;
+      TdrainStat.textContent = `${fmt(T, 1)} s`;
+
+      formulaBox.innerHTML =
+        `u = √(2gh) = √(2×${fmt(g,2)}×${fmt(h,2)}) = ${fmt(u,2)} m/s<br>` +
+        `Q = A₂u = ${fmt(A2,4)}×${fmt(u,2)} = ${fmt(Q,4)} m³/s<br>` +
+        `t = (2A₁/(A₂√(2g))) (√h₀ - √h_f) = ${fmt(T,1)} s`;
+
+      noteBox.innerHTML =
+        `현재 조건에서 자유수면이 <strong>${fmt(h,2)} m</strong>이므로 분출속도는 <strong>${fmt(u,2)} m/s</strong>입니다. ` +
+        `수면이 내려갈수록 h가 감소하여 u와 Q도 함께 감소합니다.`;
+
+      DLabel.textContent = `D = ${fmt(D,2)} m`;
+      dLabel.textContent = `d = ${fmt(d,2)} m`;
+      timeLabel.textContent = `t = ${fmt(t,1)} s`;
+      uLabel.textContent = `u = ${fmt(u,2)} m/s`;
+      QLabel.textContent = `Q = ${fmt(Q,4)} m³/s`;
+      hfLabel.textContent = `h_f = ${fmt(hf,2)} m`;
+
+      updateWaterShape();
+      updateJet();
+      drawGraph();
+    }
+
+    function resetSimulation() {
+      animating = false;
+      lastFrame = null;
+      t = 0;
+      h = h0;
+      hSlider.value = h0;
+      history = [{ t: 0, h: h0 }];
+      updateAll();
+    }
+
+    function stepSimulation(dtReal) {
+      const simScale = 1.0;
+      const dt = dtReal * simScale;
+      const A1 = area(D);
+      const A2 = area(d);
+      const dhdt = -(A2 / A1) * Math.sqrt(Math.max(2 * g * h, 0));
+      h += dhdt * dt;
+      h = Math.max(h, 0.05);
+      t += dt;
+      hSlider.value = h;
+      history.push({ t, h });
+      if (h <= hf) {
+        animating = false;
+        h = hf;
+        hSlider.value = hf;
+        t = timeToHeight(hf);
+      }
+      updateAll();
+    }
+
+    function animate(timestamp) {
+      if (!lastFrame) lastFrame = timestamp;
+      const dt = Math.min((timestamp - lastFrame) / 1000, 0.05);
+      lastFrame = timestamp;
+      if (animating) stepSimulation(dt);
+      requestAnimationFrame(animate);
+    }
+
+    [DSlider, dSlider, h0Slider, hfSlider, gSlider].forEach(el => {
+      el.addEventListener('input', () => updateFromControls(true));
+    });
+
+    hSlider.addEventListener('input', () => {
+      animating = false;
+      updateFromControls(false);
+    });
+
+    playBtn.addEventListener('click', () => {
+      if (h <= hf) {
+        t = 0;
+        h = h0;
+        hSlider.value = h0;
+      }
+      animating = true;
+      lastFrame = null;
+    });
+
+    pauseBtn.addEventListener('click', () => {
+      animating = false;
+    });
+
+    resetBtn.addEventListener('click', () => {
+      updateFromControls(true);
+    });
+
+    updateFromControls(true);
+    requestAnimationFrame(animate);
+  </script>
+</body>
+</html>
