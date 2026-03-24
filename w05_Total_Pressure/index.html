@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>정압·동압 측정 시뮬레이터</title>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --panel: #ffffff;
+      --line: #d8e0ee;
+      --text: #1f2a44;
+      --muted: #60708f;
+      --accent: #2449d8;
+      --water: #5aa9ff;
+      --orange: #ff8c42;
+      --green: #21a366;
+      --dark: #24324f;
+      --warn-bg: #fff8ec;
+      --warn-line: #f1dba7;
+      --warn-text: #7a5a05;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+      background: linear-gradient(180deg, #eef3fb 0%, #f8fbff 100%);
+      color: var(--text);
+    }
+    .wrap {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: 32px;
+    }
+    .subtitle {
+      color: var(--muted);
+      line-height: 1.75;
+      margin-bottom: 20px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 410px 1fr;
+      gap: 20px;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      box-shadow: 0 8px 24px rgba(27, 52, 111, 0.08);
+      padding: 18px;
+    }
+    h2 {
+      margin: 0 0 16px;
+      font-size: 20px;
+    }
+    .control-group { margin-bottom: 18px; }
+    .label-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+    .value { color: var(--accent); }
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-top: 10px;
+    }
+    .stat {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+      background: #fbfdff;
+    }
+    .stat-title {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .stat-value {
+      font-size: 24px;
+      font-weight: 800;
+      word-break: break-word;
+    }
+    .formula {
+      margin-top: 16px;
+      padding: 14px;
+      border-radius: 16px;
+      background: #f4f8ff;
+      border: 1px dashed #bdd1ff;
+      line-height: 1.85;
+      font-size: 15px;
+    }
+    .note-box {
+      margin-top: 16px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: var(--warn-bg);
+      border: 1px solid var(--warn-line);
+      color: var(--warn-text);
+      line-height: 1.7;
+      font-size: 14px;
+    }
+    .legend {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .swatch {
+      width: 14px;
+      height: 14px;
+      border-radius: 4px;
+      display: inline-block;
+      margin-right: 6px;
+      vertical-align: -2px;
+    }
+    .viewer-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 18px;
+    }
+    svg {
+      width: 100%;
+      height: auto;
+      display: block;
+      background: #fbfdff;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+    }
+    canvas {
+      width: 100%;
+      max-width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: #fff;
+    }
+    .caption {
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 14px;
+    }
+    @media (max-width: 1000px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>배관 정압·동압 측정 시뮬레이터</h1>
+    <div class="subtitle">
+      피토관과 정압공을 이용해 <strong>정압 P<sub>s</sub></strong>, <strong>정체압 P<sub>t</sub></strong>, <strong>동압 q = P<sub>t</sub> - P<sub>s</sub></strong>를 확인하는 시뮬레이터입니다.
+      베르누이 관계에 따라 비압축성 유체에서는 <strong>q = ½ρV²</strong>가 되며, 차압계 높이차로도 속도를 추정할 수 있습니다.
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h2>조작 패널</h2>
+
+        <div class="control-group">
+          <div class="label-row">
+            <span>배관 유속 V</span>
+            <span class="value" id="vValue">10.00 m/s</span>
+          </div>
+          <input id="vSlider" type="range" min="0" max="60" step="0.1" value="10" />
+        </div>
+
+        <div class="control-group">
+          <div class="label-row">
+            <span>유체 밀도 ρ</span>
+            <span class="value" id="rhoValue">1.20 kg/m³</span>
+          </div>
+          <input id="rhoSlider" type="range" min="0.5" max="1500" step="0.1" value="1.2" />
+        </div>
+
+        <div class="control-group">
+          <div class="label-row">
+            <span>정압 Pₛ (게이지)</span>
+            <span class="value" id="psValue">0.00 Pa</span>
+          </div>
+          <input id="psSlider" type="range" min="-5000" max="20000" step="10" value="0" />
+        </div>
+
+        <div class="control-group">
+          <div class="label-row">
+            <span>마노미터 액체 밀도 ρₘ</span>
+            <span class="value" id="rhomValue">13600 kg/m³</span>
+          </div>
+          <input id="rhomSlider" type="range" min="500" max="13600" step="10" value="13600" />
+        </div>
+
+        <div class="control-group">
+          <div class="label-row">
+            <span>중력가속도 g</span>
+            <span class="value" id="gValue">9.81 m/s²</span>
+          </div>
+          <input id="gSlider" type="range" min="1.6" max="15" step="0.01" value="9.81" />
+        </div>
+
+        <div class="stat-grid">
+          <div class="stat">
+            <div class="stat-title">정압 Pₛ</div>
+            <div class="stat-value" id="psStat">0.0 Pa</div>
+          </div>
+          <div class="stat">
+            <div class="stat-title">정체압 Pₜ</div>
+            <div class="stat-value" id="ptStat">60.0 Pa</div>
+          </div>
+          <div class="stat">
+            <div class="stat-title">동압 q</div>
+            <div class="stat-value" id="qStat">60.0 Pa</div>
+          </div>
+          <div class="stat">
+            <div class="stat-title">마노미터 높이차 Δh</div>
+            <div class="stat-value" id="dhStat">0.45 mm</div>
+          </div>
+        </div>
+
+        <div class="formula" id="formulaBox">
+          q = Pₜ - Pₛ = ½ρV² = ½×1.20×10.00² = 60.0 Pa<br>
+          Δh = q / ((ρₘ - ρ)g)
+        </div>
+
+        <div class="note-box" id="noteBox">
+          정압공은 흐름과 직각인 벽면 압력을 읽고, 피토관 전면은 유체를 정지시켜 정체압을 읽습니다. 두 압력의 차가 바로 동압입니다.
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>시각화</h2>
+        <div class="legend">
+          <span><span class="swatch" style="background:#5aa9ff"></span>유체 흐름</span>
+          <span><span class="swatch" style="background:#2449d8"></span>정압/정체압 측정선</span>
+          <span><span class="swatch" style="background:#ff8c42"></span>피토관/차압</span>
+          <span><span class="swatch" style="background:#21a366"></span>압력 그래프</span>
+        </div>
+
+        <div class="viewer-grid">
+          <svg viewBox="0 0 980 500" aria-label="정압과 동압 측정 시각화">
+            <defs>
+              <marker id="arrowBlueSD" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#2449d8"></path>
+              </marker>
+            </defs>
+
+            <line x1="60" y1="170" x2="360" y2="170" stroke="#24324f" stroke-width="10" stroke-linecap="round" />
+            <line x1="60" y1="230" x2="360" y2="230" stroke="#24324f" stroke-width="10" stroke-linecap="round" />
+            <rect x="60" y="170" width="300" height="60" fill="#d9ecff" opacity="0.9" />
+
+            <g id="flowArrows"></g>
+
+            <circle cx="245" cy="200" r="5" fill="#24324f" />
+            <text x="226" y="158" font-size="24" fill="#24324f" font-weight="700">②</text>
+            <text x="120" y="150" font-size="24" fill="#24324f" font-weight="700">①</text>
+            <text x="350" y="145" font-size="24" fill="#24324f" font-weight="700">③</text>
+
+            <path d="M 365 200 L 430 170 L 640 170 L 640 390" fill="none" stroke="#24324f" stroke-width="8" stroke-linejoin="round" stroke-linecap="round" />
+            <path d="M 355 170 L 355 120 L 730 120 L 730 390" fill="none" stroke="#24324f" stroke-width="8" stroke-linejoin="round" stroke-linecap="round" />
+
+            <rect x="350" y="193" width="10" height="14" fill="#24324f" />
+            <circle cx="355" cy="170" r="4.5" fill="#24324f" />
+
+            <path d="M 640 390 C 640 440, 730 440, 730 390" fill="none" stroke="#24324f" stroke-width="8" />
+            <rect x="636" y="300" width="8" height="90" fill="#3d3d3d" />
+            <rect x="726" y="250" width="8" height="140" fill="#3d3d3d" />
+            <path id="manometerFluid" d="M 636 340 L 636 390 C 636 430, 734 430, 734 390 L 734 285 L 726 285 L 726 390 C 726 420, 644 420, 644 390 L 644 340 Z" fill="#4b4b4b" opacity="0.85" />
+
+            <line id="leftLevel" x1="610" y1="340" x2="660" y2="340" stroke="#2449d8" stroke-width="3" />
+            <line id="rightLevel" x1="710" y1="285" x2="760" y2="285" stroke="#2449d8" stroke-width="3" />
+            <line id="dhArrow" x1="780" y1="340" x2="780" y2="285" stroke="#2449d8" stroke-width="3" marker-start="url(#arrowBlueSD)" marker-end="url(#arrowBlueSD)" />
+            <text id="dhLabel" x="792" y="318" font-size="22" fill="#2449d8" font-weight="700">Δh</text>
+
+            <text id="psPipeLabel" x="300" y="270" font-size="22" fill="#24324f" font-weight="700">Pₛ = 0 Pa</text>
+            <text id="ptPipeLabel" x="435" y="215" font-size="22" fill="#24324f" font-weight="700">Pₜ = 60 Pa</text>
+            <text id="qPipeLabel" x="800" y="310" font-size="22" fill="#24324f" font-weight="700">q = 60 Pa</text>
+            <text id="vPipeLabel" x="150" y="120" font-size="22" fill="#24324f" font-weight="700">V = 10.00 m/s</text>
+            <text id="rhomLabel" x="585" y="455" font-size="22" fill="#24324f" font-weight="700">ρₘ = 13600 kg/m³</text>
+            <text x="70" y="70" font-size="20" fill="#24324f">① 자유흐름</text>
+            <text x="70" y="95" font-size="20" fill="#24324f">② 피토관 전면: 정체압 측정</text>
+            <text x="70" y="120" font-size="20" fill="#24324f">③ 정압공: 정압 측정</text>
+          </svg>
+
+          <canvas id="graph" width="900" height="330"></canvas>
+          <div class="caption">
+            그래프는 정압, 동압, 정체압의 관계를 보여줍니다. 같은 지점에서 <strong>정체압 = 정압 + 동압</strong>이며, 유속이 증가할수록 동압이 커져 피토관 차압도 커집니다.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const vSlider = document.getElementById('vSlider');
+    const rhoSlider = document.getElementById('rhoSlider');
+    const psSlider = document.getElementById('psSlider');
+    const rhomSlider = document.getElementById('rhomSlider');
+    const gSlider = document.getElementById('gSlider');
+
+    const vValue = document.getElementById('vValue');
+    const rhoValue = document.getElementById('rhoValue');
+    const psValue = document.getElementById('psValue');
+    const rhomValue = document.getElementById('rhomValue');
+    const gValue = document.getElementById('gValue');
+
+    const psStat = document.getElementById('psStat');
+    const ptStat = document.getElementById('ptStat');
+    const qStat = document.getElementById('qStat');
+    const dhStat = document.getElementById('dhStat');
+    const formulaBox = document.getElementById('formulaBox');
+    const noteBox = document.getElementById('noteBox');
+
+    const flowArrows = document.getElementById('flowArrows');
+    const leftLevel = document.getElementById('leftLevel');
+    const rightLevel = document.getElementById('rightLevel');
+    const dhArrow = document.getElementById('dhArrow');
+    const dhLabel = document.getElementById('dhLabel');
+    const psPipeLabel = document.getElementById('psPipeLabel');
+    const ptPipeLabel = document.getElementById('ptPipeLabel');
+    const qPipeLabel = document.getElementById('qPipeLabel');
+    const vPipeLabel = document.getElementById('vPipeLabel');
+    const rhomLabel = document.getElementById('rhomLabel');
+
+    const canvas = document.getElementById('graph');
+    const ctx = canvas.getContext('2d');
+
+    function fmt(num, digits = 2) { return Number(num).toFixed(digits); }
+
+    function updateFlowArrows(v) {
+      flowArrows.innerHTML = '';
+      const count = 6;
+      const len = 26 + v * 1.3;
+      for (let i = 0; i < count; i++) {
+        const y = 182 + i * 8;
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', 110);
+        line.setAttribute('y1', y);
+        line.setAttribute('x2', 110 + len);
+        line.setAttribute('y2', y);
+        line.setAttribute('stroke', '#24324f');
+        line.setAttribute('stroke-width', 6);
+        line.setAttribute('marker-end', 'url(#arrowBlueSD)');
+        flowArrows.appendChild(line);
+      }
+    }
+
+    function drawGraph(ps, q, pt) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const pad = { left: 70, right: 30, top: 30, bottom: 50 };
+      const w = canvas.width - pad.left - pad.right;
+      const h = canvas.height - pad.top - pad.bottom;
+
+      const minP = Math.min(ps, 0);
+      const maxP = Math.max(pt, 100);
+      const range = maxP - minP || 1;
+
+      ctx.strokeStyle = '#d6ddeb';
+      ctx.lineWidth = 1;
+      for (let i = 0; i <= 5; i++) {
+        const y = pad.top + i * h / 5;
+        ctx.beginPath();
+        ctx.moveTo(pad.left, y);
+        ctx.lineTo(pad.left + w, y);
+        ctx.stroke();
+      }
+
+      ctx.strokeStyle = '#1f2a44';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(pad.left, pad.top);
+      ctx.lineTo(pad.left, pad.top + h);
+      ctx.lineTo(pad.left + w, pad.top + h);
+      ctx.stroke();
+
+      ctx.fillStyle = '#44506d';
+      ctx.font = '14px Segoe UI';
+      ctx.fillText('압력 (Pa)', 18, 20);
+      ['정압 Pₛ', '동압 q', '정체압 Pₜ'].forEach((label, i) => {
+        const x = pad.left + 120 + i * 220;
+        ctx.fillText(label, x - 24, canvas.height - 14);
+      });
+
+      for (let i = 0; i <= 5; i++) {
+        const p = maxP - (range * i / 5);
+        const y = pad.top + i * h / 5;
+        ctx.fillText(fmt(p, 0), 18, y + 4);
+      }
+
+      const toY = (p) => pad.top + ((maxP - p) / range) * h;
+      const zeroY = toY(0);
+      ctx.setLineDash([5, 5]);
+      ctx.strokeStyle = '#9aa7c2';
+      ctx.beginPath();
+      ctx.moveTo(pad.left, zeroY);
+      ctx.lineTo(pad.left + w, zeroY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      const bars = [
+        { x: pad.left + 120, val: ps, color: '#5aa9ff' },
+        { x: pad.left + 340, val: q, color: '#ff8c42' },
+        { x: pad.left + 560, val: pt, color: '#21a366' },
+      ];
+
+      bars.forEach(({ x, val, color }) => {
+        const y = toY(val);
+        const y0 = toY(0);
+        ctx.fillStyle = color;
+        ctx.fillRect(x, Math.min(y, y0), 90, Math.abs(y0 - y));
+        ctx.strokeStyle = '#24324f';
+        ctx.strokeRect(x, Math.min(y, y0), 90, Math.abs(y0 - y));
+        ctx.fillStyle = '#24324f';
+        ctx.font = 'bold 13px Segoe UI';
+        ctx.fillText(`${fmt(val,1)} Pa`, x + 12, y < y0 ? y - 8 : y + 20);
+      });
+    }
+
+    function update() {
+      const v = parseFloat(vSlider.value);
+      const rho = parseFloat(rhoSlider.value);
+      const ps = parseFloat(psSlider.value);
+      const rhom = parseFloat(rhomSlider.value);
+      const g = parseFloat(gSlider.value);
+
+      const q = 0.5 * rho * v * v;
+      const pt = ps + q;
+      const denom = Math.max((rhom - rho) * g, 1e-9);
+      const dh = q / denom; // m
+
+      vValue.textContent = `${fmt(v,2)} m/s`;
+      rhoValue.textContent = `${fmt(rho,2)} kg/m³`;
+      psValue.textContent = `${fmt(ps,0)} Pa`;
+      rhomValue.textContent = `${fmt(rhom,0)} kg/m³`;
+      gValue.textContent = `${fmt(g,2)} m/s²`;
+
+      psStat.textContent = `${fmt(ps,1)} Pa`;
+      ptStat.textContent = `${fmt(pt,1)} Pa`;
+      qStat.textContent = `${fmt(q,1)} Pa`;
+      dhStat.textContent = dh < 1 ? `${fmt(dh*1000,2)} mm` : `${fmt(dh,3)} m`;
+
+      formulaBox.innerHTML =
+        `q = Pₜ - Pₛ = ½ρV² = ½×${fmt(rho,2)}×${fmt(v,2)}² = ${fmt(q,1)} Pa<br>` +
+        `Pₜ = Pₛ + q = ${fmt(ps,1)} + ${fmt(q,1)} = ${fmt(pt,1)} Pa<br>` +
+        `Δh = q / ((ρₘ-ρ)g) = ${fmt(q,1)} / ((${fmt(rhom,0)}-${fmt(rho,2)})×${fmt(g,2)}) = ${dh < 1 ? fmt(dh*1000,2)+' mm' : fmt(dh,3)+' m'}`;
+
+      if (v === 0) {
+        noteBox.innerHTML = `유속이 0이면 동압도 0이므로 정압과 정체압이 같아지고, 마노미터 높이차도 발생하지 않습니다.`;
+      } else if (rho < 5) {
+        noteBox.innerHTML = `현재는 공기처럼 밀도가 작은 유체에 가까운 조건입니다. 같은 속도에서도 동압은 물보다 작게 나타나며, 수은 마노미터 높이차도 매우 작습니다.`;
+      } else {
+        noteBox.innerHTML = `현재 조건에서 동압은 <strong>${fmt(q,1)} Pa</strong>입니다. 피토관 전면은 유체를 정지시켜 정체압을 읽고, 벽면 정압공은 흐름 방향 성분이 없는 정압을 읽습니다.`;
+      }
+
+      const leftY = 340;
+      const scale = 2500; // px per m of dh? adapted below
+      const deltaPx = Math.min(dh * 18000, 120);
+      const rightY = leftY - deltaPx;
+      leftLevel.setAttribute('y1', leftY);
+      leftLevel.setAttribute('y2', leftY);
+      rightLevel.setAttribute('y1', rightY);
+      rightLevel.setAttribute('y2', rightY);
+      dhArrow.setAttribute('y1', leftY);
+      dhArrow.setAttribute('y2', rightY);
+      dhLabel.setAttribute('y', (leftY + rightY) / 2 + 6);
+      dhLabel.textContent = `Δh = ${dh < 1 ? fmt(dh*1000,2)+' mm' : fmt(dh,3)+' m'}`;
+
+      psPipeLabel.textContent = `Pₛ = ${fmt(ps,1)} Pa`;
+      ptPipeLabel.textContent = `Pₜ = ${fmt(pt,1)} Pa`;
+      qPipeLabel.textContent = `q = ${fmt(q,1)} Pa`;
+      vPipeLabel.textContent = `V = ${fmt(v,2)} m/s`;
+      rhomLabel.textContent = `ρₘ = ${fmt(rhom,0)} kg/m³`;
+
+      updateFlowArrows(v);
+      drawGraph(ps, q, pt);
+    }
+
+    [vSlider, rhoSlider, psSlider, rhomSlider, gSlider].forEach(el => el.addEventListener('input', update));
+    update();
+  </script>
+</body>
+</html>
