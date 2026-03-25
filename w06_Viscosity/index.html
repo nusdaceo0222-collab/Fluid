@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>점성계수·동점성계수 시뮬레이터</title>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --panel: #ffffff;
+      --line: #d8e0ee;
+      --text: #1f2a44;
+      --muted: #60708f;
+      --accent: #2449d8;
+      --water: #7fb7ff;
+      --orange: #ff8c42;
+      --green: #21a366;
+      --warn-bg: #fff8ec;
+      --warn-line: #f1dba7;
+      --warn-text: #7a5a05;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+      background: linear-gradient(180deg, #eef3fb 0%, #f8fbff 100%);
+      color: var(--text);
+    }
+    .wrap {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    h1 { margin: 0 0 8px; font-size: 32px; }
+    .subtitle {
+      color: var(--muted);
+      line-height: 1.75;
+      margin-bottom: 20px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 420px 1fr;
+      gap: 20px;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      box-shadow: 0 8px 24px rgba(27, 52, 111, 0.08);
+      padding: 18px;
+    }
+    h2 { margin: 0 0 16px; font-size: 20px; }
+    .control-group { margin-bottom: 18px; }
+    .label-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+    .value { color: var(--accent); }
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-top: 10px;
+    }
+    .stat {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+      background: #fbfdff;
+    }
+    .stat-title {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .stat-value {
+      font-size: 23px;
+      font-weight: 800;
+      word-break: break-word;
+    }
+    .formula {
+      margin-top: 16px;
+      padding: 14px;
+      border-radius: 16px;
+      background: #f4f8ff;
+      border: 1px dashed #bdd1ff;
+      line-height: 1.9;
+      font-size: 15px;
+    }
+    .note-box {
+      margin-top: 16px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: var(--warn-bg);
+      border: 1px solid var(--warn-line);
+      color: var(--warn-text);
+      line-height: 1.7;
+      font-size: 14px;
+    }
+    .legend {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .swatch {
+      width: 14px;
+      height: 14px;
+      border-radius: 4px;
+      display: inline-block;
+      margin-right: 6px;
+      vertical-align: -2px;
+    }
+    .viewer-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 18px;
+    }
+    svg {
+      width: 100%;
+      height: auto;
+      display: block;
+      background: #fbfdff;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+    }
+    canvas {
+      width: 100%;
+      max-width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: #fff;
+    }
+    .caption { color: var(--muted); line-height: 1.7; font-size: 14px; }
+    @media (max-width: 1000px) { .grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>점성계수·동점성계수 시뮬레이터</h1>
+    <div class="subtitle">
+      평행판 전단유동에서 <strong>τ = μ (du/dy)</strong>를 이용해 <strong>점성계수 μ</strong>를 구하고, 유체 밀도 ρ를 이용해 <strong>동점성계수 ν = μ/ρ</strong>를 계산하는 시뮬레이터입니다.
+      속도차, 판 사이 거리, 전단응력, 밀도를 바꾸면 점성계수와 동점성계수가 실시간으로 변합니다.
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h2>조작 패널</h2>
+
+        <div class="control-group">
+          <div class="label-row">
+            <span>윗판 속도 U</span>
+            <span class="value" id="uValue">1.00 m/s</span>
+          </div>
+          <input id="uSlider" type="range" min="0.05" max="5.00" step="0.01" value="1.00" />
+        </div>
+
+        <div class="control-group">
+          <div class="label-row">
+            <span>판 사이 거리 y</span>
+            <span class="value" id="yValue">0.010 m</span>
+          </div>
+          <input id="ySlider" type="range" min="0.001" max="0.050" step="0.001" value="0.010" />
+        </div>
+
+        <div class="control-group">
+          <div class="label-row">
+            <span>전단응력 τ</span>
+            <span class="value" id="tauValue">1.00 Pa</span>
+          </div>
+          <input id="tauSlider" type="range" min="0.05" max="20.00" step="0.01" value="1.00" />
+        </div>
+
+        <div class="control-group">
+          <div class="label-row">
+            <span>유체 밀도 ρ</span>
+            <span class="value" id="rhoValue">1000 kg/m³</span>
+          </div>
+          <input id="rhoSlider" type="range" min="0.5" max="1500" step="0.5" value="1000" />
+        </div>
+
+        <div class="stat-grid">
+          <div class="stat">
+            <div class="stat-title">속도구배 du/dy</div>
+            <div class="stat-value" id="gradStat">100.0 s⁻¹</div>
+          </div>
+          <div class="stat">
+            <div class="stat-title">점성계수 μ</div>
+            <div class="stat-value" id="muStat">0.0100 Pa·s</div>
+          </div>
+          <div class="stat">
+            <div class="stat-title">동점성계수 ν</div>
+            <div class="stat-value" id="nuStat">1.00e-5 m²/s</div>
+          </div>
+          <div class="stat">
+            <div class="stat-title">cSt 환산</div>
+            <div class="stat-value" id="cstStat">10.00 cSt</div>
+          </div>
+        </div>
+
+        <div class="formula" id="formulaBox">
+          τ = μ(du/dy),  μ = τ / (du/dy),  ν = μ/ρ
+        </div>
+
+        <div class="note-box" id="noteBox">
+          같은 전단응력에서 속도구배가 작을수록 점성계수 μ는 커집니다. 밀도가 클수록 같은 μ에서도 동점성계수 ν는 작아집니다.
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>시각화</h2>
+        <div class="legend">
+          <span><span class="swatch" style="background:#7fb7ff"></span>유체층</span>
+          <span><span class="swatch" style="background:#2449d8"></span>속도 분포</span>
+          <span><span class="swatch" style="background:#ff8c42"></span>전단 방향</span>
+          <span><span class="swatch" style="background:#21a366"></span>μ, ν 그래프</span>
+        </div>
+
+        <div class="viewer-grid">
+          <svg viewBox="0 0 980 520" aria-label="점성계수 시각화">
+            <defs>
+              <marker id="arrowBlueVC" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#2449d8"></path>
+              </marker>
+              <marker id="arrowOrangeVC" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#ff8c42"></path>
+              </marker>
+            </defs>
+
+            <rect x="90" y="110" width="420" height="24" fill="#4b556b" rx="4" />
+            <rect x="90" y="356" width="420" height="24" fill="#4b556b" rx="4" />
+            <rect x="90" y="134" width="420" height="222" fill="#d9ecff" opacity="0.95" />
+
+            <g id="flowLayers"></g>
+            <g id="velocityArrows"></g>
+
+            <line x1="550" y1="134" x2="550" y2="356" stroke="#2449d8" stroke-width="3" marker-start="url(#arrowBlueVC)" marker-end="url(#arrowBlueVC)" />
+            <text id="yLabel" x="566" y="252" font-size="24" fill="#2449d8" font-weight="700">y = 0.010 m</text>
+
+            <line x1="110" y1="90" x2="240" y2="90" stroke="#2449d8" stroke-width="4" marker-end="url(#arrowBlueVC)" />
+            <text id="uLabel" x="255" y="98" font-size="24" fill="#24324f" font-weight="700">U = 1.00 m/s</text>
+
+            <line x1="610" y1="160" x2="760" y2="160" stroke="#ff8c42" stroke-width="4" marker-end="url(#arrowOrangeVC)" />
+            <text id="tauLabel" x="770" y="168" font-size="24" fill="#24324f" font-weight="700">τ = 1.00 Pa</text>
+
+            <path d="M 650 330 L 850 330 L 850 130" fill="none" stroke="#2449d8" stroke-width="4" />
+            <text x="640" y="360" font-size="22" fill="#24324f">u = 0</text>
+            <text id="profTopLabel" x="820" y="122" font-size="22" fill="#24324f">u = U</text>
+            <text x="620" y="110" font-size="22" fill="#24324f" font-weight="700">속도 분포</text>
+          </svg>
+
+          <canvas id="graph" width="920" height="330"></canvas>
+          <div class="caption">
+            왼쪽은 평행판 사이 선형 속도분포를 나타냅니다. 오른쪽 그래프는 현재 계산된 점성계수 μ와 동점성계수 ν를 비교 표시합니다.
+            동점성계수는 일반적으로 m²/s 단위를 쓰며, 1 cSt = 10⁻⁶ m²/s 입니다.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const uSlider = document.getElementById('uSlider');
+    const ySlider = document.getElementById('ySlider');
+    const tauSlider = document.getElementById('tauSlider');
+    const rhoSlider = document.getElementById('rhoSlider');
+
+    const uValue = document.getElementById('uValue');
+    const yValue = document.getElementById('yValue');
+    const tauValue = document.getElementById('tauValue');
+    const rhoValue = document.getElementById('rhoValue');
+
+    const gradStat = document.getElementById('gradStat');
+    const muStat = document.getElementById('muStat');
+    const nuStat = document.getElementById('nuStat');
+    const cstStat = document.getElementById('cstStat');
+    const formulaBox = document.getElementById('formulaBox');
+    const noteBox = document.getElementById('noteBox');
+
+    const flowLayers = document.getElementById('flowLayers');
+    const velocityArrows = document.getElementById('velocityArrows');
+    const yLabel = document.getElementById('yLabel');
+    const uLabel = document.getElementById('uLabel');
+    const tauLabel = document.getElementById('tauLabel');
+    const profTopLabel = document.getElementById('profTopLabel');
+
+    const canvas = document.getElementById('graph');
+    const ctx = canvas.getContext('2d');
+
+    function fmt(num, digits = 2) { return Number(num).toFixed(digits); }
+    function sci(num) {
+      if (num === 0) return '0';
+      return num.toExponential(2);
+    }
+
+    function drawLayers(U) {
+      flowLayers.innerHTML = '';
+      velocityArrows.innerHTML = '';
+      const x0 = 90, yTop = 134, width = 420, height = 222;
+      const n = 8;
+      for (let i = 0; i < n; i++) {
+        const frac = i / (n - 1);
+        const yy = yTop + (n - 1 - i) * (height / n);
+        const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        rect.setAttribute('x', x0);
+        rect.setAttribute('y', yy);
+        rect.setAttribute('width', width);
+        rect.setAttribute('height', height / n);
+        rect.setAttribute('fill', i % 2 === 0 ? '#d9ecff' : '#cfe4ff');
+        flowLayers.appendChild(rect);
+
+        const uLocal = U * frac;
+        const len = 20 + 110 * frac;
+        const arrow = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        arrow.setAttribute('x1', 120);
+        arrow.setAttribute('y1', yy + height / n / 2);
+        arrow.setAttribute('x2', 120 + len);
+        arrow.setAttribute('y2', yy + height / n / 2);
+        arrow.setAttribute('stroke', '#2449d8');
+        arrow.setAttribute('stroke-width', 4);
+        arrow.setAttribute('marker-end', 'url(#arrowBlueVC)');
+        velocityArrows.appendChild(arrow);
+      }
+    }
+
+    function drawGraph(mu, nu) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const pad = { left: 70, right: 30, top: 30, bottom: 50 };
+      const w = canvas.width - pad.left - pad.right;
+      const h = canvas.height - pad.top - pad.bottom;
+
+      const muDisplay = mu;
+      const nuDisplay = nu * 1e6; // cSt-like magnitude for readable bar? actually mm2/s == cSt
+      const maxVal = Math.max(muDisplay, nuDisplay, 1) * 1.2;
+
+      ctx.strokeStyle = '#d6ddeb';
+      ctx.lineWidth = 1;
+      for (let i = 0; i <= 5; i++) {
+        const y = pad.top + i * h / 5;
+        ctx.beginPath();
+        ctx.moveTo(pad.left, y);
+        ctx.lineTo(pad.left + w, y);
+        ctx.stroke();
+      }
+
+      ctx.strokeStyle = '#1f2a44';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(pad.left, pad.top);
+      ctx.lineTo(pad.left, pad.top + h);
+      ctx.lineTo(pad.left + w, pad.top + h);
+      ctx.stroke();
+
+      ctx.fillStyle = '#44506d';
+      ctx.font = '14px Segoe UI';
+      ctx.fillText('상대 비교값', 18, 20);
+      ctx.fillText('점성계수 μ (Pa·s)', pad.left + 165, canvas.height - 14);
+      ctx.fillText('동점성계수 ν (cSt)', pad.left + 505, canvas.height - 14);
+
+      for (let i = 0; i <= 5; i++) {
+        const val = maxVal * (5 - i) / 5;
+        const y = pad.top + i * h / 5;
+        ctx.fillText(fmt(val, 1), 18, y + 4);
+      }
+
+      const toY = (v) => pad.top + h - (v / maxVal) * h;
+      const bars = [
+        { x: pad.left + 180, val: muDisplay, color: '#21a366', label: `${fmt(mu,4)} Pa·s` },
+        { x: pad.left + 520, val: nuDisplay, color: '#ff8c42', label: `${fmt(nu*1e6,2)} cSt` }
+      ];
+
+      bars.forEach(({ x, val, color, label }) => {
+        const y = toY(val);
+        ctx.fillStyle = color;
+        ctx.fillRect(x, y, 100, pad.top + h - y);
+        ctx.strokeStyle = '#24324f';
+        ctx.strokeRect(x, y, 100, pad.top + h - y);
+        ctx.fillStyle = '#24324f';
+        ctx.font = 'bold 13px Segoe UI';
+        ctx.fillText(label, x - 6, y - 8);
+      });
+    }
+
+    function update() {
+      const U = parseFloat(uSlider.value);
+      const y = parseFloat(ySlider.value);
+      const tau = parseFloat(tauSlider.value);
+      const rho = parseFloat(rhoSlider.value);
+
+      const dudy = U / y;
+      const mu = tau / dudy;
+      const nu = mu / rho;
+      const cSt = nu * 1e6;
+
+      uValue.textContent = `${fmt(U,2)} m/s`;
+      yValue.textContent = `${fmt(y,3)} m`;
+      tauValue.textContent = `${fmt(tau,2)} Pa`;
+      rhoValue.textContent = `${fmt(rho,1)} kg/m³`;
+
+      gradStat.textContent = `${fmt(dudy,1)} s⁻¹`;
+      muStat.textContent = `${fmt(mu,4)} Pa·s`;
+      nuStat.textContent = `${sci(nu)} m²/s`;
+      cstStat.textContent = `${fmt(cSt,2)} cSt`;
+
+      formulaBox.innerHTML =
+        `du/dy = U/y = ${fmt(U,2)} / ${fmt(y,3)} = ${fmt(dudy,1)} s⁻¹<br>` +
+        `μ = τ / (du/dy) = ${fmt(tau,2)} / ${fmt(dudy,1)} = ${fmt(mu,4)} Pa·s<br>` +
+        `ν = μ/ρ = ${fmt(mu,4)} / ${fmt(rho,1)} = ${sci(nu)} m²/s = ${fmt(cSt,2)} cSt`;
+
+      if (mu > 0.5) {
+        noteBox.innerHTML = `현재 조건은 비교적 점성이 큰 유체에 해당합니다. 같은 속도차를 만들기 위해 더 큰 전단응력이 필요하거나, 같은 전단응력에서 속도구배가 작게 나타납니다.`;
+      } else if (rho < 5) {
+        noteBox.innerHTML = `현재는 기체와 비슷한 밀도 조건입니다. μ가 비슷해도 밀도가 작으면 동점성계수 ν는 상대적으로 크게 나타날 수 있습니다.`;
+      } else {
+        noteBox.innerHTML = `점성계수 μ는 전단응력과 속도구배의 비이고, 동점성계수 ν는 점성계수를 밀도로 나눈 값입니다. 즉 ν는 점성효과를 밀도까지 고려해 나타낸 값입니다.`;
+      }
+
+      yLabel.textContent = `y = ${fmt(y,3)} m`;
+      uLabel.textContent = `U = ${fmt(U,2)} m/s`;
+      tauLabel.textContent = `τ = ${fmt(tau,2)} Pa`;
+      profTopLabel.textContent = `u = ${fmt(U,2)} m/s`;
+
+      drawLayers(U);
+      drawGraph(mu, nu);
+    }
+
+    [uSlider, ySlider, tauSlider, rhoSlider].forEach(el => el.addEventListener('input', update));
+    update();
+  </script>
+</body>
+</html>
