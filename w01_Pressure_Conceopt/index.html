@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>압력 개념 학습 시뮬레이터</title>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --panel: #ffffff;
+      --line: #d8e0ee;
+      --text: #1f2a44;
+      --muted: #60708f;
+      --accent: #2449d8;
+      --blue: #7fb7ff;
+      --orange: #ff8c42;
+      --green: #21a366;
+      --red: #d64545;
+      --warn-bg: #fff8ec;
+      --warn-line: #f1dba7;
+      --warn-text: #7a5a05;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+      background: linear-gradient(180deg, #eef3fb 0%, #f8fbff 100%);
+      color: var(--text);
+    }
+    .wrap {
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    h1 { margin: 0 0 8px; font-size: 32px; }
+    .subtitle {
+      color: var(--muted);
+      line-height: 1.75;
+      margin-bottom: 20px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 430px 1fr;
+      gap: 20px;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      box-shadow: 0 8px 24px rgba(27, 52, 111, 0.08);
+      padding: 18px;
+    }
+    h2 { margin: 0 0 16px; font-size: 20px; }
+    .control-group { margin-bottom: 18px; }
+    .label-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+    .value { color: var(--accent); }
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+    .mode-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .mode-btn {
+      border: 1px solid #bfd0ff;
+      background: #fff;
+      color: var(--accent);
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .mode-btn.active {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-top: 10px;
+    }
+    .stat {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+      background: #fbfdff;
+    }
+    .stat-title {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .stat-value {
+      font-size: 23px;
+      font-weight: 800;
+      word-break: break-word;
+    }
+    .formula {
+      margin-top: 16px;
+      padding: 14px;
+      border-radius: 16px;
+      background: #f4f8ff;
+      border: 1px dashed #bdd1ff;
+      line-height: 1.9;
+      font-size: 15px;
+    }
+    .note-box {
+      margin-top: 16px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: var(--warn-bg);
+      border: 1px solid var(--warn-line);
+      color: var(--warn-text);
+      line-height: 1.7;
+      font-size: 14px;
+    }
+    .legend {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .swatch {
+      width: 14px;
+      height: 14px;
+      border-radius: 4px;
+      display: inline-block;
+      margin-right: 6px;
+      vertical-align: -2px;
+    }
+    .viewer-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 18px;
+    }
+    svg {
+      width: 100%;
+      height: auto;
+      display: block;
+      background: #fbfdff;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+    }
+    canvas {
+      width: 100%;
+      max-width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: #fff;
+    }
+    .caption { color: var(--muted); line-height: 1.7; font-size: 14px; }
+    @media (max-width: 1000px) { .grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>압력 개념 학습 시뮬레이터</h1>
+    <div class="subtitle">
+      압력의 기본 개념인 <strong>P = F/A</strong>와 정수압 개념인 <strong>P = ρgh</strong>를 한 번에 익힐 수 있는 시뮬레이터입니다. 위쪽 모드에서 <strong>힘-면적 압력</strong>과 <strong>깊이-정수압</strong>을 전환해 보면서 압력이 언제 커지고 작아지는지 직관적으로 확인할 수 있습니다.
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h2>조작 패널</h2>
+
+        <div class="mode-row">
+          <button id="modeFA" class="mode-btn active">힘-면적 압력</button>
+          <button id="modeHydro" class="mode-btn">깊이-정수압</button>
+        </div>
+
+        <div class="control-group" id="forceGroup">
+          <div class="label-row">
+            <span>힘 F</span>
+            <span class="value" id="forceValue">100 N</span>
+          </div>
+          <input id="forceSlider" type="range" min="1" max="1000" step="1" value="100" />
+        </div>
+
+        <div class="control-group" id="areaGroup">
+          <div class="label-row">
+            <span>면적 A</span>
+            <span class="value" id="areaValue">0.0100 m²</span>
+          </div>
+          <input id="areaSlider" type="range" min="0.001" max="0.100" step="0.001" value="0.010" />
+        </div>
+
+        <div class="control-group" id="depthGroup" style="display:none;">
+          <div class="label-row">
+            <span>깊이 h</span>
+            <span class="value" id="depthValue">1.00 m</span>
+          </div>
+          <input id="depthSlider" type="range" min="0.00" max="10.00" step="0.01" value="1.00" />
+        </div>
+
+        <div class="control-group" id="rhoGroup" style="display:none;">
+          <div class="label-row">
+            <span>유체 밀도 ρ</span>
+            <span class="value" id="rhoValue">1000 kg/m³</span>
+          </div>
+          <input id="rhoSlider" type="range" min="100" max="13600" step="10" value="1000" />
+        </div>
+
+        <div class="control-group" id="gGroup" style="display:none;">
+          <div class="label-row">
+            <span>중력가속도 g</span>
+            <span class="value" id="gValue">9.81 m/s²</span>
+          </div>
+          <input id="gSlider" type="range" min="1.60" max="15.00" step="0.01" value="9.81" />
+        </div>
+
+        <div class="stat-grid">
+          <div class="stat">
+            <div class="stat-title">압력 P</div>
+            <div class="stat-value" id="pressureStat">10.0 kPa</div>
+          </div>
+          <div class="stat">
+            <div class="stat-title">Pa 단위</div>
+            <div class="stat-value" id="paStat">10000 Pa</div>
+          </div>
+          <div class="stat" id="auxStat1Box">
+            <div class="stat-title" id="auxStat1Title">면적당 힘</div>
+            <div class="stat-value" id="auxStat1">100/0.01</div>
+          </div>
+          <div class="stat" id="auxStat2Box">
+            <div class="stat-title" id="auxStat2Title">압력 해석</div>
+            <div class="stat-value" id="auxStat2">눌림 큼</div>
+          </div>
+        </div>
+
+        <div class="formula" id="formulaBox">
+          P = F/A = 100 / 0.0100 = 10,000 Pa = 10.0 kPa
+        </div>
+
+        <div class="note-box" id="noteBox">
+          같은 힘이라도 면적이 작아지면 압력은 커집니다. 그래서 바늘은 잘 찌르고, 넓은 신발은 같은 몸무게에서도 덜 눌립니다.
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>시각화</h2>
+        <div class="legend">
+          <span><span class="swatch" style="background:#7fb7ff"></span>압력 작용 영역</span>
+          <span><span class="swatch" style="background:#2449d8"></span>힘/깊이 표시</span>
+          <span><span class="swatch" style="background:#ff8c42"></span>압력 크기</span>
+          <span><span class="swatch" style="background:#21a366"></span>비교 그래프</span>
+        </div>
+
+        <div class="viewer-grid">
+          <svg id="vizSvg" viewBox="0 0 980 520" aria-label="압력 개념 시각화">
+            <defs>
+              <marker id="arrowBluePC" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#2449d8"></path>
+              </marker>
+              <marker id="arrowOrangePC" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#ff8c42"></path>
+              </marker>
+            </defs>
+            <g id="faScene">
+              <rect x="120" y="320" width="340" height="40" rx="6" fill="#4b556b" />
+              <rect id="contactArea" x="230" y="280" width="120" height="40" rx="6" fill="#7fb7ff" stroke="#2449d8" stroke-width="3" />
+              <rect id="loadBlock" x="220" y="170" width="140" height="110" rx="12" fill="#d9ecff" stroke="#2449d8" stroke-width="4" />
+              <line x1="290" y1="100" x2="290" y2="165" stroke="#2449d8" stroke-width="5" marker-end="url(#arrowBluePC)" />
+              <text id="forceLabel" x="318" y="130" font-size="24" fill="#24324f" font-weight="700">F = 100 N</text>
+              <text id="areaLabel" x="220" y="395" font-size="24" fill="#24324f" font-weight="700">A = 0.0100 m²</text>
+              <g id="pressureArrows"></g>
+            </g>
+            <g id="hydroScene" style="display:none;">
+              <rect x="140" y="90" width="260" height="320" rx="8" fill="#ffffff" stroke="#24324f" stroke-width="4" />
+              <rect id="waterRect" x="145" y="250" width="250" height="155" fill="#bfe0ff" stroke="none" />
+              <line id="surfaceLine" x1="145" y1="250" x2="395" y2="250" stroke="#2449d8" stroke-width="4" />
+              <circle id="probePoint" cx="270" cy="330" r="8" fill="#ff8c42" />
+              <line id="depthArrow" x1="450" y1="250" x2="450" y2="330" stroke="#2449d8" stroke-width="4" marker-start="url(#arrowBluePC)" marker-end="url(#arrowBluePC)" />
+              <text id="depthLabelSvg" x="468" y="295" font-size="24" fill="#24324f" font-weight="700">h = 1.00 m</text>
+              <g id="pressureBars"></g>
+            </g>
+            <text id="mainVizLabel" x="120" y="60" font-size="30" fill="#24324f" font-weight="800">힘을 같은 면적에 작용시키면 압력이 생김</text>
+            <text id="subVizLabel" x="120" y="95" font-size="22" fill="#60708f">작은 면적일수록 같은 힘에서도 압력이 커짐</text>
+          </svg>
+
+          <canvas id="graph" width="920" height="330"></canvas>
+          <div class="caption" id="captionText">
+            그래프는 힘과 면적에 따른 압력 변화를 보여줍니다. 압력은 단위면적당 작용하는 힘이므로, 힘이 커질수록 증가하고 면적이 커질수록 감소합니다.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const modeFA = document.getElementById('modeFA');
+    const modeHydro = document.getElementById('modeHydro');
+    const forceSlider = document.getElementById('forceSlider');
+    const areaSlider = document.getElementById('areaSlider');
+    const depthSlider = document.getElementById('depthSlider');
+    const rhoSlider = document.getElementById('rhoSlider');
+    const gSlider = document.getElementById('gSlider');
+
+    const forceValue = document.getElementById('forceValue');
+    const areaValue = document.getElementById('areaValue');
+    const depthValue = document.getElementById('depthValue');
+    const rhoValue = document.getElementById('rhoValue');
+    const gValue = document.getElementById('gValue');
+
+    const pressureStat = document.getElementById('pressureStat');
+    const paStat = document.getElementById('paStat');
+    const auxStat1Title = document.getElementById('auxStat1Title');
+    const auxStat1 = document.getElementById('auxStat1');
+    const auxStat2Title = document.getElementById('auxStat2Title');
+    const auxStat2 = document.getElementById('auxStat2');
+    const formulaBox = document.getElementById('formulaBox');
+    const noteBox = document.getElementById('noteBox');
+
+    const faScene = document.getElementById('faScene');
+    const hydroScene = document.getElementById('hydroScene');
+    const contactArea = document.getElementById('contactArea');
+    const loadBlock = document.getElementById('loadBlock');
+    const forceLabel = document.getElementById('forceLabel');
+    const areaLabel = document.getElementById('areaLabel');
+    const pressureArrows = document.getElementById('pressureArrows');
+    const waterRect = document.getElementById('waterRect');
+    const surfaceLine = document.getElementById('surfaceLine');
+    const probePoint = document.getElementById('probePoint');
+    const depthArrow = document.getElementById('depthArrow');
+    const depthLabelSvg = document.getElementById('depthLabelSvg');
+    const pressureBars = document.getElementById('pressureBars');
+    const mainVizLabel = document.getElementById('mainVizLabel');
+    const subVizLabel = document.getElementById('subVizLabel');
+    const captionText = document.getElementById('captionText');
+
+    const forceGroup = document.getElementById('forceGroup');
+    const areaGroup = document.getElementById('areaGroup');
+    const depthGroup = document.getElementById('depthGroup');
+    const rhoGroup = document.getElementById('rhoGroup');
+    const gGroup = document.getElementById('gGroup');
+
+    const canvas = document.getElementById('graph');
+    const ctx = canvas.getContext('2d');
+
+    let mode = 'fa';
+
+    function fmt(num, digits = 2) { return Number(num).toFixed(digits); }
+    function comma(num) { return Math.round(num).toLocaleString(); }
+
+    function setMode(newMode) {
+      mode = newMode;
+      const fa = mode === 'fa';
+      modeFA.classList.toggle('active', fa);
+      modeHydro.classList.toggle('active', !fa);
+      forceGroup.style.display = fa ? '' : 'none';
+      areaGroup.style.display = fa ? '' : 'none';
+      depthGroup.style.display = fa ? 'none' : '';
+      rhoGroup.style.display = fa ? 'none' : '';
+      gGroup.style.display = fa ? 'none' : '';
+      faScene.style.display = fa ? '' : 'block';
+      hydroScene.style.display = fa ? 'none' : 'block';
+      update();
+    }
+
+    function drawFAScene(F, A, P) {
+      const width = 50 + (A - 0.001) / (0.099) * 180;
+      const x = 290 - width / 2;
+      contactArea.setAttribute('x', x);
+      contactArea.setAttribute('width', width);
+      loadBlock.setAttribute('x', x - 10);
+      loadBlock.setAttribute('width', width + 20);
+      forceLabel.textContent = `F = ${comma(F)} N`;
+      areaLabel.textContent = `A = ${fmt(A,4)} m²`;
+      pressureArrows.innerHTML = '';
+      const n = Math.max(3, Math.min(12, Math.round(P / 10000)));
+      for (let i = 0; i < n; i++) {
+        const px = x + 10 + (i + 0.5) * ((width - 20) / n);
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', px);
+        line.setAttribute('y1', 250);
+        line.setAttribute('x2', px);
+        line.setAttribute('y2', 314);
+        line.setAttribute('stroke', '#ff8c42');
+        line.setAttribute('stroke-width', '4');
+        line.setAttribute('marker-end', 'url(#arrowOrangePC)');
+        pressureArrows.appendChild(line);
+      }
+      mainVizLabel.textContent = '힘을 같은 면적에 작용시키면 압력이 생김';
+      subVizLabel.textContent = '작은 면적일수록 같은 힘에서도 압력이 커짐';
+    }
+
+    function drawHydroScene(h, rho, g, P) {
+      const waterTop = 120;
+      const bottom = 405;
+      const maxH = 10;
+      const y = bottom - (h / maxH) * 260;
+      waterRect.setAttribute('y', y);
+      waterRect.setAttribute('height', bottom - y);
+      surfaceLine.setAttribute('y1', y);
+      surfaceLine.setAttribute('y2', y);
+      probePoint.setAttribute('cy', y + Math.min((h / maxH) * 180, bottom - y - 10));
+      depthArrow.setAttribute('y1', y);
+      depthArrow.setAttribute('y2', probePoint.getAttribute('cy'));
+      depthLabelSvg.setAttribute('y', (y + parseFloat(probePoint.getAttribute('cy'))) / 2 + 6);
+      depthLabelSvg.textContent = `h = ${fmt(h,2)} m`;
+      pressureBars.innerHTML = '';
+      const n = Math.max(2, Math.min(12, Math.round(P / 10000)));
+      const py = parseFloat(probePoint.getAttribute('cy'));
+      for (let i = 0; i < n; i++) {
+        const len = 18 + i * 6;
+        const yy = py - (n * 5) / 2 + i * 8;
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', 405);
+        line.setAttribute('y1', yy);
+        line.setAttribute('x2', 405 + len);
+        line.setAttribute('y2', yy);
+        line.setAttribute('stroke', '#ff8c42');
+        line.setAttribute('stroke-width', '4');
+        line.setAttribute('marker-end', 'url(#arrowOrangePC)');
+        pressureBars.appendChild(line);
+      }
+      mainVizLabel.textContent = '유체는 깊어질수록 더 큰 압력을 가짐';
+      subVizLabel.textContent = '같은 유체에서는 깊이와 밀도가 커질수록 정수압이 증가함';
+    }
+
+    function drawFAGraph(F, A, P) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const pad = { left: 70, right: 30, top: 30, bottom: 50 };
+      const w = canvas.width - pad.left - pad.right;
+      const h = canvas.height - pad.top - pad.bottom;
+      const maxP = Math.max(P * 1.3, 1000);
+      ctx.strokeStyle = '#d6ddeb';
+      for (let i = 0; i <= 5; i++) {
+        const y = pad.top + i * h / 5;
+        ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(pad.left + w, y); ctx.stroke();
+      }
+      ctx.strokeStyle = '#1f2a44'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(pad.left, pad.top); ctx.lineTo(pad.left, pad.top + h); ctx.lineTo(pad.left + w, pad.top + h); ctx.stroke();
+      ctx.fillStyle = '#44506d'; ctx.font = '14px Segoe UI';
+      ctx.fillText('비교', 18, 20);
+      const bars = [
+        { label: '힘 F', val: Math.min(F/10, maxP), color: '#7fb7ff', text: `${comma(F)} N` },
+        { label: '면적 A×10⁵', val: A*100000, color: '#2449d8', text: `${fmt(A,4)} m²` },
+        { label: '압력 P', val: P, color: '#21a366', text: `${fmt(P/1000,1)} kPa` }
+      ];
+      bars.forEach((b, i) => {
+        const x = pad.left + 120 + i * 220;
+        const bh = Math.min((b.val / maxP) * h, h);
+        ctx.fillStyle = b.color; ctx.fillRect(x, pad.top + h - bh, 90, bh);
+        ctx.strokeStyle = '#24324f'; ctx.strokeRect(x, pad.top + h - bh, 90, bh);
+        ctx.fillStyle = '#24324f'; ctx.fillText(b.label, x + 8, canvas.height - 14);
+        ctx.font = 'bold 13px Segoe UI'; ctx.fillText(b.text, x - 4, pad.top + h - bh - 8); ctx.font = '14px Segoe UI';
+      });
+    }
+
+    function drawHydroGraph(depth, rho, g, P) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const pad = { left: 70, right: 30, top: 30, bottom: 50 };
+      const w = canvas.width - pad.left - pad.right;
+      const h = canvas.height - pad.top - pad.bottom;
+      const maxDepth = 10;
+      const maxP = rho * g * maxDepth;
+      ctx.strokeStyle = '#d6ddeb';
+      for (let i = 0; i <= 5; i++) {
+        const y = pad.top + i * h / 5;
+        ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(pad.left + w, y); ctx.stroke();
+      }
+      for (let i = 0; i <= 5; i++) {
+        const x = pad.left + i * w / 5;
+        ctx.beginPath(); ctx.moveTo(x, pad.top); ctx.lineTo(x, pad.top + h); ctx.stroke();
+      }
+      ctx.strokeStyle = '#1f2a44'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(pad.left, pad.top); ctx.lineTo(pad.left, pad.top + h); ctx.lineTo(pad.left + w, pad.top + h); ctx.stroke();
+      ctx.fillStyle = '#44506d'; ctx.font = '14px Segoe UI';
+      ctx.fillText('깊이 h (m)', pad.left + w/2 - 25, canvas.height - 14);
+      ctx.save(); ctx.translate(18, pad.top + h/2 + 18); ctx.rotate(-Math.PI/2); ctx.fillText('압력 P (kPa)', 0, 0); ctx.restore();
+      for (let i = 0; i <= 5; i++) {
+        const dv = maxDepth * i / 5;
+        const x = pad.left + i * w / 5;
+        ctx.fillText(fmt(dv,1), x - 8, pad.top + h + 20);
+      }
+      for (let i = 0; i <= 5; i++) {
+        const pv = (maxP/1000) * (5 - i) / 5;
+        const y = pad.top + i * h / 5;
+        ctx.fillText(fmt(pv,1), 14, y + 4);
+      }
+      ctx.strokeStyle = '#21a366'; ctx.lineWidth = 3; ctx.beginPath();
+      ctx.moveTo(pad.left, pad.top + h);
+      ctx.lineTo(pad.left + w, pad.top);
+      ctx.stroke();
+      const xCur = pad.left + (depth/maxDepth) * w;
+      const yCur = pad.top + h - (P/maxP) * h;
+      ctx.setLineDash([6,6]); ctx.strokeStyle = '#ff8c42'; ctx.beginPath();
+      ctx.moveTo(xCur, pad.top + h); ctx.lineTo(xCur, yCur); ctx.moveTo(pad.left, yCur); ctx.lineTo(xCur, yCur); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = '#ff8c42'; ctx.beginPath(); ctx.arc(xCur, yCur, 6, 0, Math.PI*2); ctx.fill();
+      ctx.font = 'bold 13px Segoe UI'; ctx.fillText(`h=${fmt(depth,2)} m, P=${fmt(P/1000,2)} kPa`, Math.min(xCur + 10, canvas.width - 180), Math.max(yCur - 10, 24));
+    }
+
+    function update() {
+      if (mode === 'fa') {
+        const F = parseFloat(forceSlider.value);
+        const A = parseFloat(areaSlider.value);
+        const P = F / A;
+        forceValue.textContent = `${comma(F)} N`;
+        areaValue.textContent = `${fmt(A,4)} m²`;
+        pressureStat.textContent = `${fmt(P/1000,1)} kPa`;
+        paStat.textContent = `${comma(P)} Pa`;
+        auxStat1Title.textContent = '면적당 힘';
+        auxStat1.textContent = `${comma(F)}/${fmt(A,4)}`;
+        auxStat2Title.textContent = '압력 해석';
+        auxStat2.textContent = P > 50000 ? '매우 큼' : P > 10000 ? '큼' : '작음';
+        formulaBox.innerHTML = `P = F/A = ${comma(F)} / ${fmt(A,4)} = ${comma(P)} Pa = ${fmt(P/1000,1)} kPa`;
+        noteBox.innerHTML = `같은 힘이라도 면적이 <strong>${fmt(A,4)} m²</strong>로 작아지면 압력은 커집니다. 압력은 힘 자체보다 <strong>얼마나 좁은 면적에 작용하느냐</strong>가 중요합니다.`;
+        captionText.textContent = '그래프는 힘과 면적에 따른 압력 변화를 보여줍니다. 압력은 단위면적당 작용하는 힘이므로, 힘이 커질수록 증가하고 면적이 커질수록 감소합니다.';
+        drawFAScene(F, A, P);
+        drawFAGraph(F, A, P);
+      } else {
+        const h = parseFloat(depthSlider.value);
+        const rho = parseFloat(rhoSlider.value);
+        const g = parseFloat(gSlider.value);
+        const P = rho * g * h;
+        depthValue.textContent = `${fmt(h,2)} m`;
+        rhoValue.textContent = `${comma(rho)} kg/m³`;
+        gValue.textContent = `${fmt(g,2)} m/s²`;
+        pressureStat.textContent = `${fmt(P/1000,2)} kPa`;
+        paStat.textContent = `${comma(P)} Pa`;
+        auxStat1Title.textContent = '깊이 h';
+        auxStat1.textContent = `${fmt(h,2)} m`;
+        auxStat2Title.textContent = '압력 해석';
+        auxStat2.textContent = P > 50000 ? '깊음' : P > 10000 ? '보통' : '얕음';
+        formulaBox.innerHTML = `P = ρgh = ${comma(rho)} × ${fmt(g,2)} × ${fmt(h,2)} = ${comma(P)} Pa = ${fmt(P/1000,2)} kPa`;
+        noteBox.innerHTML = `정지 유체에서는 깊이 <strong>${fmt(h,2)} m</strong>에서 압력이 생깁니다. 같은 유체라면 <strong>깊을수록</strong> 압력이 커지고, 같은 깊이라면 <strong>밀도가 클수록</strong> 압력이 커집니다.`;
+        captionText.textContent = '그래프는 깊이에 따라 정수압이 선형적으로 증가하는 관계를 보여줍니다. 정지 유체에서는 용기 모양이 아니라 깊이와 밀도가 압력을 결정합니다.';
+        drawHydroScene(h, rho, g, P);
+        drawHydroGraph(h, rho, g, P);
+      }
+    }
+
+    modeFA.addEventListener('click', () => setMode('fa'));
+    modeHydro.addEventListener('click', () => setMode('hydro'));
+    [forceSlider, areaSlider, depthSlider, rhoSlider, gSlider].forEach(el => el.addEventListener('input', update));
+    update();
+  </script>
+</body>
+</html>
