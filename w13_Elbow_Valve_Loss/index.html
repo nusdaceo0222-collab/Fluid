@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>곡관·밸브 부차손실 시뮬레이터</title>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --panel: #ffffff;
+      --line: #d8e0ee;
+      --text: #1f2a44;
+      --muted: #60708f;
+      --accent: #2449d8;
+      --water: #7fb7ff;
+      --pipe: #2f3a4f;
+      --loss: #d64545;
+      --energy: #ff8c42;
+      --good: #21a366;
+      --warn-bg: #fff8ec;
+      --warn-line: #f1dba7;
+      --warn-text: #7a5a05;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+      background: linear-gradient(180deg, #eef3fb 0%, #f8fbff 100%);
+      color: var(--text);
+    }
+    .wrap { max-width: 1280px; margin: 0 auto; padding: 24px; }
+    h1 { margin: 0 0 8px; font-size: 32px; }
+    .subtitle { color: var(--muted); line-height: 1.75; margin-bottom: 20px; }
+    .grid { display: grid; grid-template-columns: 420px 1fr; gap: 20px; }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      box-shadow: 0 8px 24px rgba(27, 52, 111, 0.08);
+      padding: 18px;
+    }
+    h2 { margin: 0 0 16px; font-size: 20px; }
+    .control-group { margin-bottom: 18px; }
+    .label-row { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 8px; font-weight: 700; }
+    .value { color: var(--accent); }
+    input[type="range"] { width: 100%; accent-color: var(--accent); cursor: pointer; }
+    select {
+      width: 100%;
+      padding: 11px 12px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fbfdff;
+      color: var(--text);
+      font-size: 15px;
+      font-weight: 700;
+    }
+    .stat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 10px; }
+    .stat { border: 1px solid var(--line); border-radius: 16px; padding: 14px; background: #fbfdff; }
+    .stat-title { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+    .stat-value { font-size: 23px; font-weight: 800; word-break: break-word; }
+    .formula {
+      margin-top: 16px;
+      padding: 14px;
+      border-radius: 16px;
+      background: #f4f8ff;
+      border: 1px dashed #bdd1ff;
+      line-height: 1.9;
+      font-size: 15px;
+    }
+    .note-box {
+      margin-top: 16px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: var(--warn-bg);
+      border: 1px solid var(--warn-line);
+      color: var(--warn-text);
+      line-height: 1.7;
+      font-size: 14px;
+    }
+    .state-badge {
+      margin-top: 12px;
+      display: inline-block;
+      padding: 10px 14px;
+      border-radius: 999px;
+      color: white;
+      font-weight: 800;
+      font-size: 15px;
+      background: var(--loss);
+    }
+    .legend { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; color: var(--muted); font-size: 14px; }
+    .swatch { width: 14px; height: 14px; border-radius: 4px; display: inline-block; margin-right: 6px; vertical-align: -2px; }
+    .viewer-grid { display: grid; grid-template-columns: 1fr; gap: 18px; }
+    svg, canvas { width: 100%; max-width: 100%; border: 1px solid var(--line); border-radius: 18px; background: #fff; display: block; }
+    svg { background: #fbfdff; }
+    .caption { color: var(--muted); line-height: 1.7; font-size: 14px; }
+    @media (max-width: 1000px) { .grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>곡관·밸브 부차손실 시뮬레이터</h1>
+    <div class="subtitle">
+      배관 부속품에서 발생하는 <strong>부차손실</strong>을 계산합니다. 곡관, 게이트밸브, 글로브밸브, 체크밸브 등의 손실계수 <strong>K</strong>를 합산하고, <strong>h<sub>m</sub> = ΣK · V²/2g</strong>로 전체 부차손실수두를 구합니다.
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h2>조작 패널</h2>
+
+        <div class="control-group">
+          <div class="label-row"><span>유량 Q</span><span class="value" id="qValue">0.0200 m³/s</span></div>
+          <input id="qSlider" type="range" min="0.001" max="0.120" step="0.001" value="0.020" />
+        </div>
+
+        <div class="control-group">
+          <div class="label-row"><span>관지름 D</span><span class="value" id="dValue">0.100 m</span></div>
+          <input id="dSlider" type="range" min="0.020" max="0.400" step="0.001" value="0.100" />
+        </div>
+
+        <div class="control-group">
+          <div class="label-row"><span>90° 곡관 개수</span><span class="value" id="elbowValue">2 개</span></div>
+          <input id="elbowSlider" type="range" min="0" max="10" step="1" value="2" />
+        </div>
+
+        <div class="control-group">
+          <div class="label-row"><span>곡관 1개당 K</span><span class="value" id="elbowKValue">0.90</span></div>
+          <input id="elbowKSlider" type="range" min="0.10" max="2.00" step="0.05" value="0.90" />
+        </div>
+
+        <div class="control-group">
+          <div class="label-row"><span>밸브 종류</span><span class="value" id="valveTypeValue">글로브밸브</span></div>
+          <select id="valveTypeSelect">
+            <option value="gate">게이트밸브, 완전개방 K=0.15</option>
+            <option value="ball">볼밸브, 완전개방 K=0.05</option>
+            <option value="globe" selected>글로브밸브 K=10.0</option>
+            <option value="check">체크밸브 K=2.0</option>
+            <option value="custom">사용자 지정 K</option>
+          </select>
+        </div>
+
+        <div class="control-group">
+          <div class="label-row"><span>밸브 개수</span><span class="value" id="valveValue">1 개</span></div>
+          <input id="valveSlider" type="range" min="0" max="6" step="1" value="1" />
+        </div>
+
+        <div class="control-group" id="customKGroup">
+          <div class="label-row"><span>사용자 지정 밸브 K</span><span class="value" id="customKValue">1.00</span></div>
+          <input id="customKSlider" type="range" min="0.01" max="20.00" step="0.01" value="1.00" />
+        </div>
+
+        <div class="control-group">
+          <div class="label-row"><span>유체 밀도 ρ</span><span class="value" id="rhoValue">1000 kg/m³</span></div>
+          <input id="rhoSlider" type="range" min="1" max="1500" step="1" value="1000" />
+        </div>
+
+        <div class="stat-grid">
+          <div class="stat"><div class="stat-title">평균유속 V</div><div class="stat-value" id="vStat">2.55 m/s</div></div>
+          <div class="stat"><div class="stat-title">속도수두 V²/2g</div><div class="stat-value" id="vhStat">0.331 m</div></div>
+          <div class="stat"><div class="stat-title">전체 손실계수 ΣK</div><div class="stat-value" id="sumKStat">11.80</div></div>
+          <div class="stat"><div class="stat-title">부차손실수두 hm</div><div class="stat-value" id="hmStat">3.91 m</div></div>
+        </div>
+
+        <div id="stateBadge" class="state-badge">부차손실 큼</div>
+
+        <div class="formula" id="formulaBox">
+          ΣK = 곡관 2×0.90 + 밸브 1×10.00 = 11.80<br>
+          hm = ΣK·V²/2g = 11.80×0.331 = 3.91 m<br>
+          ΔP = ρghm = 38.3 kPa
+        </div>
+
+        <div class="note-box" id="noteBox">
+          글로브밸브는 유로가 크게 꺾이므로 손실계수 K가 큽니다. 같은 유량에서도 밸브 종류에 따라 부차손실이 크게 달라집니다.
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>시각화</h2>
+        <div class="legend">
+          <span><span class="swatch" style="background:#7fb7ff"></span>배관 유동</span>
+          <span><span class="swatch" style="background:#d64545"></span>손실 발생 위치</span>
+          <span><span class="swatch" style="background:#ff8c42"></span>에너지선 저하</span>
+          <span><span class="swatch" style="background:#2449d8"></span>계산 기준</span>
+        </div>
+
+        <div class="viewer-grid">
+          <svg viewBox="0 0 980 500" aria-label="곡관 밸브 부차손실 시각화">
+            <defs>
+              <marker id="arrowBlueFitting" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#2449d8"></path>
+              </marker>
+              <marker id="arrowRedFitting" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#d64545"></path>
+              </marker>
+              <linearGradient id="waterFitting" x1="0%" x2="100%" y1="0%" y2="0%">
+                <stop offset="0%" stop-color="#bfe0ff" />
+                <stop offset="100%" stop-color="#7fb7ff" />
+              </linearGradient>
+            </defs>
+
+            <path d="M 100 320 L 360 320 Q 440 320 440 240 L 440 195 Q 440 145 490 145 L 790 145" fill="none" stroke="#2f3a4f" stroke-width="74" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M 100 320 L 360 320 Q 440 320 440 240 L 440 195 Q 440 145 490 145 L 790 145" fill="none" stroke="url(#waterFitting)" stroke-width="50" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M 100 320 L 360 320 Q 440 320 440 240 L 440 195 Q 440 145 490 145 L 790 145" fill="none" stroke="#2449d8" stroke-width="4" stroke-dasharray="18 14" opacity="0.75" />
+
+            <g id="lossGroup"></g>
+            <g id="particleGroup"></g>
+
+            <line id="energyLine" x1="110" y1="70" x2="790" y2="130" stroke="#ff8c42" stroke-width="6" stroke-linecap="round" />
+            <text x="110" y="52" font-size="22" fill="#7a5a05" font-weight="800">에너지선 저하</text>
+            <line id="lossArrow" x1="812" y1="70" x2="812" y2="130" stroke="#d64545" stroke-width="4" marker-end="url(#arrowRedFitting)" />
+            <text id="hmPipeLabel" x="832" y="105" font-size="24" fill="#d64545" font-weight="800">hm = 3.91 m</text>
+
+            <line x1="135" y1="385" x2="300" y2="385" stroke="#2449d8" stroke-width="5" marker-end="url(#arrowBlueFitting)" />
+            <text id="vPipeLabel" x="135" y="425" font-size="23" fill="#24324f" font-weight="700">V = 2.55 m/s</text>
+
+            <g id="valveSymbol" transform="translate(610 145)">
+              <polygon points="-38,-24 0,0 -38,24" fill="#fff" stroke="#2f3a4f" stroke-width="5" />
+              <polygon points="38,-24 0,0 38,24" fill="#fff" stroke="#2f3a4f" stroke-width="5" />
+              <line x1="0" y1="-34" x2="0" y2="-62" stroke="#2f3a4f" stroke-width="5" />
+              <circle cx="0" cy="-72" r="15" fill="#fff" stroke="#2f3a4f" stroke-width="5" />
+            </g>
+
+            <text id="elbowLabel" x="315" y="235" font-size="24" fill="#d64545" font-weight="800">곡관 손실</text>
+            <text id="valveLabel" x="555" y="238" font-size="24" fill="#d64545" font-weight="800">밸브 손실</text>
+            <text id="mainLabel" x="95" y="470" font-size="28" fill="#24324f" font-weight="800">hm = ΣK · V²/2g</text>
+          </svg>
+
+          <canvas id="graph" width="920" height="330"></canvas>
+          <div class="caption">
+            곡관과 밸브 손실은 배관의 길이 때문이 아니라 <strong>유동 방향 변화, 유로 축소, 박리, 와류</strong> 때문에 발생합니다. 계산할 때는 각 부속품의 K를 합산한 뒤 속도수두를 곱합니다.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const g = 9.81;
+    const valveKTable = {
+      gate: { name: '게이트밸브', K: 0.15, note: '게이트밸브는 완전 개방 시 유로 방해가 작아 손실계수 K가 비교적 작습니다.' },
+      ball: { name: '볼밸브', K: 0.05, note: '볼밸브는 완전 개방 시 직선 유로에 가까워 손실계수 K가 매우 작습니다.' },
+      globe: { name: '글로브밸브', K: 10.0, note: '글로브밸브는 유로가 크게 꺾이므로 손실계수 K가 큽니다. 같은 유량에서도 밸브 종류에 따라 부차손실이 크게 달라집니다.' },
+      check: { name: '체크밸브', K: 2.0, note: '체크밸브는 역류 방지 구조 때문에 일반 직선 밸브보다 손실이 크게 발생할 수 있습니다.' },
+      custom: { name: '사용자 지정 밸브', K: 1.0, note: '사용자 지정 K값으로 특정 부속품이나 밸브의 손실을 비교할 수 있습니다.' }
+    };
+
+    const qSlider = document.getElementById('qSlider');
+    const dSlider = document.getElementById('dSlider');
+    const elbowSlider = document.getElementById('elbowSlider');
+    const elbowKSlider = document.getElementById('elbowKSlider');
+    const valveTypeSelect = document.getElementById('valveTypeSelect');
+    const valveSlider = document.getElementById('valveSlider');
+    const customKSlider = document.getElementById('customKSlider');
+    const rhoSlider = document.getElementById('rhoSlider');
+
+    const qValue = document.getElementById('qValue');
+    const dValue = document.getElementById('dValue');
+    const elbowValue = document.getElementById('elbowValue');
+    const elbowKValue = document.getElementById('elbowKValue');
+    const valveTypeValue = document.getElementById('valveTypeValue');
+    const valveValue = document.getElementById('valveValue');
+    const customKValue = document.getElementById('customKValue');
+    const rhoValue = document.getElementById('rhoValue');
+    const customKGroup = document.getElementById('customKGroup');
+
+    const vStat = document.getElementById('vStat');
+    const vhStat = document.getElementById('vhStat');
+    const sumKStat = document.getElementById('sumKStat');
+    const hmStat = document.getElementById('hmStat');
+    const formulaBox = document.getElementById('formulaBox');
+    const noteBox = document.getElementById('noteBox');
+    const stateBadge = document.getElementById('stateBadge');
+
+    const lossGroup = document.getElementById('lossGroup');
+    const particleGroup = document.getElementById('particleGroup');
+    const hmPipeLabel = document.getElementById('hmPipeLabel');
+    const vPipeLabel = document.getElementById('vPipeLabel');
+    const energyLine = document.getElementById('energyLine');
+    const lossArrow = document.getElementById('lossArrow');
+    const elbowLabel = document.getElementById('elbowLabel');
+    const valveLabel = document.getElementById('valveLabel');
+
+    const canvas = document.getElementById('graph');
+    const ctx = canvas.getContext('2d');
+
+    let particles = [];
+    let currentV = 2.5;
+
+    function fmt(num, digits = 2) { return Number(num).toFixed(digits); }
+    function comma(num, digits = 0) { return Number(num).toLocaleString(undefined, { maximumFractionDigits: digits }); }
+    function area(D) { return Math.PI * D * D / 4; }
+
+    function initParticles() {
+      particles = [];
+      for (let i = 0; i < 34; i++) {
+        particles.push({
+          t: Math.random(),
+          r: 4 + Math.random() * 2,
+          seed: Math.random() * Math.PI * 2
+        });
+      }
+    }
+
+    function pathPoint(t) {
+      if (t < 0.35) return { x: 100 + t / 0.35 * 260, y: 320 };
+      if (t < 0.58) {
+        const a = (t - 0.35) / 0.23;
+        const theta = Math.PI / 2 * a;
+        return { x: 360 + 80 * Math.sin(theta), y: 320 - 80 * (1 - Math.cos(theta)) };
+      }
+      if (t < 0.70) return { x: 440, y: 240 - (t - 0.58) / 0.12 * 95 };
+      return { x: 440 + (t - 0.70) / 0.30 * 350, y: 145 };
+    }
+
+    function drawParticles() {
+      particleGroup.innerHTML = '';
+      particles.forEach((p, idx) => {
+        const pt = pathPoint(p.t);
+        const wobble = Math.sin(p.seed + performance.now() * 0.004 + idx) * 3;
+        const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        c.setAttribute('cx', pt.x);
+        c.setAttribute('cy', pt.y + wobble);
+        c.setAttribute('r', p.r);
+        c.setAttribute('fill', '#2449d8');
+        c.setAttribute('opacity', '0.72');
+        particleGroup.appendChild(c);
+      });
+    }
+
+    function animate() {
+      particles.forEach(p => {
+        p.t += 0.0015 + currentV * 0.00045;
+        if (p.t > 1) p.t = 0;
+      });
+      drawParticles();
+      requestAnimationFrame(animate);
+    }
+
+    function drawLossMarks(elbowN, valveN, elbowK, valveK) {
+      lossGroup.innerHTML = '';
+      const elbowIntensity = Math.min(1, elbowN * elbowK / 6);
+      const valveIntensity = Math.min(1, valveN * valveK / 12);
+
+      for (let i = 0; i < Math.max(2, Math.round(3 + elbowIntensity * 8)); i++) {
+        const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        const x = 360 + (i % 4) * 18;
+        const y = 285 - Math.floor(i / 4) * 22;
+        p.setAttribute('d', `M ${x} ${y} c 18 -18, 38 12, 5 25 c -16 7, -26 -8, -8 -18`);
+        p.setAttribute('fill', 'none');
+        p.setAttribute('stroke', '#d64545');
+        p.setAttribute('stroke-width', '3');
+        p.setAttribute('opacity', '0.70');
+        lossGroup.appendChild(p);
+      }
+
+      for (let i = 0; i < Math.max(1, Math.round(2 + valveIntensity * 8)); i++) {
+        const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        const x = 570 + i * 16;
+        const y = 165 + (i % 2) * 26;
+        p.setAttribute('d', `M ${x} ${y} c 18 -14, 30 10, 3 22 c -12 5, -20 -6, -5 -15`);
+        p.setAttribute('fill', 'none');
+        p.setAttribute('stroke', '#d64545');
+        p.setAttribute('stroke-width', '3');
+        p.setAttribute('opacity', '0.70');
+        lossGroup.appendChild(p);
+      }
+    }
+
+    function drawGraph(elbowLoss, valveLoss, totalLoss, elbowKsum, valveKsum, dp) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const baseY = 255;
+      const maxH = 170;
+      const items = [
+        { label: '곡관 ΣK', val: elbowKsum, desc: '곡관 K 합' },
+        { label: '밸브 ΣK', val: valveKsum, desc: '밸브 K 합' },
+        { label: '곡관 hm', val: elbowLoss, desc: '곡관 손실' },
+        { label: '밸브 hm', val: valveLoss, desc: '밸브 손실' },
+        { label: '전체 hm', val: totalLoss, desc: '총 손실' }
+      ];
+      const maxVal = Math.max(...items.map(i => i.val), 1);
+      const barW = 92;
+      const gap = 68;
+      const startX = 90;
+
+      ctx.fillStyle = '#24324f';
+      ctx.font = 'bold 20px Segoe UI';
+      ctx.fillText('곡관·밸브 손실 비교', 70, 32);
+
+      ctx.strokeStyle = '#d8e0ee';
+      ctx.lineWidth = 1;
+      for (let i = 0; i <= 4; i++) {
+        const y = baseY - (i / 4) * maxH;
+        ctx.beginPath();
+        ctx.moveTo(70, y);
+        ctx.lineTo(canvas.width - 40, y);
+        ctx.stroke();
+      }
+
+      items.forEach((it, i) => {
+        const x = startX + i * (barW + gap);
+        const h = (it.val / maxVal) * maxH;
+        ctx.fillStyle = i === 4 ? '#d64545' : i >= 2 ? '#ff8c42' : '#7fb7ff';
+        ctx.fillRect(x, baseY - h, barW, h);
+        ctx.strokeStyle = '#24324f';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x, baseY - h, barW, h);
+
+        ctx.fillStyle = '#24324f';
+        ctx.font = 'bold 15px Segoe UI';
+        ctx.fillText(it.label, x - 4, baseY + 24);
+        ctx.font = '13px Segoe UI';
+        ctx.fillText(it.desc, x + 4, baseY + 45);
+        ctx.font = 'bold 14px Segoe UI';
+        ctx.fillText(fmt(it.val, 2), x + 22, baseY - h - 10);
+      });
+
+      ctx.fillStyle = '#60708f';
+      ctx.font = '14px Segoe UI';
+      ctx.fillText(`압력손실 ΔP = ${fmt(dp / 1000, 2)} kPa`, 70, 315);
+    }
+
+    function update() {
+      const Q = parseFloat(qSlider.value);
+      const D = parseFloat(dSlider.value);
+      const elbowN = parseInt(elbowSlider.value, 10);
+      const elbowK = parseFloat(elbowKSlider.value);
+      const valveN = parseInt(valveSlider.value, 10);
+      const valveType = valveTypeSelect.value;
+      const customK = parseFloat(customKSlider.value);
+      const rho = parseFloat(rhoSlider.value);
+
+      const valveInfo = valveKTable[valveType];
+      const valveK = valveType === 'custom' ? customK : valveInfo.K;
+      const V = Q / area(D);
+      const velocityHead = V * V / (2 * g);
+      const elbowKsum = elbowN * elbowK;
+      const valveKsum = valveN * valveK;
+      const sumK = elbowKsum + valveKsum;
+      const elbowLoss = elbowKsum * velocityHead;
+      const valveLoss = valveKsum * velocityHead;
+      const hm = sumK * velocityHead;
+      const dp = rho * g * hm;
+      currentV = V;
+
+      qValue.textContent = `${fmt(Q,4)} m³/s`;
+      dValue.textContent = `${fmt(D,3)} m`;
+      elbowValue.textContent = `${elbowN} 개`;
+      elbowKValue.textContent = fmt(elbowK,2);
+      valveTypeValue.textContent = valveInfo.name;
+      valveValue.textContent = `${valveN} 개`;
+      customKValue.textContent = fmt(customK,2);
+      rhoValue.textContent = `${comma(rho)} kg/m³`;
+      customKGroup.style.display = valveType === 'custom' ? 'block' : 'none';
+
+      vStat.textContent = `${fmt(V,2)} m/s`;
+      vhStat.textContent = `${fmt(velocityHead,3)} m`;
+      sumKStat.textContent = fmt(sumK,2);
+      hmStat.textContent = `${fmt(hm,2)} m`;
+
+      stateBadge.textContent = hm >= 5 ? '부차손실 큼' : hm >= 1 ? '부차손실 중간' : '부차손실 작음';
+      stateBadge.style.background = hm >= 5 ? '#d64545' : hm >= 1 ? '#ff8c42' : '#21a366';
+
+      formulaBox.innerHTML =
+        `ΣK = 곡관 ${elbowN}×${fmt(elbowK,2)} + 밸브 ${valveN}×${fmt(valveK,2)} = ${fmt(sumK,2)}<br>` +
+        `hm = ΣK·V²/2g = ${fmt(sumK,2)}×${fmt(velocityHead,3)} = ${fmt(hm,2)} m<br>` +
+        `ΔP = ρghm = ${comma(rho)}×9.81×${fmt(hm,2)} = ${fmt(dp / 1000,2)} kPa`;
+
+      noteBox.innerHTML = valveInfo.note + ' 곡관 개수와 밸브 개수가 증가하면 ΣK가 증가하여 전체 부차손실이 커집니다.';
+
+      const drop = Math.min(135, 25 + hm * 9);
+      energyLine.setAttribute('y2', String(70 + drop));
+      lossArrow.setAttribute('y2', String(70 + drop));
+      hmPipeLabel.textContent = `hm = ${fmt(hm,2)} m`;
+      hmPipeLabel.setAttribute('y', String(78 + drop / 2));
+      vPipeLabel.textContent = `V = ${fmt(V,2)} m/s`;
+      elbowLabel.textContent = `곡관 ${elbowN}개, ΣK=${fmt(elbowKsum,2)}`;
+      valveLabel.textContent = `${valveInfo.name} ${valveN}개, ΣK=${fmt(valveKsum,2)}`;
+
+      drawLossMarks(elbowN, valveN, elbowK, valveK);
+      drawGraph(elbowLoss, valveLoss, hm, elbowKsum, valveKsum, dp);
+    }
+
+    [qSlider, dSlider, elbowSlider, elbowKSlider, valveTypeSelect, valveSlider, customKSlider, rhoSlider].forEach(el => el.addEventListener('input', update));
+    valveTypeSelect.addEventListener('change', update);
+    initParticles();
+    update();
+    animate();
+  </script>
+</body>
+</html>
