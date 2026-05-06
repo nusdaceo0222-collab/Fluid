@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>무디선도 마찰계수 시뮬레이터</title>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --panel: #ffffff;
+      --line: #d8e0ee;
+      --text: #1f2a44;
+      --muted: #60708f;
+      --accent: #2449d8;
+      --laminar: #21a366;
+      --transition: #ff8c42;
+      --turbulent: #d64545;
+      --water: #7fb7ff;
+      --pipe: #2f3a4f;
+      --warn-bg: #fff8ec;
+      --warn-line: #f1dba7;
+      --warn-text: #7a5a05;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+      background: linear-gradient(180deg, #eef3fb 0%, #f8fbff 100%);
+      color: var(--text);
+    }
+    .wrap {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    h1 { margin: 0 0 8px; font-size: 32px; }
+    .subtitle {
+      color: var(--muted);
+      line-height: 1.75;
+      margin-bottom: 20px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 420px 1fr;
+      gap: 20px;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      box-shadow: 0 8px 24px rgba(27, 52, 111, 0.08);
+      padding: 18px;
+    }
+    h2 { margin: 0 0 16px; font-size: 20px; }
+    .control-group { margin-bottom: 18px; }
+    .label-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+    .value { color: var(--accent); }
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-top: 10px;
+    }
+    .stat {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+      background: #fbfdff;
+    }
+    .stat-title {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .stat-value {
+      font-size: 23px;
+      font-weight: 800;
+      word-break: break-word;
+    }
+    .formula {
+      margin-top: 16px;
+      padding: 14px;
+      border-radius: 16px;
+      background: #f4f8ff;
+      border: 1px dashed #bdd1ff;
+      line-height: 1.9;
+      font-size: 15px;
+    }
+    .note-box {
+      margin-top: 16px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: var(--warn-bg);
+      border: 1px solid var(--warn-line);
+      color: var(--warn-text);
+      line-height: 1.7;
+      font-size: 14px;
+    }
+    .state-badge {
+      margin-top: 12px;
+      display: inline-block;
+      padding: 10px 14px;
+      border-radius: 999px;
+      color: white;
+      font-weight: 800;
+      font-size: 15px;
+    }
+    .legend {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .swatch {
+      width: 14px;
+      height: 14px;
+      border-radius: 4px;
+      display: inline-block;
+      margin-right: 6px;
+      vertical-align: -2px;
+    }
+    .viewer-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 18px;
+    }
+    canvas {
+      width: 100%;
+      max-width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: #fff;
+    }
+    svg {
+      width: 100%;
+      height: auto;
+      display: block;
+      background: #fbfdff;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+    }
+    .caption { color: var(--muted); line-height: 1.7; font-size: 14px; }
+    @media (max-width: 1000px) { .grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>무디선도 마찰계수 시뮬레이터</h1>
+    <div class="subtitle">
+      관내 유동에서 <strong>레이놀즈수 Re</strong>와 <strong>상대조도 ε/D</strong>에 따라 달시 마찰계수 <strong>f</strong>가 어떻게 결정되는지 확인합니다. 층류에서는 <strong>f = 64/Re</strong>, 난류에서는 Colebrook 식을 근사 계산하여 무디선도 위에 표시합니다.
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h2>조작 패널</h2>
+
+        <div class="control-group">
+          <div class="label-row">
+            <span>평균유속 V</span>
+            <span class="value" id="vValue">2.00 m/s</span>
+          </div>
+          <input id="vSlider" type="range" min="0.01" max="8.00" step="0.01" value="2.00" />
+        </div>
+
+        <div class="control-group">
+          <div class="label-row">
+            <span>관지름 D</span>
+            <span class="value" id="dValue">0.100 m</span>
+          </div>
+          <input id="dSlider" type="range" min="0.01" max="0.50" step="0.001" value="0.100" />
+        </div>
+
+        <div class="control-group">
+          <div class="label-row">
+            <span>절대조도 ε</span>
+            <span class="value" id="epsValue">0.045 mm</span>
+          </div>
+          <input id="epsSlider" type="range" min="0.000001" max="0.005" step="0.000001" value="0.000045" />
+        </div>
+
+        <div class="control-group">
+          <div class="label-row">
+            <span>유체 밀도 ρ</span>
+            <span class="value" id="rhoValue">1000 kg/m³</span>
+          </div>
+          <input id="rhoSlider" type="range" min="1" max="1500" step="1" value="1000" />
+        </div>
+
+        <div class="control-group">
+          <div class="label-row">
+            <span>점성계수 μ</span>
+            <span class="value" id="muValue">0.00100 Pa·s</span>
+          </div>
+          <input id="muSlider" type="range" min="0.00001" max="0.05000" step="0.00001" value="0.00100" />
+        </div>
+
+        <div class="stat-grid">
+          <div class="stat">
+            <div class="stat-title">레이놀즈수 Re</div>
+            <div class="stat-value" id="reStat">200,000</div>
+          </div>
+          <div class="stat">
+            <div class="stat-title">상대조도 ε/D</div>
+            <div class="stat-value" id="relStat">4.50e-4</div>
+          </div>
+          <div class="stat">
+            <div class="stat-title">마찰계수 f</div>
+            <div class="stat-value" id="fStat">0.0172</div>
+          </div>
+          <div class="stat">
+            <div class="stat-title">계산 방법</div>
+            <div class="stat-value" id="methodStat">Colebrook</div>
+          </div>
+        </div>
+
+        <div id="stateBadge" class="state-badge">난류</div>
+
+        <div class="formula" id="formulaBox">
+          Re = ρVD/μ<br>
+          ε/D = 0.000045/0.100 = 4.50×10⁻⁴<br>
+          f ≈ 0.0172
+        </div>
+
+        <div class="note-box" id="noteBox">
+          난류에서는 Re와 상대조도 ε/D가 함께 마찰계수 f를 결정합니다.
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>시각화</h2>
+        <div class="legend">
+          <span><span class="swatch" style="background:#21a366"></span>층류선</span>
+          <span><span class="swatch" style="background:#d64545"></span>조도별 난류곡선</span>
+          <span><span class="swatch" style="background:#2449d8"></span>현재 조건</span>
+          <span><span class="swatch" style="background:#ff8c42"></span>천이영역</span>
+        </div>
+
+        <div class="viewer-grid">
+          <canvas id="moody" width="920" height="560"></canvas>
+
+          <svg viewBox="0 0 980 280" aria-label="관 조도 개념 시각화">
+            <defs>
+              <marker id="arrowBlueMoody" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#2449d8"></path>
+              </marker>
+            </defs>
+            <rect x="80" y="90" width="720" height="110" rx="55" fill="#d9ecff" stroke="#2f3a4f" stroke-width="8" />
+            <rect x="80" y="112" width="720" height="66" rx="33" fill="#bfe0ff" opacity="0.92" />
+            <g id="roughnessGroup"></g>
+            <line x1="120" y1="145" x2="260" y2="145" stroke="#2449d8" stroke-width="5" marker-end="url(#arrowBlueMoody)" />
+            <text id="vPipeLabel" x="280" y="154" font-size="24" fill="#24324f" font-weight="700">V = 2.00 m/s</text>
+            <line x1="835" y1="95" x2="835" y2="195" stroke="#2449d8" stroke-width="4" marker-start="url(#arrowBlueMoody)" marker-end="url(#arrowBlueMoody)" />
+            <text id="dPipeLabel" x="852" y="153" font-size="24" fill="#24324f" font-weight="700">D = 0.100 m</text>
+            <text id="roughLabel" x="90" y="245" font-size="24" fill="#24324f" font-weight="800">상대조도 ε/D = 4.50×10⁻⁴</text>
+          </svg>
+
+          <div class="caption">
+            무디선도는 보통 가로축 Re와 세로축 f를 로그축으로 표시합니다. 이 시뮬레이터에서는 강의 이해를 위해 주요 조도 곡선과 현재 위치를 단순화하여 표시했습니다.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const vSlider = document.getElementById('vSlider');
+    const dSlider = document.getElementById('dSlider');
+    const epsSlider = document.getElementById('epsSlider');
+    const rhoSlider = document.getElementById('rhoSlider');
+    const muSlider = document.getElementById('muSlider');
+
+    const vValue = document.getElementById('vValue');
+    const dValue = document.getElementById('dValue');
+    const epsValue = document.getElementById('epsValue');
+    const rhoValue = document.getElementById('rhoValue');
+    const muValue = document.getElementById('muValue');
+
+    const reStat = document.getElementById('reStat');
+    const relStat = document.getElementById('relStat');
+    const fStat = document.getElementById('fStat');
+    const methodStat = document.getElementById('methodStat');
+    const formulaBox = document.getElementById('formulaBox');
+    const noteBox = document.getElementById('noteBox');
+    const stateBadge = document.getElementById('stateBadge');
+
+    const vPipeLabel = document.getElementById('vPipeLabel');
+    const dPipeLabel = document.getElementById('dPipeLabel');
+    const roughLabel = document.getElementById('roughLabel');
+    const roughnessGroup = document.getElementById('roughnessGroup');
+
+    const canvas = document.getElementById('moody');
+    const ctx = canvas.getContext('2d');
+
+    function fmt(num, digits = 2) { return Number(num).toFixed(digits); }
+    function sci(num) { return Number(num).toExponential(2); }
+    function comma(num) { return Math.round(num).toLocaleString(); }
+
+    function classifyRe(Re) {
+      if (Re < 2100) return 'laminar';
+      if (Re > 4000) return 'turbulent';
+      return 'transition';
+    }
+
+    function frictionFactor(Re, relRough) {
+      if (Re <= 0) return NaN;
+      if (Re < 2100) return 64 / Re;
+      if (Re <= 4000) {
+        const fLam = 64 / 2100;
+        const fTur = swameeJain(4000, relRough);
+        const t = (Re - 2100) / (4000 - 2100);
+        return fLam * (1 - t) + fTur * t;
+      }
+      return colebrook(Re, relRough);
+    }
+
+    function swameeJain(Re, relRough) {
+      return 0.25 / Math.pow(Math.log10(relRough / 3.7 + 5.74 / Math.pow(Re, 0.9)), 2);
+    }
+
+    function colebrook(Re, relRough) {
+      let f = swameeJain(Re, relRough);
+      for (let i = 0; i < 18; i++) {
+        const rhs = -2 * Math.log10(relRough / 3.7 + 2.51 / (Re * Math.sqrt(f)));
+        f = 1 / (rhs * rhs);
+      }
+      return f;
+    }
+
+    function methodName(Re) {
+      if (Re < 2100) return '64/Re';
+      if (Re <= 4000) return '천이 보간';
+      return 'Colebrook';
+    }
+
+    function stateInfo(state) {
+      if (state === 'laminar') return { name: '층류', color: '#21a366', note: '층류에서는 조도보다 Re의 영향이 지배적이며, f = 64/Re로 계산합니다.' };
+      if (state === 'transition') return { name: '천이영역', color: '#ff8c42', note: '천이영역에서는 유동 상태가 불안정하므로 실제 설계에서는 주의가 필요합니다. 여기서는 층류와 난류 사이를 단순 보간했습니다.' };
+      return { name: '난류', color: '#d64545', note: '난류에서는 Re와 상대조도 ε/D가 함께 마찰계수 f를 결정합니다. Re가 충분히 커지면 조도 영향이 더 두드러집니다.' };
+    }
+
+    const pad = { left: 85, right: 55, top: 48, bottom: 78 };
+    const xMin = Math.log10(600);
+    const xMax = Math.log10(10000000);
+    const yMin = Math.log10(0.008);
+    const yMax = Math.log10(0.10);
+
+    function xMap(Re) {
+      return pad.left + (Math.log10(Re) - xMin) / (xMax - xMin) * (canvas.width - pad.left - pad.right);
+    }
+    function yMap(f) {
+      return canvas.height - pad.bottom - (Math.log10(f) - yMin) / (yMax - yMin) * (canvas.height - pad.top - pad.bottom);
+    }
+
+    function drawMoody(currentRe, currentRel, currentF) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const w = canvas.width - pad.left - pad.right;
+      const h = canvas.height - pad.top - pad.bottom;
+      const left = pad.left;
+      const right = canvas.width - pad.right;
+      const top = pad.top;
+      const bottom = canvas.height - pad.bottom;
+
+      ctx.fillStyle = '#24324f';
+      ctx.font = 'bold 22px Segoe UI';
+      ctx.fillText('무디선도: Re - f - ε/D 관계', left, 30);
+
+      ctx.fillStyle = '#fff5e8';
+      ctx.fillRect(xMap(2100), top, xMap(4000) - xMap(2100), h);
+      ctx.fillStyle = '#7a5a05';
+      ctx.font = '13px Segoe UI';
+      ctx.fillText('천이영역', xMap(2300), top + 20);
+
+      ctx.strokeStyle = '#d8e0ee';
+      ctx.lineWidth = 1;
+      const reTicks = [1000, 2000, 4000, 10000, 100000, 1000000, 10000000];
+      reTicks.forEach(t => {
+        const x = xMap(t);
+        ctx.beginPath();
+        ctx.moveTo(x, top);
+        ctx.lineTo(x, bottom);
+        ctx.stroke();
+        ctx.fillStyle = '#60708f';
+        ctx.font = '12px Segoe UI';
+        ctx.fillText(t >= 1000000 ? `${t/1000000}e6` : t >= 1000 ? `${t/1000}e3` : `${t}`, x - 16, bottom + 24);
+      });
+      const fTicks = [0.008, 0.01, 0.015, 0.02, 0.03, 0.04, 0.06, 0.08, 0.10];
+      fTicks.forEach(t => {
+        const y = yMap(t);
+        ctx.beginPath();
+        ctx.moveTo(left, y);
+        ctx.lineTo(right, y);
+        ctx.stroke();
+        ctx.fillStyle = '#60708f';
+        ctx.font = '12px Segoe UI';
+        ctx.fillText(t.toFixed(3).replace(/0$/, ''), 36, y + 4);
+      });
+
+      ctx.strokeStyle = '#24324f';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(left, top, w, h);
+
+      ctx.fillStyle = '#24324f';
+      ctx.font = 'bold 15px Segoe UI';
+      ctx.fillText('Re', left + w / 2 - 12, canvas.height - 22);
+      ctx.save();
+      ctx.translate(22, top + h / 2 + 12);
+      ctx.rotate(-Math.PI / 2);
+      ctx.fillText('달시 마찰계수 f', 0, 0);
+      ctx.restore();
+
+      // laminar line
+      ctx.beginPath();
+      for (let Re = 600; Re <= 2100; Re *= 1.05) {
+        const f = 64 / Re;
+        const x = xMap(Re);
+        const y = yMap(f);
+        if (Re === 600) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.strokeStyle = '#21a366';
+      ctx.lineWidth = 4;
+      ctx.stroke();
+      ctx.fillStyle = '#21a366';
+      ctx.font = 'bold 13px Segoe UI';
+      ctx.fillText('층류 f=64/Re', xMap(800), yMap(64/800) - 12);
+
+      // roughness curves
+      const roughList = [0.0, 0.00001, 0.00005, 0.0001, 0.0005, 0.001, 0.005, 0.01, 0.02];
+      roughList.forEach((rr, idx) => {
+        ctx.beginPath();
+        let first = true;
+        for (let Re = 4000; Re <= 10000000; Re *= 1.035) {
+          const f = colebrook(Re, rr);
+          const x = xMap(Re);
+          const y = yMap(f);
+          if (first) { ctx.moveTo(x, y); first = false; } else ctx.lineTo(x, y);
+        }
+        ctx.strokeStyle = rr === 0 ? '#60708f' : '#d64545';
+        ctx.lineWidth = rr === 0 ? 2 : 1.8;
+        ctx.globalAlpha = rr === 0 ? 0.9 : 0.72;
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+
+        if (idx >= 2) {
+          const labelRe = 8000000;
+          const labelF = colebrook(labelRe, rr);
+          const lx = xMap(labelRe) - 10;
+          const ly = yMap(labelF);
+          ctx.fillStyle = '#7a1f1f';
+          ctx.font = '11px Segoe UI';
+          ctx.fillText(rr.toString(), lx, ly + 4);
+        }
+      });
+      ctx.fillStyle = '#7a1f1f';
+      ctx.font = 'bold 12px Segoe UI';
+      ctx.fillText('ε/D', right - 45, top + 42);
+
+      // current point
+      const cx = xMap(Math.min(Math.max(currentRe, 600), 10000000));
+      const cy = yMap(Math.min(Math.max(currentF, 0.008), 0.10));
+      ctx.strokeStyle = '#2449d8';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([6, 6]);
+      ctx.beginPath();
+      ctx.moveTo(cx, top);
+      ctx.lineTo(cx, bottom);
+      ctx.moveTo(left, cy);
+      ctx.lineTo(right, cy);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.beginPath();
+      ctx.arc(cx, cy, 8, 0, Math.PI * 2);
+      ctx.fillStyle = '#2449d8';
+      ctx.fill();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      ctx.fillStyle = '#24324f';
+      ctx.font = 'bold 15px Segoe UI';
+      ctx.fillText(`현재점: Re=${comma(currentRe)}, f=${fmt(currentF,4)}`, Math.min(cx + 14, right - 230), Math.max(cy - 12, top + 18));
+    }
+
+    function drawRoughness(relRough) {
+      roughnessGroup.innerHTML = '';
+      const amp = Math.min(18, 3 + Math.log10(1 + relRough * 100000) * 5);
+      for (let i = 0; i < 28; i++) {
+        const x = 95 + i * 25;
+        const topY = 95 + Math.sin(i * 1.4) * amp;
+        const botY = 195 - Math.cos(i * 1.2) * amp;
+        const t = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        t.setAttribute('x1', x);
+        t.setAttribute('y1', 96);
+        t.setAttribute('x2', x + 8);
+        t.setAttribute('y2', topY + 5);
+        t.setAttribute('stroke', '#d64545');
+        t.setAttribute('stroke-width', '3');
+        t.setAttribute('opacity', '0.65');
+        roughnessGroup.appendChild(t);
+        const b = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        b.setAttribute('x1', x);
+        b.setAttribute('y1', 194);
+        b.setAttribute('x2', x + 8);
+        b.setAttribute('y2', botY - 5);
+        b.setAttribute('stroke', '#d64545');
+        b.setAttribute('stroke-width', '3');
+        b.setAttribute('opacity', '0.65');
+        roughnessGroup.appendChild(b);
+      }
+    }
+
+    function update() {
+      const V = parseFloat(vSlider.value);
+      const D = parseFloat(dSlider.value);
+      const eps = parseFloat(epsSlider.value);
+      const rho = parseFloat(rhoSlider.value);
+      const mu = parseFloat(muSlider.value);
+      const Re = rho * V * D / mu;
+      const rel = eps / D;
+      const f = frictionFactor(Re, rel);
+      const state = classifyRe(Re);
+      const info = stateInfo(state);
+
+      vValue.textContent = `${fmt(V,2)} m/s`;
+      dValue.textContent = `${fmt(D,3)} m`;
+      epsValue.textContent = `${fmt(eps * 1000,3)} mm`;
+      rhoValue.textContent = `${comma(rho)} kg/m³`;
+      muValue.textContent = `${fmt(mu,5)} Pa·s`;
+
+      reStat.textContent = comma(Re);
+      relStat.textContent = sci(rel);
+      fStat.textContent = fmt(f,4);
+      methodStat.textContent = methodName(Re);
+
+      stateBadge.textContent = info.name;
+      stateBadge.style.background = info.color;
+      noteBox.innerHTML = info.note;
+
+      formulaBox.innerHTML =
+        `Re = ρVD/μ = ${comma(rho)}×${fmt(V,2)}×${fmt(D,3)}/${fmt(mu,5)} = ${comma(Re)}<br>` +
+        `ε/D = ${fmt(eps,6)}/${fmt(D,3)} = ${sci(rel)}<br>` +
+        `마찰계수 f = ${fmt(f,4)} &nbsp; (${methodName(Re)})`;
+
+      vPipeLabel.textContent = `V = ${fmt(V,2)} m/s`;
+      dPipeLabel.textContent = `D = ${fmt(D,3)} m`;
+      roughLabel.textContent = `상대조도 ε/D = ${sci(rel)}`;
+
+      drawMoody(Re, rel, f);
+      drawRoughness(rel);
+    }
+
+    [vSlider, dSlider, epsSlider, rhoSlider, muSlider].forEach(el => el.addEventListener('input', update));
+    update();
+  </script>
+</body>
+</html>
