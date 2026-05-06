@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>달시-바이스바흐식 주손실 시뮬레이터</title>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --panel: #ffffff;
+      --line: #d8e0ee;
+      --text: #1f2a44;
+      --muted: #60708f;
+      --accent: #2449d8;
+      --water: #7fb7ff;
+      --pipe: #2f3a4f;
+      --loss: #d64545;
+      --energy: #ff8c42;
+      --good: #21a366;
+      --warn-bg: #fff8ec;
+      --warn-line: #f1dba7;
+      --warn-text: #7a5a05;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+      background: linear-gradient(180deg, #eef3fb 0%, #f8fbff 100%);
+      color: var(--text);
+    }
+    .wrap {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    h1 { margin: 0 0 8px; font-size: 32px; }
+    .subtitle {
+      color: var(--muted);
+      line-height: 1.75;
+      margin-bottom: 20px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 420px 1fr;
+      gap: 20px;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      box-shadow: 0 8px 24px rgba(27, 52, 111, 0.08);
+      padding: 18px;
+    }
+    h2 { margin: 0 0 16px; font-size: 20px; }
+    .control-group { margin-bottom: 18px; }
+    .label-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+    .value { color: var(--accent); }
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-top: 10px;
+    }
+    .stat {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+      background: #fbfdff;
+    }
+    .stat-title {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .stat-value {
+      font-size: 23px;
+      font-weight: 800;
+      word-break: break-word;
+    }
+    .formula {
+      margin-top: 16px;
+      padding: 14px;
+      border-radius: 16px;
+      background: #f4f8ff;
+      border: 1px dashed #bdd1ff;
+      line-height: 1.9;
+      font-size: 15px;
+    }
+    .note-box {
+      margin-top: 16px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: var(--warn-bg);
+      border: 1px solid var(--warn-line);
+      color: var(--warn-text);
+      line-height: 1.7;
+      font-size: 14px;
+    }
+    .state-badge {
+      margin-top: 12px;
+      display: inline-block;
+      padding: 10px 14px;
+      border-radius: 999px;
+      color: white;
+      font-weight: 800;
+      font-size: 15px;
+      background: var(--loss);
+    }
+    .legend {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .swatch {
+      width: 14px;
+      height: 14px;
+      border-radius: 4px;
+      display: inline-block;
+      margin-right: 6px;
+      vertical-align: -2px;
+    }
+    .viewer-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 18px;
+    }
+    svg {
+      width: 100%;
+      height: auto;
+      display: block;
+      background: #fbfdff;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+    }
+    canvas {
+      width: 100%;
+      max-width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: #fff;
+    }
+    .caption { color: var(--muted); line-height: 1.7; font-size: 14px; }
+    @media (max-width: 1000px) { .grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>달시-바이스바흐식 주손실 시뮬레이터</h1>
+    <div class="subtitle">
+      원형 직관에서 발생하는 <strong>주손실수두</strong>를 달시-바이스바흐식으로 계산합니다. 이 단계에서는 마찰계수 <strong>f</strong>를 직접 조절하여, 관 길이, 관지름, 유속, 마찰계수가 손실수두에 미치는 영향을 확인합니다.
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h2>조작 패널</h2>
+
+        <div class="control-group">
+          <div class="label-row">
+            <span>관 길이 L</span>
+            <span class="value" id="lValue">50.0 m</span>
+          </div>
+          <input id="lSlider" type="range" min="1" max="300" step="1" value="50" />
+        </div>
+
+        <div class="control-group">
+          <div class="label-row">
+            <span>관지름 D</span>
+            <span class="value" id="dValue">0.100 m</span>
+          </div>
+          <input id="dSlider" type="range" min="0.02" max="0.50" step="0.001" value="0.100" />
+        </div>
+
+        <div class="control-group">
+          <div class="label-row">
+            <span>평균유속 V</span>
+            <span class="value" id="vValue">2.00 m/s</span>
+          </div>
+          <input id="vSlider" type="range" min="0.10" max="8.00" step="0.01" value="2.00" />
+        </div>
+
+        <div class="control-group">
+          <div class="label-row">
+            <span>마찰계수 f</span>
+            <span class="value" id="fValue">0.020</span>
+          </div>
+          <input id="fSlider" type="range" min="0.005" max="0.080" step="0.001" value="0.020" />
+        </div>
+
+        <div class="control-group">
+          <div class="label-row">
+            <span>유체 밀도 ρ</span>
+            <span class="value" id="rhoValue">1000 kg/m³</span>
+          </div>
+          <input id="rhoSlider" type="range" min="1" max="1500" step="1" value="1000" />
+        </div>
+
+        <div class="stat-grid">
+          <div class="stat">
+            <div class="stat-title">속도수두 V²/2g</div>
+            <div class="stat-value" id="vhStat">0.204 m</div>
+          </div>
+          <div class="stat">
+            <div class="stat-title">길이비 L/D</div>
+            <div class="stat-value" id="ldStat">500</div>
+          </div>
+          <div class="stat">
+            <div class="stat-title">주손실수두 hf</div>
+            <div class="stat-value" id="hfStat">2.04 m</div>
+          </div>
+          <div class="stat">
+            <div class="stat-title">압력손실 ΔP</div>
+            <div class="stat-value" id="dpStat">20.0 kPa</div>
+          </div>
+        </div>
+
+        <div id="stateBadge" class="state-badge">주손실 발생</div>
+
+        <div class="formula" id="formulaBox">
+          hf = f × (L/D) × (V²/2g)<br>
+          hf = 0.020 × (50.0/0.100) × (2.00²/(2×9.81)) = 2.04 m<br>
+          ΔP = ρghf = 1000×9.81×2.04 = 20.0 kPa
+        </div>
+
+        <div class="note-box" id="noteBox">
+          유속 V는 제곱으로 작용하므로, 유속이 커지면 주손실이 급격히 증가합니다.
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>시각화</h2>
+        <div class="legend">
+          <span><span class="swatch" style="background:#7fb7ff"></span>배관 내 유동</span>
+          <span><span class="swatch" style="background:#d64545"></span>손실수두</span>
+          <span><span class="swatch" style="background:#ff8c42"></span>에너지선 저하</span>
+          <span><span class="swatch" style="background:#2449d8"></span>치수 표시</span>
+        </div>
+
+        <div class="viewer-grid">
+          <svg viewBox="0 0 980 500" aria-label="달시-바이스바흐식 주손실 시각화">
+            <defs>
+              <marker id="arrowBlue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#2449d8"></path>
+              </marker>
+              <marker id="arrowRed" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#d64545"></path>
+              </marker>
+              <linearGradient id="pipeWater" x1="0%" x2="100%" y1="0%" y2="0%">
+                <stop offset="0%" stop-color="#bfe0ff" />
+                <stop offset="100%" stop-color="#7fb7ff" />
+              </linearGradient>
+            </defs>
+
+            <rect x="90" y="210" width="700" height="120" rx="60" fill="#d9ecff" stroke="#2f3a4f" stroke-width="8" />
+            <rect x="90" y="235" width="700" height="70" rx="35" fill="url(#pipeWater)" opacity="0.95" />
+            <g id="streamGroup"></g>
+            <g id="particleGroup"></g>
+
+            <line x1="110" y1="175" x2="770" y2="175" stroke="#2449d8" stroke-width="4" marker-start="url(#arrowBlue)" marker-end="url(#arrowBlue)" />
+            <text id="lPipeLabel" x="400" y="160" font-size="24" fill="#24324f" font-weight="700">L = 50.0 m</text>
+
+            <line x1="825" y1="215" x2="825" y2="325" stroke="#2449d8" stroke-width="4" marker-start="url(#arrowBlue)" marker-end="url(#arrowBlue)" />
+            <text id="dPipeLabel" x="842" y="278" font-size="24" fill="#24324f" font-weight="700">D = 0.100 m</text>
+
+            <line id="energyLine" x1="110" y1="95" x2="770" y2="150" stroke="#ff8c42" stroke-width="6" stroke-linecap="round" />
+            <text x="110" y="78" font-size="22" fill="#7a5a05" font-weight="800">에너지선</text>
+            <line id="lossArrow" x1="790" y1="96" x2="790" y2="150" stroke="#d64545" stroke-width="4" marker-end="url(#arrowRed)" />
+            <text id="hfPipeLabel" x="810" y="125" font-size="24" fill="#d64545" font-weight="800">hf = 2.04 m</text>
+
+            <line x1="130" y1="270" x2="260" y2="270" stroke="#2449d8" stroke-width="5" marker-end="url(#arrowBlue)" />
+            <text id="vPipeLabel" x="275" y="278" font-size="24" fill="#24324f" font-weight="700">V = 2.00 m/s</text>
+
+            <text id="mainLabel" x="95" y="405" font-size="28" fill="#24324f" font-weight="800">hf = f(L/D)(V²/2g)</text>
+            <text id="subLabel" x="95" y="440" font-size="24" fill="#24324f" font-weight="700">주손실수두 2.04 m, 압력손실 20.0 kPa</text>
+          </svg>
+
+          <canvas id="graph" width="920" height="330"></canvas>
+          <div class="caption">
+            아래 그래프는 현재 조건에서 각 인자가 주손실에 기여하는 상대적인 크기를 보여줍니다. 달시-바이스바흐식은 <strong>관 길이에 비례</strong>, <strong>관지름에 반비례</strong>, <strong>유속의 제곱에 비례</strong>합니다.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const g = 9.81;
+
+    const lSlider = document.getElementById('lSlider');
+    const dSlider = document.getElementById('dSlider');
+    const vSlider = document.getElementById('vSlider');
+    const fSlider = document.getElementById('fSlider');
+    const rhoSlider = document.getElementById('rhoSlider');
+
+    const lValue = document.getElementById('lValue');
+    const dValue = document.getElementById('dValue');
+    const vValue = document.getElementById('vValue');
+    const fValue = document.getElementById('fValue');
+    const rhoValue = document.getElementById('rhoValue');
+
+    const vhStat = document.getElementById('vhStat');
+    const ldStat = document.getElementById('ldStat');
+    const hfStat = document.getElementById('hfStat');
+    const dpStat = document.getElementById('dpStat');
+    const formulaBox = document.getElementById('formulaBox');
+    const noteBox = document.getElementById('noteBox');
+    const stateBadge = document.getElementById('stateBadge');
+
+    const streamGroup = document.getElementById('streamGroup');
+    const particleGroup = document.getElementById('particleGroup');
+    const lPipeLabel = document.getElementById('lPipeLabel');
+    const dPipeLabel = document.getElementById('dPipeLabel');
+    const vPipeLabel = document.getElementById('vPipeLabel');
+    const hfPipeLabel = document.getElementById('hfPipeLabel');
+    const subLabel = document.getElementById('subLabel');
+    const energyLine = document.getElementById('energyLine');
+    const lossArrow = document.getElementById('lossArrow');
+
+    const canvas = document.getElementById('graph');
+    const ctx = canvas.getContext('2d');
+
+    let particles = [];
+    let currentV = 2;
+
+    function fmt(num, digits = 2) { return Number(num).toFixed(digits); }
+    function comma(num, digits = 0) { return Number(num).toLocaleString(undefined, { maximumFractionDigits: digits }); }
+
+    function initParticles() {
+      particles = [];
+      for (let i = 0; i < 28; i++) {
+        particles.push({
+          x: 110 + Math.random() * 640,
+          y: 245 + Math.random() * 50,
+          seed: Math.random() * Math.PI * 2,
+          r: 4 + Math.random() * 2
+        });
+      }
+    }
+
+    function drawStreams() {
+      streamGroup.innerHTML = '';
+      for (let i = 0; i < 5; i++) {
+        const y = 245 + i * 13;
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        line.setAttribute('d', `M 115 ${y} C 300 ${y}, 520 ${y}, 760 ${y}`);
+        line.setAttribute('fill', 'none');
+        line.setAttribute('stroke', '#2449d8');
+        line.setAttribute('stroke-width', '3');
+        line.setAttribute('opacity', '0.55');
+        streamGroup.appendChild(line);
+      }
+    }
+
+    function drawParticles() {
+      particleGroup.innerHTML = '';
+      particles.forEach((p, idx) => {
+        const yy = p.y + Math.sin(p.seed + performance.now() * 0.003 + idx) * 2.5;
+        const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        c.setAttribute('cx', p.x);
+        c.setAttribute('cy', Math.min(Math.max(yy, 245), 295));
+        c.setAttribute('r', p.r);
+        c.setAttribute('fill', '#2449d8');
+        c.setAttribute('opacity', '0.75');
+        particleGroup.appendChild(c);
+      });
+    }
+
+    function animate() {
+      particles.forEach(p => {
+        p.x += 0.8 + currentV * 0.35;
+        if (p.x > 760) p.x = 110;
+      });
+      drawParticles();
+      requestAnimationFrame(animate);
+    }
+
+    function drawGraph(L, D, V, f, hf) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const pad = { left: 70, right: 40, top: 40, bottom: 70 };
+      const baseY = 255;
+      const maxH = 170;
+
+      ctx.fillStyle = '#24324f';
+      ctx.font = 'bold 20px Segoe UI';
+      ctx.fillText('주손실 영향 인자 비교', pad.left, 32);
+
+      const ref = {
+        L: 50,
+        D: 0.1,
+        V: 2,
+        f: 0.02
+      };
+
+      const items = [
+        { label: '관 길이 L', val: L / ref.L, desc: `${fmt(L,1)} m` },
+        { label: '1/관지름 D', val: ref.D / D, desc: `${fmt(D,3)} m` },
+        { label: '유속 V²', val: (V * V) / (ref.V * ref.V), desc: `${fmt(V,2)} m/s` },
+        { label: '마찰계수 f', val: f / ref.f, desc: `${fmt(f,3)}` },
+        { label: '결과 hf', val: hf / 2.04, desc: `${fmt(hf,2)} m` }
+      ];
+
+      const maxVal = Math.max(...items.map(i => i.val), 1);
+      const barW = 90;
+      const gap = 70;
+      const startX = 90;
+
+      ctx.strokeStyle = '#d8e0ee';
+      ctx.lineWidth = 1;
+      for (let i = 0; i <= 4; i++) {
+        const y = baseY - (i / 4) * maxH;
+        ctx.beginPath();
+        ctx.moveTo(pad.left, y);
+        ctx.lineTo(canvas.width - pad.right, y);
+        ctx.stroke();
+      }
+
+      items.forEach((it, i) => {
+        const x = startX + i * (barW + gap);
+        const h = (it.val / maxVal) * maxH;
+        ctx.fillStyle = i === 4 ? '#d64545' : '#7fb7ff';
+        ctx.fillRect(x, baseY - h, barW, h);
+        ctx.strokeStyle = '#24324f';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x, baseY - h, barW, h);
+
+        ctx.fillStyle = '#24324f';
+        ctx.font = 'bold 14px Segoe UI';
+        ctx.fillText(it.label, x - 5, baseY + 24);
+        ctx.font = '13px Segoe UI';
+        ctx.fillText(it.desc, x + 8, baseY + 45);
+        ctx.font = 'bold 14px Segoe UI';
+        ctx.fillText(`${fmt(it.val,2)}배`, x + 18, baseY - h - 10);
+      });
+
+      ctx.fillStyle = '#60708f';
+      ctx.font = '14px Segoe UI';
+      ctx.fillText('기준 조건: L=50 m, D=0.100 m, V=2.00 m/s, f=0.020일 때 hf≈2.04 m', pad.left, 315);
+    }
+
+    function chooseNote(L, D, V, f, hf) {
+      if (V >= 5) return '유속 V가 큰 조건입니다. 달시-바이스바흐식에서 V는 제곱으로 작용하므로 손실수두가 매우 크게 증가합니다.';
+      if (D <= 0.05) return '관지름 D가 작은 조건입니다. 같은 유속이라도 L/D가 커져 주손실이 크게 증가합니다.';
+      if (L >= 200) return '관 길이 L이 긴 조건입니다. 직관 손실은 관 길이에 비례하여 증가합니다.';
+      if (f >= 0.05) return '마찰계수 f가 큰 조건입니다. 거친 관 또는 난류 조건에서는 f가 커져 주손실이 증가할 수 있습니다.';
+      if (hf < 0.5) return '현재 조건에서는 주손실이 비교적 작습니다. 짧은 관, 큰 관지름, 낮은 유속일수록 손실이 작아집니다.';
+      return '유속 V는 제곱으로 작용하므로, 유속이 커지면 주손실이 급격히 증가합니다.';
+    }
+
+    function update() {
+      const L = parseFloat(lSlider.value);
+      const D = parseFloat(dSlider.value);
+      const V = parseFloat(vSlider.value);
+      const f = parseFloat(fSlider.value);
+      const rho = parseFloat(rhoSlider.value);
+
+      const velocityHead = V * V / (2 * g);
+      const LD = L / D;
+      const hf = f * LD * velocityHead;
+      const dp = rho * g * hf;
+      currentV = V;
+
+      lValue.textContent = `${fmt(L,1)} m`;
+      dValue.textContent = `${fmt(D,3)} m`;
+      vValue.textContent = `${fmt(V,2)} m/s`;
+      fValue.textContent = `${fmt(f,3)}`;
+      rhoValue.textContent = `${comma(rho)} kg/m³`;
+
+      vhStat.textContent = `${fmt(velocityHead,3)} m`;
+      ldStat.textContent = `${comma(LD,0)}`;
+      hfStat.textContent = `${fmt(hf,2)} m`;
+      dpStat.textContent = `${fmt(dp / 1000,1)} kPa`;
+
+      formulaBox.innerHTML =
+        `hf = f × (L/D) × (V²/2g)<br>` +
+        `hf = ${fmt(f,3)} × (${fmt(L,1)}/${fmt(D,3)}) × (${fmt(V,2)}²/(2×9.81)) = ${fmt(hf,2)} m<br>` +
+        `ΔP = ρghf = ${comma(rho)}×9.81×${fmt(hf,2)} = ${fmt(dp / 1000,1)} kPa`;
+
+      noteBox.innerHTML = chooseNote(L, D, V, f, hf);
+      stateBadge.textContent = hf >= 10 ? '큰 주손실' : hf >= 2 ? '중간 주손실' : '작은 주손실';
+      stateBadge.style.background = hf >= 10 ? '#d64545' : hf >= 2 ? '#ff8c42' : '#21a366';
+
+      lPipeLabel.textContent = `L = ${fmt(L,1)} m`;
+      dPipeLabel.textContent = `D = ${fmt(D,3)} m`;
+      vPipeLabel.textContent = `V = ${fmt(V,2)} m/s`;
+      hfPipeLabel.textContent = `hf = ${fmt(hf,2)} m`;
+      subLabel.textContent = `주손실수두 ${fmt(hf,2)} m, 압력손실 ${fmt(dp / 1000,1)} kPa`;
+
+      const drop = Math.min(130, 25 + hf * 4);
+      energyLine.setAttribute('x1', '110');
+      energyLine.setAttribute('y1', '95');
+      energyLine.setAttribute('x2', '770');
+      energyLine.setAttribute('y2', String(95 + drop));
+      lossArrow.setAttribute('x1', '790');
+      lossArrow.setAttribute('y1', '95');
+      lossArrow.setAttribute('x2', '790');
+      lossArrow.setAttribute('y2', String(95 + drop));
+      hfPipeLabel.setAttribute('y', String(100 + drop / 2));
+
+      drawGraph(L, D, V, f, hf);
+    }
+
+    [lSlider, dSlider, vSlider, fSlider, rhoSlider].forEach(el => el.addEventListener('input', update));
+    drawStreams();
+    initParticles();
+    update();
+    animate();
+  </script>
+</body>
+</html>
