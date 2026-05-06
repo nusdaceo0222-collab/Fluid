@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>확대관·축소관 부차손실 시뮬레이터</title>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --panel: #ffffff;
+      --line: #d8e0ee;
+      --text: #1f2a44;
+      --muted: #60708f;
+      --accent: #2449d8;
+      --water: #7fb7ff;
+      --pipe: #2f3a4f;
+      --loss: #d64545;
+      --energy: #ff8c42;
+      --good: #21a366;
+      --warn-bg: #fff8ec;
+      --warn-line: #f1dba7;
+      --warn-text: #7a5a05;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+      background: linear-gradient(180deg, #eef3fb 0%, #f8fbff 100%);
+      color: var(--text);
+    }
+    .wrap {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    h1 { margin: 0 0 8px; font-size: 32px; }
+    .subtitle {
+      color: var(--muted);
+      line-height: 1.75;
+      margin-bottom: 20px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 420px 1fr;
+      gap: 20px;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      box-shadow: 0 8px 24px rgba(27, 52, 111, 0.08);
+      padding: 18px;
+    }
+    h2 { margin: 0 0 16px; font-size: 20px; }
+    .control-group { margin-bottom: 18px; }
+    .label-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+    .value { color: var(--accent); }
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+    select {
+      width: 100%;
+      padding: 11px 12px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fbfdff;
+      color: var(--text);
+      font-size: 15px;
+      font-weight: 700;
+    }
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-top: 10px;
+    }
+    .stat {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+      background: #fbfdff;
+    }
+    .stat-title {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .stat-value {
+      font-size: 23px;
+      font-weight: 800;
+      word-break: break-word;
+    }
+    .formula {
+      margin-top: 16px;
+      padding: 14px;
+      border-radius: 16px;
+      background: #f4f8ff;
+      border: 1px dashed #bdd1ff;
+      line-height: 1.9;
+      font-size: 15px;
+    }
+    .note-box {
+      margin-top: 16px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: var(--warn-bg);
+      border: 1px solid var(--warn-line);
+      color: var(--warn-text);
+      line-height: 1.7;
+      font-size: 14px;
+    }
+    .state-badge {
+      margin-top: 12px;
+      display: inline-block;
+      padding: 10px 14px;
+      border-radius: 999px;
+      color: white;
+      font-weight: 800;
+      font-size: 15px;
+      background: var(--loss);
+    }
+    .legend {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .swatch {
+      width: 14px;
+      height: 14px;
+      border-radius: 4px;
+      display: inline-block;
+      margin-right: 6px;
+      vertical-align: -2px;
+    }
+    .viewer-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 18px;
+    }
+    svg {
+      width: 100%;
+      height: auto;
+      display: block;
+      background: #fbfdff;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+    }
+    canvas {
+      width: 100%;
+      max-width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: #fff;
+    }
+    .caption { color: var(--muted); line-height: 1.7; font-size: 14px; }
+    @media (max-width: 1000px) { .grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>확대관·축소관 부차손실 시뮬레이터</h1>
+    <div class="subtitle">
+      관 지름이 갑자기 변할 때 발생하는 <strong>부차손실수두</strong>를 계산합니다. 확대관에서는 급확대 손실을 <strong>h<sub>m</sub> = (V₁−V₂)²/2g</strong>로 계산하고, 축소관에서는 <strong>h<sub>m</sub> = K V₂²/2g</strong> 형태로 계산합니다.
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h2>조작 패널</h2>
+
+        <div class="control-group">
+          <div class="label-row">
+            <span>관 형상 선택</span>
+            <span class="value" id="modeValue">확대관</span>
+          </div>
+          <select id="modeSelect">
+            <option value="expansion" selected>확대관: 작은 관 → 큰 관</option>
+            <option value="contraction">축소관: 큰 관 → 작은 관</option>
+          </select>
+        </div>
+
+        <div class="control-group">
+          <div class="label-row">
+            <span>작은 관 지름 D₁</span>
+            <span class="value" id="d1Value">0.080 m</span>
+          </div>
+          <input id="d1Slider" type="range" min="0.020" max="0.250" step="0.001" value="0.080" />
+        </div>
+
+        <div class="control-group">
+          <div class="label-row">
+            <span>큰 관 지름 D₂</span>
+            <span class="value" id="d2Value">0.160 m</span>
+          </div>
+          <input id="d2Slider" type="range" min="0.030" max="0.400" step="0.001" value="0.160" />
+        </div>
+
+        <div class="control-group">
+          <div class="label-row">
+            <span>유량 Q</span>
+            <span class="value" id="qValue">0.0200 m³/s</span>
+          </div>
+          <input id="qSlider" type="range" min="0.001" max="0.120" step="0.001" value="0.020" />
+        </div>
+
+        <div class="control-group" id="kGroup">
+          <div class="label-row">
+            <span>축소관 손실계수 K</span>
+            <span class="value" id="kValue">0.40</span>
+          </div>
+          <input id="kSlider" type="range" min="0.05" max="1.00" step="0.01" value="0.40" />
+        </div>
+
+        <div class="control-group">
+          <div class="label-row">
+            <span>유체 밀도 ρ</span>
+            <span class="value" id="rhoValue">1000 kg/m³</span>
+          </div>
+          <input id="rhoSlider" type="range" min="1" max="1500" step="1" value="1000" />
+        </div>
+
+        <div class="stat-grid">
+          <div class="stat">
+            <div class="stat-title">작은 관 속도 V₁</div>
+            <div class="stat-value" id="v1Stat">3.98 m/s</div>
+          </div>
+          <div class="stat">
+            <div class="stat-title">큰 관 속도 V₂</div>
+            <div class="stat-value" id="v2Stat">0.99 m/s</div>
+          </div>
+          <div class="stat">
+            <div class="stat-title">부차손실수두 hm</div>
+            <div class="stat-value" id="hmStat">0.46 m</div>
+          </div>
+          <div class="stat">
+            <div class="stat-title">압력손실 ΔP</div>
+            <div class="stat-value" id="dpStat">4.5 kPa</div>
+          </div>
+        </div>
+
+        <div id="stateBadge" class="state-badge">확대손실</div>
+
+        <div class="formula" id="formulaBox">
+          확대관: hm = (V₁−V₂)²/2g<br>
+          hm = (3.98−0.99)²/(2×9.81) = 0.46 m<br>
+          ΔP = ρghm = 4.5 kPa
+        </div>
+
+        <div class="note-box" id="noteBox">
+          확대관에서는 빠른 유동이 갑자기 넓은 관으로 들어가면서 박리와 와류가 발생하고, 속도차가 손실로 전환됩니다.
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>시각화</h2>
+        <div class="legend">
+          <span><span class="swatch" style="background:#7fb7ff"></span>배관 내 유동</span>
+          <span><span class="swatch" style="background:#d64545"></span>손실 영역</span>
+          <span><span class="swatch" style="background:#ff8c42"></span>에너지 손실</span>
+          <span><span class="swatch" style="background:#2449d8"></span>속도·치수 표시</span>
+        </div>
+
+        <div class="viewer-grid">
+          <svg viewBox="0 0 980 500" aria-label="확대관 축소관 부차손실 시각화">
+            <defs>
+              <marker id="arrowBlueMinor" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#2449d8"></path>
+              </marker>
+              <marker id="arrowRedMinor" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#d64545"></path>
+              </marker>
+              <linearGradient id="waterMinor" x1="0%" x2="100%" y1="0%" y2="0%">
+                <stop offset="0%" stop-color="#bfe0ff" />
+                <stop offset="100%" stop-color="#7fb7ff" />
+              </linearGradient>
+            </defs>
+
+            <g id="pipeGroup"></g>
+            <g id="streamGroup"></g>
+            <g id="vortexGroup"></g>
+            <g id="particleGroup"></g>
+
+            <line id="energyLine" x1="110" y1="85" x2="780" y2="135" stroke="#ff8c42" stroke-width="6" stroke-linecap="round" />
+            <text x="110" y="68" font-size="22" fill="#7a5a05" font-weight="800">에너지선 저하</text>
+            <line id="lossArrow" x1="800" y1="85" x2="800" y2="135" stroke="#d64545" stroke-width="4" marker-end="url(#arrowRedMinor)" />
+            <text id="hmPipeLabel" x="820" y="116" font-size="24" fill="#d64545" font-weight="800">hm = 0.46 m</text>
+
+            <line x1="125" y1="395" x2="315" y2="395" stroke="#2449d8" stroke-width="5" marker-end="url(#arrowBlueMinor)" />
+            <text id="leftVLabel" x="130" y="430" font-size="23" fill="#24324f" font-weight="700">V₁ = 3.98 m/s</text>
+
+            <line x1="610" y1="395" x2="800" y2="395" stroke="#2449d8" stroke-width="5" marker-end="url(#arrowBlueMinor)" />
+            <text id="rightVLabel" x="615" y="430" font-size="23" fill="#24324f" font-weight="700">V₂ = 0.99 m/s</text>
+
+            <text id="mainLabel" x="95" y="470" font-size="28" fill="#24324f" font-weight="800">확대관 손실: hm = (V₁−V₂)²/2g</text>
+          </svg>
+
+          <canvas id="graph" width="920" height="330"></canvas>
+          <div class="caption">
+            확대관·축소관 손실은 배관이 길어서 생기는 주손실이 아니라, <strong>단면 변화</strong> 때문에 생기는 부차손실입니다. 유속이 커질수록 속도수두가 커져 손실도 증가합니다.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const g = 9.81;
+
+    const modeSelect = document.getElementById('modeSelect');
+    const d1Slider = document.getElementById('d1Slider');
+    const d2Slider = document.getElementById('d2Slider');
+    const qSlider = document.getElementById('qSlider');
+    const kSlider = document.getElementById('kSlider');
+    const rhoSlider = document.getElementById('rhoSlider');
+
+    const modeValue = document.getElementById('modeValue');
+    const d1Value = document.getElementById('d1Value');
+    const d2Value = document.getElementById('d2Value');
+    const qValue = document.getElementById('qValue');
+    const kValue = document.getElementById('kValue');
+    const rhoValue = document.getElementById('rhoValue');
+    const kGroup = document.getElementById('kGroup');
+
+    const v1Stat = document.getElementById('v1Stat');
+    const v2Stat = document.getElementById('v2Stat');
+    const hmStat = document.getElementById('hmStat');
+    const dpStat = document.getElementById('dpStat');
+    const formulaBox = document.getElementById('formulaBox');
+    const noteBox = document.getElementById('noteBox');
+    const stateBadge = document.getElementById('stateBadge');
+
+    const pipeGroup = document.getElementById('pipeGroup');
+    const streamGroup = document.getElementById('streamGroup');
+    const vortexGroup = document.getElementById('vortexGroup');
+    const particleGroup = document.getElementById('particleGroup');
+    const hmPipeLabel = document.getElementById('hmPipeLabel');
+    const leftVLabel = document.getElementById('leftVLabel');
+    const rightVLabel = document.getElementById('rightVLabel');
+    const mainLabel = document.getElementById('mainLabel');
+    const energyLine = document.getElementById('energyLine');
+    const lossArrow = document.getElementById('lossArrow');
+
+    const canvas = document.getElementById('graph');
+    const ctx = canvas.getContext('2d');
+
+    let particles = [];
+    let currentSpeed = 2;
+    let currentMode = 'expansion';
+
+    function fmt(num, digits = 2) { return Number(num).toFixed(digits); }
+    function comma(num, digits = 0) { return Number(num).toLocaleString(undefined, { maximumFractionDigits: digits }); }
+
+    function area(D) { return Math.PI * D * D / 4; }
+
+    function ensureDiameters() {
+      let d1 = parseFloat(d1Slider.value);
+      let d2 = parseFloat(d2Slider.value);
+      if (d2 <= d1) {
+        d2 = Math.min(0.400, d1 + 0.010);
+        d2Slider.value = d2.toFixed(3);
+      }
+    }
+
+    function initParticles() {
+      particles = [];
+      for (let i = 0; i < 34; i++) {
+        particles.push({
+          x: 100 + Math.random() * 720,
+          y: 230 + Math.random() * 70,
+          seed: Math.random() * Math.PI * 2,
+          r: 4 + Math.random() * 2
+        });
+      }
+    }
+
+    function pipePath(mode) {
+      if (mode === 'expansion') {
+        return 'M 90 260 L 390 260 L 460 195 L 820 195 L 820 345 L 460 345 L 390 280 L 90 280 Z';
+      }
+      return 'M 90 195 L 450 195 L 520 260 L 820 260 L 820 280 L 520 280 L 450 345 L 90 345 Z';
+    }
+
+    function waterPath(mode) {
+      if (mode === 'expansion') {
+        return 'M 95 263 L 395 263 L 462 205 L 812 205 L 812 335 L 462 335 L 395 277 L 95 277 Z';
+      }
+      return 'M 95 205 L 445 205 L 518 263 L 812 263 L 812 277 L 518 277 L 445 335 L 95 335 Z';
+    }
+
+    function drawPipe(mode) {
+      pipeGroup.innerHTML = '';
+      const pipe = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      pipe.setAttribute('d', pipePath(mode));
+      pipe.setAttribute('fill', '#d9ecff');
+      pipe.setAttribute('stroke', '#2f3a4f');
+      pipe.setAttribute('stroke-width', '8');
+      pipe.setAttribute('stroke-linejoin', 'round');
+      pipeGroup.appendChild(pipe);
+
+      const water = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      water.setAttribute('d', waterPath(mode));
+      water.setAttribute('fill', 'url(#waterMinor)');
+      water.setAttribute('opacity', '0.92');
+      pipeGroup.appendChild(water);
+
+      const d1Text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      d1Text.setAttribute('x', mode === 'expansion' ? '105' : '105');
+      d1Text.setAttribute('y', mode === 'expansion' ? '245' : '185');
+      d1Text.setAttribute('font-size', '22');
+      d1Text.setAttribute('fill', '#24324f');
+      d1Text.setAttribute('font-weight', '800');
+      d1Text.textContent = mode === 'expansion' ? '작은 관 D₁' : '큰 관 D₂';
+      pipeGroup.appendChild(d1Text);
+
+      const d2Text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      d2Text.setAttribute('x', '620');
+      d2Text.setAttribute('y', mode === 'expansion' ? '185' : '245');
+      d2Text.setAttribute('font-size', '22');
+      d2Text.setAttribute('fill', '#24324f');
+      d2Text.setAttribute('font-weight', '800');
+      d2Text.textContent = mode === 'expansion' ? '큰 관 D₂' : '작은 관 D₁';
+      pipeGroup.appendChild(d2Text);
+    }
+
+    function drawStreams(mode) {
+      streamGroup.innerHTML = '';
+      for (let i = 0; i < 5; i++) {
+        const y = 252 + i * 9;
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        if (mode === 'expansion') {
+          const y2 = 225 + i * 22;
+          line.setAttribute('d', `M 110 ${y} C 250 ${y}, 360 ${y}, 455 ${y2} S 650 ${y2}, 790 ${y2}`);
+        } else {
+          const y1 = 225 + i * 22;
+          const y2 = 253 + i * 7;
+          line.setAttribute('d', `M 110 ${y1} C 280 ${y1}, 380 ${y1}, 515 ${y2} S 660 ${y2}, 790 ${y2}`);
+        }
+        line.setAttribute('fill', 'none');
+        line.setAttribute('stroke', '#2449d8');
+        line.setAttribute('stroke-width', '3');
+        line.setAttribute('opacity', '0.55');
+        streamGroup.appendChild(line);
+      }
+    }
+
+    function drawVortices(mode, intensity) {
+      vortexGroup.innerHTML = '';
+      const count = Math.min(8, Math.max(2, Math.round(2 + intensity * 5)));
+      for (let i = 0; i < count; i++) {
+        const c = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        const x = mode === 'expansion' ? 500 + i * 34 : 430 + i * 18;
+        const y = mode === 'expansion' ? (i % 2 === 0 ? 220 : 315) : (i % 2 === 0 ? 220 : 320);
+        const r = 14 + intensity * 10;
+        c.setAttribute('d', `M ${x} ${y} c ${r} -${r}, ${r*2} ${r}, 0 ${r*1.5} c -${r} ${r/2}, -${r*1.5} -${r/2}, -${r/3} -${r}`);
+        c.setAttribute('fill', 'none');
+        c.setAttribute('stroke', '#d64545');
+        c.setAttribute('stroke-width', '3');
+        c.setAttribute('opacity', '0.65');
+        vortexGroup.appendChild(c);
+      }
+    }
+
+    function drawParticles() {
+      particleGroup.innerHTML = '';
+      particles.forEach((p, idx) => {
+        const yy = p.y + Math.sin(p.seed + performance.now() * 0.004 + idx) * 3.5;
+        const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        c.setAttribute('cx', p.x);
+        c.setAttribute('cy', Math.min(Math.max(yy, 210), 330));
+        c.setAttribute('r', p.r);
+        c.setAttribute('fill', '#2449d8');
+        c.setAttribute('opacity', '0.70');
+        particleGroup.appendChild(c);
+      });
+    }
+
+    function animate() {
+      particles.forEach(p => {
+        p.x += 0.7 + currentSpeed * 0.20;
+        if (p.x > 810) p.x = 100;
+      });
+      drawParticles();
+      requestAnimationFrame(animate);
+    }
+
+    function drawGraph(Vsmall, Vlarge, hm, dp, mode, K) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const baseY = 255;
+      const maxH = 170;
+      const items = mode === 'expansion'
+        ? [
+          { label: 'V₁', val: Vsmall, desc: '작은 관 속도' },
+          { label: 'V₂', val: Vlarge, desc: '큰 관 속도' },
+          { label: 'V₁−V₂', val: Math.abs(Vsmall - Vlarge), desc: '속도차' },
+          { label: 'hm', val: hm, desc: '손실수두' },
+          { label: 'ΔP(kPa)', val: dp / 1000, desc: '압력손실' }
+        ]
+        : [
+          { label: 'V₂', val: Vlarge, desc: '큰 관 속도' },
+          { label: 'V₁', val: Vsmall, desc: '작은 관 속도' },
+          { label: 'K', val: K, desc: '손실계수' },
+          { label: 'hm', val: hm, desc: '손실수두' },
+          { label: 'ΔP(kPa)', val: dp / 1000, desc: '압력손실' }
+        ];
+
+      const maxVal = Math.max(...items.map(i => i.val), 1);
+      const barW = 92;
+      const gap = 68;
+      const startX = 90;
+
+      ctx.fillStyle = '#24324f';
+      ctx.font = 'bold 20px Segoe UI';
+      ctx.fillText(mode === 'expansion' ? '확대관 손실 영향 비교' : '축소관 손실 영향 비교', 70, 32);
+
+      ctx.strokeStyle = '#d8e0ee';
+      ctx.lineWidth = 1;
+      for (let i = 0; i <= 4; i++) {
+        const y = baseY - (i / 4) * maxH;
+        ctx.beginPath();
+        ctx.moveTo(70, y);
+        ctx.lineTo(canvas.width - 40, y);
+        ctx.stroke();
+      }
+
+      items.forEach((it, i) => {
+        const x = startX + i * (barW + gap);
+        const h = (it.val / maxVal) * maxH;
+        ctx.fillStyle = i >= 3 ? '#d64545' : '#7fb7ff';
+        if (i === 2) ctx.fillStyle = '#ff8c42';
+        ctx.fillRect(x, baseY - h, barW, h);
+        ctx.strokeStyle = '#24324f';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x, baseY - h, barW, h);
+
+        ctx.fillStyle = '#24324f';
+        ctx.font = 'bold 15px Segoe UI';
+        ctx.fillText(it.label, x + 22, baseY + 24);
+        ctx.font = '13px Segoe UI';
+        ctx.fillText(it.desc, x - 4, baseY + 45);
+        ctx.font = 'bold 14px Segoe UI';
+        ctx.fillText(fmt(it.val, 2), x + 20, baseY - h - 10);
+      });
+
+      ctx.fillStyle = '#60708f';
+      ctx.font = '14px Segoe UI';
+      ctx.fillText(mode === 'expansion' ? '확대관에서는 속도차가 클수록 손실이 커집니다.' : '축소관에서는 작은 관 속도와 손실계수 K가 손실을 좌우합니다.', 70, 315);
+    }
+
+    function update() {
+      ensureDiameters();
+      const mode = modeSelect.value;
+      const D1 = parseFloat(d1Slider.value); // small
+      const D2 = parseFloat(d2Slider.value); // large
+      const Q = parseFloat(qSlider.value);
+      const K = parseFloat(kSlider.value);
+      const rho = parseFloat(rhoSlider.value);
+
+      const Vsmall = Q / area(D1);
+      const Vlarge = Q / area(D2);
+      let hm;
+      let formula;
+      let note;
+      let badge;
+
+      if (mode === 'expansion') {
+        hm = Math.pow(Vsmall - Vlarge, 2) / (2 * g);
+        formula = `확대관: hm = (V₁−V₂)²/2g<br>` +
+          `hm = (${fmt(Vsmall,2)}−${fmt(Vlarge,2)})²/(2×9.81) = ${fmt(hm,3)} m<br>`;
+        note = '확대관에서는 빠른 유동이 갑자기 넓은 관으로 들어가면서 박리와 와류가 발생하고, 속도차가 손실로 전환됩니다.';
+        badge = '확대손실';
+      } else {
+        hm = K * Vsmall * Vsmall / (2 * g);
+        formula = `축소관: hm = K V₁²/2g<br>` +
+          `hm = ${fmt(K,2)}×${fmt(Vsmall,2)}²/(2×9.81) = ${fmt(hm,3)} m<br>`;
+        note = '축소관에서는 유동이 좁은 관으로 모이면서 수축부와 재확대 과정에서 손실이 발생합니다. 여기서는 작은 관 속도 V₁ 기준으로 계산합니다.';
+        badge = '축소손실';
+      }
+
+      const dp = rho * g * hm;
+      currentSpeed = Math.max(Vsmall, Vlarge);
+      currentMode = mode;
+
+      modeValue.textContent = mode === 'expansion' ? '확대관' : '축소관';
+      d1Value.textContent = `${fmt(D1,3)} m`;
+      d2Value.textContent = `${fmt(D2,3)} m`;
+      qValue.textContent = `${fmt(Q,4)} m³/s`;
+      kValue.textContent = fmt(K,2);
+      rhoValue.textContent = `${comma(rho)} kg/m³`;
+      kGroup.style.display = mode === 'expansion' ? 'none' : 'block';
+
+      v1Stat.textContent = `${fmt(Vsmall,2)} m/s`;
+      v2Stat.textContent = `${fmt(Vlarge,2)} m/s`;
+      hmStat.textContent = `${fmt(hm,3)} m`;
+      dpStat.textContent = `${fmt(dp / 1000,2)} kPa`;
+
+      stateBadge.textContent = badge;
+      stateBadge.style.background = hm >= 2 ? '#d64545' : hm >= 0.5 ? '#ff8c42' : '#21a366';
+      formulaBox.innerHTML = formula + `ΔP = ρghm = ${comma(rho)}×9.81×${fmt(hm,3)} = ${fmt(dp / 1000,2)} kPa`;
+      noteBox.innerHTML = note;
+
+      drawPipe(mode);
+      drawStreams(mode);
+      drawVortices(mode, Math.min(1.2, hm));
+
+      const drop = Math.min(120, 22 + hm * 24);
+      energyLine.setAttribute('y2', String(85 + drop));
+      lossArrow.setAttribute('y2', String(85 + drop));
+      hmPipeLabel.textContent = `hm = ${fmt(hm,3)} m`;
+      hmPipeLabel.setAttribute('y', String(92 + drop / 2));
+
+      if (mode === 'expansion') {
+        leftVLabel.textContent = `V₁ = ${fmt(Vsmall,2)} m/s`;
+        rightVLabel.textContent = `V₂ = ${fmt(Vlarge,2)} m/s`;
+        mainLabel.textContent = '확대관 손실: hm = (V₁−V₂)²/2g';
+      } else {
+        leftVLabel.textContent = `V₂ = ${fmt(Vlarge,2)} m/s`;
+        rightVLabel.textContent = `V₁ = ${fmt(Vsmall,2)} m/s`;
+        mainLabel.textContent = '축소관 손실: hm = K V₁²/2g';
+      }
+
+      drawGraph(Vsmall, Vlarge, hm, dp, mode, K);
+    }
+
+    [modeSelect, d1Slider, d2Slider, qSlider, kSlider, rhoSlider].forEach(el => el.addEventListener('input', update));
+    modeSelect.addEventListener('change', update);
+    initParticles();
+    update();
+    animate();
+  </script>
+</body>
+</html>
