@@ -1,554 +1,1222 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>압력 개념 학습 시뮬레이터</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="힘과 면적에 따른 압력, 깊이에 따른 정수압을 탐구하는 유체역학 학습 시뮬레이터">
+  <title>압력 개념 탐구 | Fluid Lab</title>
+
+  <script>
+    window.mathJaxReady = false;
+    window.MathJax = {
+      tex: {
+        inlineMath: [['\\(', '\\)']],
+        displayMath: [['\\[', '\\]']],
+        processEscapes: true
+      },
+      chtml: {
+        displayAlign: 'center',
+        displayIndent: '0'
+      },
+      startup: {
+        pageReady() {
+          return MathJax.startup.defaultPageReady().then(() => {
+            window.mathJaxReady = true;
+            window.dispatchEvent(new Event('mathjax-ready'));
+          });
+        }
+      }
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@4.0.0/tex-mml-chtml.js"></script>
+
   <style>
     :root {
-      --bg: #f4f7fb;
-      --panel: #ffffff;
-      --line: #d8e0ee;
-      --text: #1f2a44;
-      --muted: #60708f;
-      --accent: #2449d8;
-      --blue: #7fb7ff;
-      --orange: #ff8c42;
-      --green: #21a366;
-      --red: #d64545;
-      --warn-bg: #fff8ec;
-      --warn-line: #f1dba7;
-      --warn-text: #7a5a05;
+      color-scheme: light;
+      --ink-950: #0a1930;
+      --ink-900: #10233f;
+      --ink-700: #35516f;
+      --ink-500: #6b8097;
+      --line: #d9e4ec;
+      --line-strong: #bed0dc;
+      --paper: #ffffff;
+      --canvas: #eef5f7;
+      --navy: #123b5d;
+      --blue: #176b87;
+      --cyan: #14a6a6;
+      --cyan-soft: #def6f4;
+      --amber: #f59e0b;
+      --amber-soft: #fff3d5;
+      --red: #d94b4b;
+      --green: #178a65;
+      --shadow: 0 18px 48px rgba(12, 43, 63, 0.11);
+      --radius-xl: 24px;
+      --radius-lg: 18px;
+      --radius-md: 13px;
     }
 
     * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
     body {
       margin: 0;
-      font-family: "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
-      background: linear-gradient(180deg, #eef3fb 0%, #f8fbff 100%);
-      color: var(--text);
+      min-width: 320px;
+      font-family: Pretendard, "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+      color: var(--ink-950);
+      background:
+        radial-gradient(circle at 82% 3%, rgba(20, 166, 166, 0.12), transparent 24rem),
+        linear-gradient(180deg, #f8fbfc 0, var(--canvas) 100%);
     }
-    .wrap {
-      max-width: 1320px;
+
+    button, input { font: inherit; }
+    button { -webkit-tap-highlight-color: transparent; }
+
+    .app-shell {
+      width: min(1480px, 100%);
       margin: 0 auto;
-      padding: 24px;
+      padding: 22px clamp(16px, 2.5vw, 34px) 42px;
     }
-    h1 { margin: 0 0 8px; font-size: 32px; }
-    .subtitle {
-      color: var(--muted);
-      line-height: 1.75;
-      margin-bottom: 20px;
-    }
-    .grid {
-      display: grid;
-      grid-template-columns: 430px 1fr;
-      gap: 20px;
-    }
-    .card {
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: 22px;
-      box-shadow: 0 8px 24px rgba(27, 52, 111, 0.08);
-      padding: 18px;
-    }
-    h2 { margin: 0 0 16px; font-size: 20px; }
-    .control-group { margin-bottom: 18px; }
-    .label-row {
+
+    .topbar {
       display: flex;
+      align-items: center;
       justify-content: space-between;
-      gap: 12px;
-      margin-bottom: 8px;
-      font-weight: 700;
+      gap: 18px;
+      margin-bottom: 18px;
     }
-    .value { color: var(--accent); }
-    input[type="range"] {
-      width: 100%;
-      accent-color: var(--accent);
-      cursor: pointer;
-    }
-    .mode-row {
+
+    .brand {
       display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-bottom: 16px;
+      align-items: center;
+      gap: 11px;
+      color: var(--navy);
+      font-weight: 850;
+      letter-spacing: -0.02em;
     }
-    .mode-btn {
-      border: 1px solid #bfd0ff;
-      background: #fff;
-      color: var(--accent);
-      padding: 10px 14px;
+
+    .brand-mark {
+      display: grid;
+      place-items: center;
+      width: 38px;
+      height: 38px;
       border-radius: 12px;
-      font-weight: 800;
-      cursor: pointer;
-    }
-    .mode-btn.active {
-      background: var(--accent);
       color: white;
-      border-color: var(--accent);
+      background: linear-gradient(145deg, var(--blue), var(--cyan));
+      box-shadow: 0 8px 18px rgba(23, 107, 135, 0.25);
     }
-    .stat-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 12px;
-      margin-top: 10px;
+
+    .brand small {
+      display: block;
+      margin-top: 1px;
+      color: var(--ink-500);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
     }
-    .stat {
+
+    .header-actions { display: flex; gap: 8px; }
+
+    .icon-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      min-height: 40px;
+      padding: 0 13px;
       border: 1px solid var(--line);
-      border-radius: 16px;
-      padding: 14px;
-      background: #fbfdff;
+      border-radius: 12px;
+      color: var(--ink-700);
+      background: rgba(255,255,255,0.8);
+      font-weight: 750;
+      cursor: pointer;
+      transition: transform .18s ease, border-color .18s ease, background .18s ease;
     }
-    .stat-title {
-      font-size: 13px;
-      color: var(--muted);
-      margin-bottom: 6px;
+
+    .icon-button:hover { transform: translateY(-1px); border-color: var(--cyan); background: white; }
+    .icon-button:focus-visible, .mode-button:focus-visible, .preset:focus-visible, input:focus-visible {
+      outline: 3px solid rgba(20, 166, 166, 0.24);
+      outline-offset: 2px;
     }
-    .stat-value {
-      font-size: 23px;
-      font-weight: 800;
-      word-break: break-word;
-    }
-    .formula {
-      margin-top: 16px;
-      padding: 14px;
-      border-radius: 16px;
-      background: #f4f8ff;
-      border: 1px dashed #bdd1ff;
-      line-height: 1.9;
-      font-size: 15px;
-    }
-    .note-box {
-      margin-top: 16px;
-      padding: 12px 14px;
-      border-radius: 14px;
-      background: var(--warn-bg);
-      border: 1px solid var(--warn-line);
-      color: var(--warn-text);
-      line-height: 1.7;
-      font-size: 14px;
-    }
-    .legend {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-      margin-bottom: 12px;
-      color: var(--muted);
-      font-size: 14px;
-    }
-    .swatch {
-      width: 14px;
-      height: 14px;
-      border-radius: 4px;
-      display: inline-block;
-      margin-right: 6px;
-      vertical-align: -2px;
-    }
-    .viewer-grid {
+
+    .hero {
+      position: relative;
+      overflow: hidden;
       display: grid;
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 24px;
+      padding: clamp(22px, 3vw, 34px);
+      margin-bottom: 18px;
+      border: 1px solid rgba(18, 59, 93, 0.08);
+      border-radius: var(--radius-xl);
+      color: white;
+      background: linear-gradient(118deg, #0d2d49 0%, #154e67 58%, #147d83 100%);
+      box-shadow: var(--shadow);
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      right: -90px;
+      top: -135px;
+      width: 360px;
+      height: 360px;
+      border: 44px solid rgba(255,255,255,0.07);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 9px;
+      color: #a9eeeb;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: .06em;
+    }
+
+    .eyebrow::before { content: ""; width: 22px; height: 2px; background: currentColor; }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(29px, 3.5vw, 48px);
+      line-height: 1.16;
+      letter-spacing: -0.045em;
+    }
+
+    .hero p {
+      max-width: 760px;
+      margin: 12px 0 0;
+      color: rgba(255,255,255,.78);
+      font-size: clamp(14px, 1.35vw, 17px);
+      line-height: 1.75;
+    }
+
+    .hero-equation {
+      position: relative;
+      z-index: 1;
+      min-width: 250px;
+      padding: 18px 24px;
+      border: 1px solid rgba(255,255,255,.2);
+      border-radius: 18px;
+      background: rgba(255,255,255,.1);
+      backdrop-filter: blur(10px);
+      text-align: center;
+      font-size: clamp(18px, 2vw, 26px);
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(310px, 390px) minmax(0, 1fr);
+      align-items: start;
       gap: 18px;
     }
-    svg {
-      width: 100%;
-      height: auto;
-      display: block;
-      background: #fbfdff;
+
+    .panel {
       border: 1px solid var(--line);
-      border-radius: 18px;
+      border-radius: var(--radius-xl);
+      background: rgba(255,255,255,.94);
+      box-shadow: 0 10px 32px rgba(25, 63, 80, .07);
     }
-    canvas {
-      width: 100%;
-      max-width: 100%;
+
+    .controls-panel {
+      position: sticky;
+      top: 18px;
+      padding: 18px;
+    }
+
+    .section-kicker {
+      margin: 0 0 7px;
+      color: var(--cyan);
+      font-size: 12px;
+      font-weight: 850;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    h2 { margin: 0; font-size: 21px; letter-spacing: -.025em; }
+
+    .mode-switch {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5px;
+      margin: 17px 0 20px;
+      padding: 5px;
       border: 1px solid var(--line);
-      border-radius: 18px;
-      background: #fff;
+      border-radius: 15px;
+      background: #f1f6f8;
     }
-    .caption { color: var(--muted); line-height: 1.7; font-size: 14px; }
-    @media (max-width: 1000px) { .grid { grid-template-columns: 1fr; } }
+
+    .mode-button {
+      min-height: 48px;
+      border: 0;
+      border-radius: 11px;
+      color: var(--ink-500);
+      background: transparent;
+      font-weight: 820;
+      cursor: pointer;
+      transition: .2s ease;
+    }
+
+    .mode-button.active {
+      color: white;
+      background: var(--navy);
+      box-shadow: 0 7px 14px rgba(18, 59, 93, .2);
+    }
+
+    .control-stack { display: grid; gap: 19px; }
+    .control-group[hidden] { display: none; }
+
+    .label-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 9px;
+    }
+
+    .label-row label { font-weight: 820; }
+    .symbol { color: var(--cyan); font-style: italic; }
+
+    .number-wrap {
+      display: flex;
+      align-items: center;
+      width: 150px;
+      overflow: hidden;
+      border: 1px solid var(--line-strong);
+      border-radius: 10px;
+      background: #fbfdfe;
+    }
+
+    .number-wrap input {
+      min-width: 0;
+      width: 100%;
+      padding: 7px 2px 7px 9px;
+      border: 0;
+      outline: 0;
+      color: var(--ink-950);
+      background: transparent;
+      font-weight: 780;
+      text-align: right;
+    }
+
+    .number-wrap span {
+      flex: none;
+      padding: 0 9px 0 5px;
+      color: var(--ink-500);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      height: 7px;
+      margin: 4px 0 0;
+      border-radius: 999px;
+      outline: none;
+      appearance: none;
+      background: linear-gradient(90deg, var(--cyan) var(--fill, 50%), #dfe9ed var(--fill, 50%));
+      cursor: pointer;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      width: 21px;
+      height: 21px;
+      border: 4px solid white;
+      border-radius: 50%;
+      appearance: none;
+      background: var(--cyan);
+      box-shadow: 0 2px 9px rgba(10, 62, 74, .28);
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 14px;
+      height: 14px;
+      border: 4px solid white;
+      border-radius: 50%;
+      background: var(--cyan);
+      box-shadow: 0 2px 9px rgba(10, 62, 74, .28);
+    }
+
+    .scale-labels {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 5px;
+      color: var(--ink-500);
+      font-size: 10px;
+    }
+
+    .presets-wrap { margin-top: 21px; padding-top: 17px; border-top: 1px solid var(--line); }
+    .presets-title { margin: 0 0 9px; color: var(--ink-700); font-size: 13px; font-weight: 820; }
+    .presets { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+
+    .preset {
+      min-height: 39px;
+      padding: 7px 8px;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      color: var(--ink-700);
+      background: white;
+      font-size: 12px;
+      font-weight: 760;
+      cursor: pointer;
+      transition: .18s ease;
+    }
+
+    .preset:hover { border-color: var(--cyan); color: var(--blue); background: #f3fbfb; }
+
+    .main-column { display: grid; gap: 18px; min-width: 0; }
+
+    .result-strip {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr 1fr;
+      gap: 10px;
+      padding: 12px;
+    }
+
+    .metric {
+      min-width: 0;
+      padding: 15px 17px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      background: #fbfdfe;
+    }
+
+    .metric.primary {
+      color: white;
+      border-color: transparent;
+      background: linear-gradient(135deg, var(--blue), var(--cyan));
+    }
+
+    .metric-label { margin-bottom: 7px; color: var(--ink-500); font-size: 12px; font-weight: 760; }
+    .metric.primary .metric-label { color: rgba(255,255,255,.75); }
+    .metric-value { overflow-wrap: anywhere; font-size: clamp(21px, 2.3vw, 31px); font-weight: 880; letter-spacing: -.04em; }
+    .metric-sub { margin-top: 5px; color: var(--ink-500); font-size: 11px; }
+    .metric.primary .metric-sub { color: rgba(255,255,255,.72); }
+
+    .visual-panel { overflow: hidden; }
+
+    .panel-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 15px;
+      padding: 18px 20px 13px;
+    }
+
+    .live-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 6px 9px;
+      border-radius: 999px;
+      color: var(--green);
+      background: #e9f8f2;
+      font-size: 11px;
+      font-weight: 850;
+    }
+
+    .live-badge::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 4px rgba(23,138,101,.12); }
+
+    .visual-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.08fr) minmax(310px, .92fr);
+      gap: 12px;
+      padding: 0 12px 12px;
+    }
+
+    .figure-card {
+      position: relative;
+      min-width: 0;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      background: linear-gradient(180deg, #fbfeff, #f2f8fa);
+    }
+
+    svg, canvas { display: block; width: 100%; height: auto; }
+    canvas { aspect-ratio: 1.28 / 1; }
+
+    .figure-label {
+      position: absolute;
+      left: 13px;
+      top: 12px;
+      z-index: 2;
+      padding: 5px 8px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: var(--ink-500);
+      background: rgba(255,255,255,.88);
+      font-size: 10px;
+      font-weight: 820;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+    }
+
+    .formula-card {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(250px, .62fr);
+      gap: 12px;
+      padding: 16px 18px 18px;
+      border-top: 1px solid var(--line);
+    }
+
+    .formula-stage {
+      display: grid;
+      place-items: center;
+      min-height: 104px;
+      overflow-x: auto;
+      padding: 14px;
+      border: 1px solid #bce5e2;
+      border-radius: var(--radius-lg);
+      color: var(--navy);
+      background: linear-gradient(135deg, #eefbfa, #f8fdfd);
+      font-size: clamp(15px, 1.55vw, 20px);
+    }
+
+    .formula-stage mjx-container { margin: 0 !important; max-width: 100%; }
+
+    .insight {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-height: 104px;
+      padding: 14px 16px;
+      border: 1px solid #f2d99c;
+      border-radius: var(--radius-lg);
+      color: #674808;
+      background: var(--amber-soft);
+      line-height: 1.58;
+    }
+
+    .insight strong { display: block; margin-bottom: 5px; color: #8a5a00; font-size: 13px; }
+    .insight span { font-size: 13px; }
+
+    .concept-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      padding: 0 18px 18px;
+    }
+
+    .concept {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 11px 13px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      color: var(--ink-700);
+      background: white;
+      font-size: 12px;
+      font-weight: 720;
+    }
+
+    .trend {
+      display: grid;
+      place-items: center;
+      flex: none;
+      width: 29px;
+      height: 29px;
+      border-radius: 9px;
+      color: var(--cyan);
+      background: var(--cyan-soft);
+      font-size: 16px;
+      font-weight: 900;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0,0,0,0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    @media (max-width: 1120px) {
+      .workspace { grid-template-columns: 330px minmax(0, 1fr); }
+      .visual-grid { grid-template-columns: 1fr; }
+      canvas { aspect-ratio: 2 / 1; }
+      .formula-card { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 820px) {
+      .app-shell { padding-top: 14px; }
+      .hero { grid-template-columns: 1fr; }
+      .hero-equation { display: none; }
+      .workspace { grid-template-columns: 1fr; }
+      .controls-panel { position: static; }
+      .result-strip { grid-template-columns: 1fr 1fr; }
+      .metric.primary { grid-column: 1 / -1; }
+      .concept-row { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 520px) {
+      .topbar .button-text { display: none; }
+      .hero { padding: 22px 19px; border-radius: 19px; }
+      .panel { border-radius: 19px; }
+      .result-strip { grid-template-columns: 1fr; }
+      .metric.primary { grid-column: auto; }
+      .visual-grid { padding-inline: 8px; }
+      .formula-card { padding-inline: 12px; }
+      .presets { grid-template-columns: 1fr 1fr; }
+      .number-wrap { width: 135px; }
+    }
+
+    @media print {
+      body { background: white; }
+      .app-shell { width: 100%; padding: 0; }
+      .topbar, .header-actions, .presets-wrap { display: none; }
+      .hero, .panel { box-shadow: none; break-inside: avoid; }
+      .workspace { grid-template-columns: 34% 1fr; }
+      .controls-panel { position: static; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; }
+    }
   </style>
 </head>
+
 <body>
-  <div class="wrap">
-    <h1>압력 개념 학습 시뮬레이터</h1>
-    <div class="subtitle">
-      압력의 기본 개념인 <strong>P = F/A</strong>와 정수압 개념인 <strong>P = ρgh</strong>를 한 번에 익힐 수 있는 시뮬레이터입니다. 위쪽 모드에서 <strong>힘-면적 압력</strong>과 <strong>깊이-정수압</strong>을 전환해 보면서 압력이 언제 커지고 작아지는지 직관적으로 확인할 수 있습니다.
-    </div>
-
-    <div class="grid">
-      <div class="card">
-        <h2>조작 패널</h2>
-
-        <div class="mode-row">
-          <button id="modeFA" class="mode-btn active">힘-면적 압력</button>
-          <button id="modeHydro" class="mode-btn">깊이-정수압</button>
-        </div>
-
-        <div class="control-group" id="forceGroup">
-          <div class="label-row">
-            <span>힘 F</span>
-            <span class="value" id="forceValue">100 N</span>
-          </div>
-          <input id="forceSlider" type="range" min="1" max="1000" step="1" value="100" />
-        </div>
-
-        <div class="control-group" id="areaGroup">
-          <div class="label-row">
-            <span>면적 A</span>
-            <span class="value" id="areaValue">0.0100 m²</span>
-          </div>
-          <input id="areaSlider" type="range" min="0.001" max="0.100" step="0.001" value="0.010" />
-        </div>
-
-        <div class="control-group" id="depthGroup" style="display:none;">
-          <div class="label-row">
-            <span>깊이 h</span>
-            <span class="value" id="depthValue">1.00 m</span>
-          </div>
-          <input id="depthSlider" type="range" min="0.00" max="10.00" step="0.01" value="1.00" />
-        </div>
-
-        <div class="control-group" id="rhoGroup" style="display:none;">
-          <div class="label-row">
-            <span>유체 밀도 ρ</span>
-            <span class="value" id="rhoValue">1000 kg/m³</span>
-          </div>
-          <input id="rhoSlider" type="range" min="100" max="13600" step="10" value="1000" />
-        </div>
-
-        <div class="control-group" id="gGroup" style="display:none;">
-          <div class="label-row">
-            <span>중력가속도 g</span>
-            <span class="value" id="gValue">9.81 m/s²</span>
-          </div>
-          <input id="gSlider" type="range" min="1.60" max="15.00" step="0.01" value="9.81" />
-        </div>
-
-        <div class="stat-grid">
-          <div class="stat">
-            <div class="stat-title">압력 P</div>
-            <div class="stat-value" id="pressureStat">10.0 kPa</div>
-          </div>
-          <div class="stat">
-            <div class="stat-title">Pa 단위</div>
-            <div class="stat-value" id="paStat">10000 Pa</div>
-          </div>
-          <div class="stat" id="auxStat1Box">
-            <div class="stat-title" id="auxStat1Title">면적당 힘</div>
-            <div class="stat-value" id="auxStat1">100/0.01</div>
-          </div>
-          <div class="stat" id="auxStat2Box">
-            <div class="stat-title" id="auxStat2Title">압력 해석</div>
-            <div class="stat-value" id="auxStat2">눌림 큼</div>
-          </div>
-        </div>
-
-        <div class="formula" id="formulaBox">
-          P = F/A = 100 / 0.0100 = 10,000 Pa = 10.0 kPa
-        </div>
-
-        <div class="note-box" id="noteBox">
-          같은 힘이라도 면적이 작아지면 압력은 커집니다. 그래서 바늘은 잘 찌르고, 넓은 신발은 같은 몸무게에서도 덜 눌립니다.
-        </div>
+  <main class="app-shell">
+    <header class="topbar">
+      <div class="brand" aria-label="Fluid Lab">
+        <span class="brand-mark" aria-hidden="true">∿</span>
+        <span>Fluid Lab<small>Interactive mechanics</small></span>
       </div>
+      <div class="header-actions">
+        <button class="icon-button" id="resetButton" type="button" title="현재 모드 초기화">
+          <span aria-hidden="true">↺</span><span class="button-text">초기화</span>
+        </button>
+        <button class="icon-button" id="fullscreenButton" type="button" title="전체 화면">
+          <span aria-hidden="true">⛶</span><span class="button-text">전체 화면</span>
+        </button>
+      </div>
+    </header>
 
-      <div class="card">
-        <h2>시각화</h2>
-        <div class="legend">
-          <span><span class="swatch" style="background:#7fb7ff"></span>압력 작용 영역</span>
-          <span><span class="swatch" style="background:#2449d8"></span>힘/깊이 표시</span>
-          <span><span class="swatch" style="background:#ff8c42"></span>압력 크기</span>
-          <span><span class="swatch" style="background:#21a366"></span>비교 그래프</span>
+    <section class="hero" aria-labelledby="pageTitle">
+      <div>
+        <div class="eyebrow">PRESSURE CONCEPT</div>
+        <h1 id="pageTitle">압력은 힘이 아니라<br>힘의 집중 정도입니다</h1>
+        <p>힘·면적·깊이·밀도를 직접 바꾸며 압력이 달라지는 원인을 관찰하세요. 수치, 그림, 관계곡선과 계산식이 동시에 갱신됩니다.</p>
+      </div>
+      <div class="hero-equation" aria-label="압력의 두 가지 기본식">
+        \(P=\dfrac{F}{A}\)<br>
+        \(P=\rho gh\)
+      </div>
+    </section>
+
+    <div class="workspace">
+      <aside class="panel controls-panel" aria-labelledby="controlTitle">
+        <p class="section-kicker">Explore</p>
+        <h2 id="controlTitle">변수를 조절해 보세요</h2>
+
+        <div class="mode-switch" role="group" aria-label="압력 학습 모드">
+          <button id="modeFA" class="mode-button active" type="button" aria-pressed="true">힘 ÷ 면적</button>
+          <button id="modeHydro" class="mode-button" type="button" aria-pressed="false">깊이 × 밀도</button>
         </div>
 
-        <div class="viewer-grid">
-          <svg id="vizSvg" viewBox="0 0 980 520" aria-label="압력 개념 시각화">
-            <defs>
-              <marker id="arrowBluePC" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
-                <path d="M 0 0 L 10 5 L 0 10 z" fill="#2449d8"></path>
-              </marker>
-              <marker id="arrowOrangePC" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
-                <path d="M 0 0 L 10 5 L 0 10 z" fill="#ff8c42"></path>
-              </marker>
-            </defs>
-            <g id="faScene">
-              <rect x="120" y="320" width="340" height="40" rx="6" fill="#4b556b" />
-              <rect id="contactArea" x="230" y="280" width="120" height="40" rx="6" fill="#7fb7ff" stroke="#2449d8" stroke-width="3" />
-              <rect id="loadBlock" x="220" y="170" width="140" height="110" rx="12" fill="#d9ecff" stroke="#2449d8" stroke-width="4" />
-              <line x1="290" y1="100" x2="290" y2="165" stroke="#2449d8" stroke-width="5" marker-end="url(#arrowBluePC)" />
-              <text id="forceLabel" x="318" y="130" font-size="24" fill="#24324f" font-weight="700">F = 100 N</text>
-              <text id="areaLabel" x="220" y="395" font-size="24" fill="#24324f" font-weight="700">A = 0.0100 m²</text>
-              <g id="pressureArrows"></g>
-            </g>
-            <g id="hydroScene" style="display:none;">
-              <rect x="140" y="90" width="260" height="320" rx="8" fill="#ffffff" stroke="#24324f" stroke-width="4" />
-              <rect id="waterRect" x="145" y="250" width="250" height="155" fill="#bfe0ff" stroke="none" />
-              <line id="surfaceLine" x1="145" y1="250" x2="395" y2="250" stroke="#2449d8" stroke-width="4" />
-              <circle id="probePoint" cx="270" cy="330" r="8" fill="#ff8c42" />
-              <line id="depthArrow" x1="450" y1="250" x2="450" y2="330" stroke="#2449d8" stroke-width="4" marker-start="url(#arrowBluePC)" marker-end="url(#arrowBluePC)" />
-              <text id="depthLabelSvg" x="468" y="295" font-size="24" fill="#24324f" font-weight="700">h = 1.00 m</text>
-              <g id="pressureBars"></g>
-            </g>
-            <text id="mainVizLabel" x="120" y="60" font-size="30" fill="#24324f" font-weight="800">힘을 같은 면적에 작용시키면 압력이 생김</text>
-            <text id="subVizLabel" x="120" y="95" font-size="22" fill="#60708f">작은 면적일수록 같은 힘에서도 압력이 커짐</text>
-          </svg>
+        <div class="control-stack">
+          <div class="control-group" id="forceGroup">
+            <div class="label-row">
+              <label for="forceSlider">힘 <span class="symbol">F</span></label>
+              <span class="number-wrap"><input id="forceInput" type="number" min="1" max="1000" step="1" value="100" aria-label="힘 직접 입력"><span>N</span></span>
+            </div>
+            <input id="forceSlider" type="range" min="1" max="1000" step="1" value="100" aria-label="힘 F">
+            <div class="scale-labels"><span>1 N</span><span>1,000 N</span></div>
+          </div>
 
-          <canvas id="graph" width="920" height="330"></canvas>
-          <div class="caption" id="captionText">
-            그래프는 힘과 면적에 따른 압력 변화를 보여줍니다. 압력은 단위면적당 작용하는 힘이므로, 힘이 커질수록 증가하고 면적이 커질수록 감소합니다.
+          <div class="control-group" id="areaGroup">
+            <div class="label-row">
+              <label for="areaSlider">접촉 면적 <span class="symbol">A</span></label>
+              <span class="number-wrap"><input id="areaInput" type="number" min="0.0001" max="0.1" step="0.0001" value="0.01" aria-label="면적 직접 입력"><span>m²</span></span>
+            </div>
+            <input id="areaSlider" type="range" min="0.0001" max="0.1" step="0.0001" value="0.01" aria-label="접촉 면적 A">
+            <div class="scale-labels"><span>0.0001 m²</span><span>0.1000 m²</span></div>
+          </div>
+
+          <div class="control-group" id="depthGroup" hidden>
+            <div class="label-row">
+              <label for="depthSlider">깊이 <span class="symbol">h</span></label>
+              <span class="number-wrap"><input id="depthInput" type="number" min="0" max="10" step="0.01" value="1" aria-label="깊이 직접 입력"><span>m</span></span>
+            </div>
+            <input id="depthSlider" type="range" min="0" max="10" step="0.01" value="1" aria-label="깊이 h">
+            <div class="scale-labels"><span>수면 0 m</span><span>깊이 10 m</span></div>
+          </div>
+
+          <div class="control-group" id="rhoGroup" hidden>
+            <div class="label-row">
+              <label for="rhoSlider">유체 밀도 <span class="symbol">ρ</span></label>
+              <span class="number-wrap"><input id="rhoInput" type="number" min="100" max="13600" step="10" value="1000" aria-label="유체 밀도 직접 입력"><span>kg/m³</span></span>
+            </div>
+            <input id="rhoSlider" type="range" min="100" max="13600" step="10" value="1000" aria-label="유체 밀도 rho">
+            <div class="scale-labels"><span>100</span><span>13,600 kg/m³</span></div>
+          </div>
+
+          <div class="control-group" id="gravityGroup" hidden>
+            <div class="label-row">
+              <label for="gravitySlider">중력가속도 <span class="symbol">g</span></label>
+              <span class="number-wrap"><input id="gravityInput" type="number" min="1.6" max="15" step="0.01" value="9.81" aria-label="중력가속도 직접 입력"><span>m/s²</span></span>
+            </div>
+            <input id="gravitySlider" type="range" min="1.6" max="15" step="0.01" value="9.81" aria-label="중력가속도 g">
+            <div class="scale-labels"><span>1.60</span><span>15.00 m/s²</span></div>
           </div>
         </div>
-      </div>
+
+        <div class="presets-wrap">
+          <p class="presets-title">학습 예시 바로 적용</p>
+          <div class="presets" id="faPresets">
+            <button class="preset" type="button" data-preset="basic">기본 상태</button>
+            <button class="preset" type="button" data-preset="wide">넓은 받침</button>
+            <button class="preset" type="button" data-preset="heel">하이힐 굽</button>
+            <button class="preset" type="button" data-preset="pin">압정 끝</button>
+          </div>
+          <div class="presets" id="hydroPresets" hidden>
+            <button class="preset" type="button" data-preset="water">물 1 m</button>
+            <button class="preset" type="button" data-preset="sea">바닷물 10 m</button>
+            <button class="preset" type="button" data-preset="oil">기름 5 m</button>
+            <button class="preset" type="button" data-preset="moon">달의 물 10 m</button>
+          </div>
+        </div>
+      </aside>
+
+      <section class="main-column" aria-label="시뮬레이션 결과">
+        <div class="panel result-strip" aria-live="polite">
+          <article class="metric primary">
+            <div class="metric-label">계산된 게이지 압력</div>
+            <div class="metric-value" id="pressureMetric">10.00 kPa</div>
+            <div class="metric-sub" id="pressurePa">10,000 Pa</div>
+          </article>
+          <article class="metric">
+            <div class="metric-label" id="ratioLabel">기준 대비 압력</div>
+            <div class="metric-value" id="ratioMetric">1.00×</div>
+            <div class="metric-sub" id="ratioSub">기본값과 같음</div>
+          </article>
+          <article class="metric">
+            <div class="metric-label">압력 수준</div>
+            <div class="metric-value" id="levelMetric">낮음</div>
+            <div class="metric-sub" id="levelSub">면적에 분산된 상태</div>
+          </article>
+        </div>
+
+        <div class="panel visual-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="section-kicker">Observe</p>
+              <h2 id="visualTitle">압력의 분포와 관계곡선</h2>
+            </div>
+            <span class="live-badge">실시간 변화</span>
+          </div>
+
+          <div class="visual-grid">
+            <div class="figure-card">
+              <span class="figure-label">현상 모형</span>
+              <svg id="vizSvg" viewBox="0 0 680 430" role="img" aria-labelledby="svgTitle svgDesc">
+                <title id="svgTitle">압력 현상 시각화</title>
+                <desc id="svgDesc">선택한 힘, 면적 또는 깊이에 따른 압력의 변화를 그림으로 나타냅니다.</desc>
+                <defs>
+                  <linearGradient id="waterGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0" stop-color="#8de1e2" stop-opacity=".67"/>
+                    <stop offset="1" stop-color="#1689a7" stop-opacity=".92"/>
+                  </linearGradient>
+                  <linearGradient id="blockGradient" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0" stop-color="#dff7f5"/>
+                    <stop offset="1" stop-color="#a6dfdc"/>
+                  </linearGradient>
+                  <marker id="arrowNavy" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                    <path d="M0,0 L10,5 L0,10 Z" fill="#123b5d"/>
+                  </marker>
+                  <marker id="arrowAmber" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                    <path d="M0,0 L10,5 L0,10 Z" fill="#f59e0b"/>
+                  </marker>
+                  <filter id="softShadow" x="-20%" y="-20%" width="140%" height="150%">
+                    <feDropShadow dx="0" dy="8" stdDeviation="7" flood-color="#123b5d" flood-opacity=".16"/>
+                  </filter>
+                </defs>
+
+                <g id="faScene">
+                  <ellipse cx="320" cy="365" rx="220" ry="25" fill="#cbd9df" opacity=".45"/>
+                  <rect x="92" y="330" width="456" height="34" rx="9" fill="#35516f"/>
+                  <rect id="contactArea" x="260" y="312" width="120" height="20" rx="5" fill="#f59e0b"/>
+                  <rect id="loadBlock" x="250" y="160" width="140" height="152" rx="18" fill="url(#blockGradient)" stroke="#176b87" stroke-width="4" filter="url(#softShadow)"/>
+                  <line id="forceArrow" x1="320" y1="68" x2="320" y2="148" stroke="#123b5d" stroke-width="7" marker-end="url(#arrowNavy)"/>
+                  <text id="forceLabel" x="345" y="102" font-size="23" fill="#10233f" font-weight="800">F = 100 N</text>
+                  <text id="areaLabel" x="320" y="402" text-anchor="middle" font-size="21" fill="#35516f" font-weight="750">A = 0.0100 m²</text>
+                  <g id="pressureArrows"></g>
+                </g>
+
+                <g id="hydroScene" hidden>
+                  <path d="M135 80 V360 Q135 375 150 375 H475 Q490 375 490 360 V80" fill="#fff" stroke="#35516f" stroke-width="5"/>
+                  <rect id="waterRect" x="140" y="250" width="345" height="120" fill="url(#waterGradient)"/>
+                  <line id="surfaceLine" x1="140" y1="250" x2="485" y2="250" stroke="#176b87" stroke-width="4"/>
+                  <circle id="probePoint" cx="315" cy="316" r="10" fill="#f59e0b" stroke="#fff" stroke-width="4"/>
+                  <line id="depthArrow" x1="540" y1="250" x2="540" y2="316" stroke="#123b5d" stroke-width="4" marker-start="url(#arrowNavy)" marker-end="url(#arrowNavy)"/>
+                  <text id="depthLabel" x="558" y="290" font-size="21" fill="#10233f" font-weight="800">h = 1.00 m</text>
+                  <g id="pressureBars"></g>
+                  <text id="fluidLabel" x="315" y="116" text-anchor="middle" font-size="19" fill="#35516f" font-weight="750">ρ = 1,000 kg/m³</text>
+                </g>
+              </svg>
+            </div>
+
+            <div class="figure-card">
+              <span class="figure-label" id="graphLabel">P–A 관계</span>
+              <canvas id="graph" width="700" height="540" role="img" aria-label="압력 관계 그래프"></canvas>
+            </div>
+          </div>
+
+          <div class="formula-card">
+            <div class="formula-stage" id="formulaBox" aria-label="현재 값의 압력 계산식">
+              \[P=\frac{F}{A}=\frac{100\,\mathrm{N}}{0.0100\,\mathrm{m^2}}=10{,}000\,\mathrm{Pa}=10.00\,\mathrm{kPa}\]
+            </div>
+            <div class="insight">
+              <strong id="insightTitle">관찰 포인트</strong>
+              <span id="insightText">같은 힘이라도 접촉 면적이 작아지면 압력은 커집니다.</span>
+            </div>
+          </div>
+
+          <div class="concept-row" id="conceptRow">
+            <div class="concept"><span class="trend">↑</span><span>힘이 커지면<br>압력도 커진다</span></div>
+            <div class="concept"><span class="trend">↓</span><span>면적이 커지면<br>압력은 작아진다</span></div>
+            <div class="concept"><span class="trend">1/A</span><span>면적과 압력은<br>반비례한다</span></div>
+          </div>
+        </div>
+      </section>
     </div>
-  </div>
+  </main>
 
   <script>
-    const modeFA = document.getElementById('modeFA');
-    const modeHydro = document.getElementById('modeHydro');
-    const forceSlider = document.getElementById('forceSlider');
-    const areaSlider = document.getElementById('areaSlider');
-    const depthSlider = document.getElementById('depthSlider');
-    const rhoSlider = document.getElementById('rhoSlider');
-    const gSlider = document.getElementById('gSlider');
+    const $ = (id) => document.getElementById(id);
+    const state = { mode: 'fa' };
 
-    const forceValue = document.getElementById('forceValue');
-    const areaValue = document.getElementById('areaValue');
-    const depthValue = document.getElementById('depthValue');
-    const rhoValue = document.getElementById('rhoValue');
-    const gValue = document.getElementById('gValue');
+    const controls = {
+      force: { slider: $('forceSlider'), input: $('forceInput') },
+      area: { slider: $('areaSlider'), input: $('areaInput') },
+      depth: { slider: $('depthSlider'), input: $('depthInput') },
+      rho: { slider: $('rhoSlider'), input: $('rhoInput') },
+      gravity: { slider: $('gravitySlider'), input: $('gravityInput') }
+    };
 
-    const pressureStat = document.getElementById('pressureStat');
-    const paStat = document.getElementById('paStat');
-    const auxStat1Title = document.getElementById('auxStat1Title');
-    const auxStat1 = document.getElementById('auxStat1');
-    const auxStat2Title = document.getElementById('auxStat2Title');
-    const auxStat2 = document.getElementById('auxStat2');
-    const formulaBox = document.getElementById('formulaBox');
-    const noteBox = document.getElementById('noteBox');
+    const groups = {
+      force: $('forceGroup'), area: $('areaGroup'), depth: $('depthGroup'),
+      rho: $('rhoGroup'), gravity: $('gravityGroup')
+    };
 
-    const faScene = document.getElementById('faScene');
-    const hydroScene = document.getElementById('hydroScene');
-    const contactArea = document.getElementById('contactArea');
-    const loadBlock = document.getElementById('loadBlock');
-    const forceLabel = document.getElementById('forceLabel');
-    const areaLabel = document.getElementById('areaLabel');
-    const pressureArrows = document.getElementById('pressureArrows');
-    const waterRect = document.getElementById('waterRect');
-    const surfaceLine = document.getElementById('surfaceLine');
-    const probePoint = document.getElementById('probePoint');
-    const depthArrow = document.getElementById('depthArrow');
-    const depthLabelSvg = document.getElementById('depthLabelSvg');
-    const pressureBars = document.getElementById('pressureBars');
-    const mainVizLabel = document.getElementById('mainVizLabel');
-    const subVizLabel = document.getElementById('subVizLabel');
-    const captionText = document.getElementById('captionText');
+    const defaults = {
+      fa: { force: 100, area: 0.01 },
+      hydro: { depth: 1, rho: 1000, gravity: 9.81 }
+    };
 
-    const forceGroup = document.getElementById('forceGroup');
-    const areaGroup = document.getElementById('areaGroup');
-    const depthGroup = document.getElementById('depthGroup');
-    const rhoGroup = document.getElementById('rhoGroup');
-    const gGroup = document.getElementById('gGroup');
+    const presets = {
+      basic: { force: 100, area: 0.01 },
+      wide: { force: 700, area: 0.08 },
+      heel: { force: 600, area: 0.0005 },
+      pin: { force: 50, area: 0.0001 },
+      water: { depth: 1, rho: 1000, gravity: 9.81 },
+      sea: { depth: 10, rho: 1025, gravity: 9.81 },
+      oil: { depth: 5, rho: 850, gravity: 9.81 },
+      moon: { depth: 10, rho: 1000, gravity: 1.62 }
+    };
 
-    const canvas = document.getElementById('graph');
+    const canvas = $('graph');
     const ctx = canvas.getContext('2d');
+    let mathTimer = 0;
+    let mathQueue = Promise.resolve();
 
-    let mode = 'fa';
-
-    function fmt(num, digits = 2) { return Number(num).toFixed(digits); }
-    function comma(num) { return Math.round(num).toLocaleString(); }
-
-    function setMode(newMode) {
-      mode = newMode;
-      const fa = mode === 'fa';
-      modeFA.classList.toggle('active', fa);
-      modeHydro.classList.toggle('active', !fa);
-      forceGroup.style.display = fa ? '' : 'none';
-      areaGroup.style.display = fa ? '' : 'none';
-      depthGroup.style.display = fa ? 'none' : '';
-      rhoGroup.style.display = fa ? 'none' : '';
-      gGroup.style.display = fa ? 'none' : '';
-      faScene.style.display = fa ? '' : 'block';
-      hydroScene.style.display = fa ? 'none' : 'block';
-      update();
+    function clamp(value, min, max) {
+      return Math.min(max, Math.max(min, value));
     }
 
-    function drawFAScene(F, A, P) {
-      const width = 50 + (A - 0.001) / (0.099) * 180;
-      const x = 290 - width / 2;
-      contactArea.setAttribute('x', x);
-      contactArea.setAttribute('width', width);
-      loadBlock.setAttribute('x', x - 10);
-      loadBlock.setAttribute('width', width + 20);
-      forceLabel.textContent = `F = ${comma(F)} N`;
-      areaLabel.textContent = `A = ${fmt(A,4)} m²`;
-      pressureArrows.innerHTML = '';
-      const n = Math.max(3, Math.min(12, Math.round(P / 10000)));
-      for (let i = 0; i < n; i++) {
-        const px = x + 10 + (i + 0.5) * ((width - 20) / n);
-        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-        line.setAttribute('x1', px);
-        line.setAttribute('y1', 250);
-        line.setAttribute('x2', px);
-        line.setAttribute('y2', 314);
-        line.setAttribute('stroke', '#ff8c42');
-        line.setAttribute('stroke-width', '4');
-        line.setAttribute('marker-end', 'url(#arrowOrangePC)');
-        pressureArrows.appendChild(line);
-      }
-      mainVizLabel.textContent = '힘을 같은 면적에 작용시키면 압력이 생김';
-      subVizLabel.textContent = '작은 면적일수록 같은 힘에서도 압력이 커짐';
-    }
-
-    function drawHydroScene(h, rho, g, P) {
-      const waterTop = 120;
-      const bottom = 405;
-      const maxH = 10;
-      const y = bottom - (h / maxH) * 260;
-      waterRect.setAttribute('y', y);
-      waterRect.setAttribute('height', bottom - y);
-      surfaceLine.setAttribute('y1', y);
-      surfaceLine.setAttribute('y2', y);
-      probePoint.setAttribute('cy', y + Math.min((h / maxH) * 180, bottom - y - 10));
-      depthArrow.setAttribute('y1', y);
-      depthArrow.setAttribute('y2', probePoint.getAttribute('cy'));
-      depthLabelSvg.setAttribute('y', (y + parseFloat(probePoint.getAttribute('cy'))) / 2 + 6);
-      depthLabelSvg.textContent = `h = ${fmt(h,2)} m`;
-      pressureBars.innerHTML = '';
-      const n = Math.max(2, Math.min(12, Math.round(P / 10000)));
-      const py = parseFloat(probePoint.getAttribute('cy'));
-      for (let i = 0; i < n; i++) {
-        const len = 18 + i * 6;
-        const yy = py - (n * 5) / 2 + i * 8;
-        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-        line.setAttribute('x1', 405);
-        line.setAttribute('y1', yy);
-        line.setAttribute('x2', 405 + len);
-        line.setAttribute('y2', yy);
-        line.setAttribute('stroke', '#ff8c42');
-        line.setAttribute('stroke-width', '4');
-        line.setAttribute('marker-end', 'url(#arrowOrangePC)');
-        pressureBars.appendChild(line);
-      }
-      mainVizLabel.textContent = '유체는 깊어질수록 더 큰 압력을 가짐';
-      subVizLabel.textContent = '같은 유체에서는 깊이와 밀도가 커질수록 정수압이 증가함';
-    }
-
-    function drawFAGraph(F, A, P) {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      const pad = { left: 70, right: 30, top: 30, bottom: 50 };
-      const w = canvas.width - pad.left - pad.right;
-      const h = canvas.height - pad.top - pad.bottom;
-      const maxP = Math.max(P * 1.3, 1000);
-      ctx.strokeStyle = '#d6ddeb';
-      for (let i = 0; i <= 5; i++) {
-        const y = pad.top + i * h / 5;
-        ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(pad.left + w, y); ctx.stroke();
-      }
-      ctx.strokeStyle = '#1f2a44'; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(pad.left, pad.top); ctx.lineTo(pad.left, pad.top + h); ctx.lineTo(pad.left + w, pad.top + h); ctx.stroke();
-      ctx.fillStyle = '#44506d'; ctx.font = '14px Segoe UI';
-      ctx.fillText('비교', 18, 20);
-      const bars = [
-        { label: '힘 F', val: Math.min(F/10, maxP), color: '#7fb7ff', text: `${comma(F)} N` },
-        { label: '면적 A×10⁵', val: A*100000, color: '#2449d8', text: `${fmt(A,4)} m²` },
-        { label: '압력 P', val: P, color: '#21a366', text: `${fmt(P/1000,1)} kPa` }
-      ];
-      bars.forEach((b, i) => {
-        const x = pad.left + 120 + i * 220;
-        const bh = Math.min((b.val / maxP) * h, h);
-        ctx.fillStyle = b.color; ctx.fillRect(x, pad.top + h - bh, 90, bh);
-        ctx.strokeStyle = '#24324f'; ctx.strokeRect(x, pad.top + h - bh, 90, bh);
-        ctx.fillStyle = '#24324f'; ctx.fillText(b.label, x + 8, canvas.height - 14);
-        ctx.font = 'bold 13px Segoe UI'; ctx.fillText(b.text, x - 4, pad.top + h - bh - 8); ctx.font = '14px Segoe UI';
+    function number(value, digits = 0) {
+      return Number(value).toLocaleString('ko-KR', {
+        minimumFractionDigits: digits,
+        maximumFractionDigits: digits
       });
     }
 
-    function drawHydroGraph(depth, rho, g, P) {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      const pad = { left: 70, right: 30, top: 30, bottom: 50 };
-      const w = canvas.width - pad.left - pad.right;
-      const h = canvas.height - pad.top - pad.bottom;
-      const maxDepth = 10;
-      const maxP = rho * g * maxDepth;
-      ctx.strokeStyle = '#d6ddeb';
-      for (let i = 0; i <= 5; i++) {
-        const y = pad.top + i * h / 5;
-        ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(pad.left + w, y); ctx.stroke();
+    function texNumber(value, digits = 0) {
+      return number(value, digits).replace(/,/g, '{,}');
+    }
+
+    function valueOf(name) { return Number(controls[name].slider.value); }
+
+    function syncControl(name, rawValue, source) {
+      const pair = controls[name];
+      const min = Number(pair.slider.min);
+      const max = Number(pair.slider.max);
+      if (rawValue === '') return;
+      let value = Number(rawValue);
+      if (!Number.isFinite(value)) return;
+      value = clamp(value, min, max);
+      pair.slider.value = value;
+      pair.input.value = value;
+      setRangeFill(pair.slider);
+      if (source !== 'silent') update();
+    }
+
+    function setRangeFill(slider) {
+      const min = Number(slider.min);
+      const max = Number(slider.max);
+      const percent = ((Number(slider.value) - min) / (max - min)) * 100;
+      slider.style.setProperty('--fill', `${percent}%`);
+    }
+
+    Object.entries(controls).forEach(([name, pair]) => {
+      pair.slider.addEventListener('input', () => syncControl(name, pair.slider.value, 'slider'));
+      pair.input.addEventListener('input', () => syncControl(name, pair.input.value, 'input'));
+      pair.input.addEventListener('blur', () => {
+        if (pair.input.value === '') syncControl(name, pair.slider.value, 'input');
+      });
+      setRangeFill(pair.slider);
+    });
+
+    function setValues(values) {
+      Object.entries(values).forEach(([name, value]) => syncControl(name, value, 'silent'));
+      update();
+    }
+
+    function setMode(mode) {
+      state.mode = mode;
+      const fa = mode === 'fa';
+      $('modeFA').classList.toggle('active', fa);
+      $('modeHydro').classList.toggle('active', !fa);
+      $('modeFA').setAttribute('aria-pressed', String(fa));
+      $('modeHydro').setAttribute('aria-pressed', String(!fa));
+      groups.force.hidden = !fa;
+      groups.area.hidden = !fa;
+      groups.depth.hidden = fa;
+      groups.rho.hidden = fa;
+      groups.gravity.hidden = fa;
+      $('faPresets').hidden = !fa;
+      $('hydroPresets').hidden = fa;
+      $('faScene').hidden = !fa;
+      $('hydroScene').hidden = fa;
+      updateConceptCards(fa);
+      update();
+    }
+
+    function updateConceptCards(fa) {
+      $('conceptRow').innerHTML = fa
+        ? '<div class="concept"><span class="trend">↑</span><span>힘이 커지면<br>압력도 커진다</span></div><div class="concept"><span class="trend">↓</span><span>면적이 커지면<br>압력은 작아진다</span></div><div class="concept"><span class="trend">1/A</span><span>면적과 압력은<br>반비례한다</span></div>'
+        : '<div class="concept"><span class="trend">h</span><span>깊이가 깊을수록<br>압력이 커진다</span></div><div class="concept"><span class="trend">ρ</span><span>밀도가 클수록<br>압력이 커진다</span></div><div class="concept"><span class="trend">∝</span><span>정수압은 깊이에<br>선형 비례한다</span></div>';
+    }
+
+    function scheduleMath(tex) {
+      const box = $('formulaBox');
+      box.dataset.tex = tex;
+      if (!window.mathJaxReady) {
+        box.textContent = `\\[${tex}\\]`;
+        return;
       }
-      for (let i = 0; i <= 5; i++) {
-        const x = pad.left + i * w / 5;
-        ctx.beginPath(); ctx.moveTo(x, pad.top); ctx.lineTo(x, pad.top + h); ctx.stroke();
-      }
-      ctx.strokeStyle = '#1f2a44'; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(pad.left, pad.top); ctx.lineTo(pad.left, pad.top + h); ctx.lineTo(pad.left + w, pad.top + h); ctx.stroke();
-      ctx.fillStyle = '#44506d'; ctx.font = '14px Segoe UI';
-      ctx.fillText('깊이 h (m)', pad.left + w/2 - 25, canvas.height - 14);
-      ctx.save(); ctx.translate(18, pad.top + h/2 + 18); ctx.rotate(-Math.PI/2); ctx.fillText('압력 P (kPa)', 0, 0); ctx.restore();
-      for (let i = 0; i <= 5; i++) {
-        const dv = maxDepth * i / 5;
-        const x = pad.left + i * w / 5;
-        ctx.fillText(fmt(dv,1), x - 8, pad.top + h + 20);
-      }
-      for (let i = 0; i <= 5; i++) {
-        const pv = (maxP/1000) * (5 - i) / 5;
-        const y = pad.top + i * h / 5;
-        ctx.fillText(fmt(pv,1), 14, y + 4);
-      }
-      ctx.strokeStyle = '#21a366'; ctx.lineWidth = 3; ctx.beginPath();
-      ctx.moveTo(pad.left, pad.top + h);
-      ctx.lineTo(pad.left + w, pad.top);
-      ctx.stroke();
-      const xCur = pad.left + (depth/maxDepth) * w;
-      const yCur = pad.top + h - (P/maxP) * h;
-      ctx.setLineDash([6,6]); ctx.strokeStyle = '#ff8c42'; ctx.beginPath();
-      ctx.moveTo(xCur, pad.top + h); ctx.lineTo(xCur, yCur); ctx.moveTo(pad.left, yCur); ctx.lineTo(xCur, yCur); ctx.stroke(); ctx.setLineDash([]);
-      ctx.fillStyle = '#ff8c42'; ctx.beginPath(); ctx.arc(xCur, yCur, 6, 0, Math.PI*2); ctx.fill();
-      ctx.font = 'bold 13px Segoe UI'; ctx.fillText(`h=${fmt(depth,2)} m, P=${fmt(P/1000,2)} kPa`, Math.min(xCur + 10, canvas.width - 180), Math.max(yCur - 10, 24));
+      clearTimeout(mathTimer);
+      mathTimer = window.setTimeout(() => {
+        const latest = box.dataset.tex;
+        mathQueue = mathQueue.then(() => {
+          if (window.MathJax.typesetClear) window.MathJax.typesetClear([box]);
+          box.textContent = `\\[${latest}\\]`;
+          return window.MathJax.typesetPromise([box]);
+        }).catch((error) => {
+          console.warn('MathJax rendering failed:', error);
+          box.textContent = latest.replace(/\\,/g, ' ').replace(/\\mathrm\{([^}]+)\}/g, '$1');
+        });
+      }, 70);
+    }
+
+    window.addEventListener('mathjax-ready', () => {
+      const tex = $('formulaBox').dataset.tex;
+      if (tex) scheduleMath(tex);
+    });
+
+    function pressureLevel(P) {
+      if (P < 10000) return ['낮음', '비교적 작은 압력'];
+      if (P < 100000) return ['보통', '일상에서 관찰되는 범위'];
+      if (P < 1000000) return ['높음', '강한 압력 집중'];
+      return ['매우 높음', '매우 좁은 면적에 집중'];
     }
 
     function update() {
-      if (mode === 'fa') {
-        const F = parseFloat(forceSlider.value);
-        const A = parseFloat(areaSlider.value);
-        const P = F / A;
-        forceValue.textContent = `${comma(F)} N`;
-        areaValue.textContent = `${fmt(A,4)} m²`;
-        pressureStat.textContent = `${fmt(P/1000,1)} kPa`;
-        paStat.textContent = `${comma(P)} Pa`;
-        auxStat1Title.textContent = '면적당 힘';
-        auxStat1.textContent = `${comma(F)}/${fmt(A,4)}`;
-        auxStat2Title.textContent = '압력 해석';
-        auxStat2.textContent = P > 50000 ? '매우 큼' : P > 10000 ? '큼' : '작음';
-        formulaBox.innerHTML = `P = F/A = ${comma(F)} / ${fmt(A,4)} = ${comma(P)} Pa = ${fmt(P/1000,1)} kPa`;
-        noteBox.innerHTML = `같은 힘이라도 면적이 <strong>${fmt(A,4)} m²</strong>로 작아지면 압력은 커집니다. 압력은 힘 자체보다 <strong>얼마나 좁은 면적에 작용하느냐</strong>가 중요합니다.`;
-        captionText.textContent = '그래프는 힘과 면적에 따른 압력 변화를 보여줍니다. 압력은 단위면적당 작용하는 힘이므로, 힘이 커질수록 증가하고 면적이 커질수록 감소합니다.';
-        drawFAScene(F, A, P);
-        drawFAGraph(F, A, P);
-      } else {
-        const h = parseFloat(depthSlider.value);
-        const rho = parseFloat(rhoSlider.value);
-        const g = parseFloat(gSlider.value);
-        const P = rho * g * h;
-        depthValue.textContent = `${fmt(h,2)} m`;
-        rhoValue.textContent = `${comma(rho)} kg/m³`;
-        gValue.textContent = `${fmt(g,2)} m/s²`;
-        pressureStat.textContent = `${fmt(P/1000,2)} kPa`;
-        paStat.textContent = `${comma(P)} Pa`;
-        auxStat1Title.textContent = '깊이 h';
-        auxStat1.textContent = `${fmt(h,2)} m`;
-        auxStat2Title.textContent = '압력 해석';
-        auxStat2.textContent = P > 50000 ? '깊음' : P > 10000 ? '보통' : '얕음';
-        formulaBox.innerHTML = `P = ρgh = ${comma(rho)} × ${fmt(g,2)} × ${fmt(h,2)} = ${comma(P)} Pa = ${fmt(P/1000,2)} kPa`;
-        noteBox.innerHTML = `정지 유체에서는 깊이 <strong>${fmt(h,2)} m</strong>에서 압력이 생깁니다. 같은 유체라면 <strong>깊을수록</strong> 압력이 커지고, 같은 깊이라면 <strong>밀도가 클수록</strong> 압력이 커집니다.`;
-        captionText.textContent = '그래프는 깊이에 따라 정수압이 선형적으로 증가하는 관계를 보여줍니다. 정지 유체에서는 용기 모양이 아니라 깊이와 밀도가 압력을 결정합니다.';
-        drawHydroScene(h, rho, g, P);
-        drawHydroGraph(h, rho, g, P);
-      }
+      if (state.mode === 'fa') updateFA();
+      else updateHydro();
     }
 
-    modeFA.addEventListener('click', () => setMode('fa'));
-    modeHydro.addEventListener('click', () => setMode('hydro'));
-    [forceSlider, areaSlider, depthSlider, rhoSlider, gSlider].forEach(el => el.addEventListener('input', update));
-    update();
+    function updateFA() {
+      const F = valueOf('force');
+      const A = valueOf('area');
+      const P = F / A;
+      const baseP = defaults.fa.force / defaults.fa.area;
+      const ratio = P / baseP;
+      const [level, description] = pressureLevel(P);
+
+      $('pressureMetric').textContent = `${number(P / 1000, P >= 100000 ? 1 : 2)} kPa`;
+      $('pressurePa').textContent = `${number(P, 0)} Pa`;
+      $('ratioMetric').textContent = `${number(ratio, 2)}×`;
+      $('ratioSub').textContent = ratio > 1.005 ? '기본값보다 큼' : ratio < .995 ? '기본값보다 작음' : '기본값과 같음';
+      $('levelMetric').textContent = level;
+      $('levelSub').textContent = description;
+      $('graphLabel').textContent = 'P–A 관계';
+      $('insightTitle').textContent = '관찰 포인트';
+      $('insightText').textContent = `현재 면적 ${number(A, 4)} m²에 힘 ${number(F)} N이 작용합니다. 면적을 절반으로 줄이면 압력은 2배가 됩니다.`;
+
+      const tex = `P=\\frac{F}{A}=\\frac{${texNumber(F)}\\,\\mathrm{N}}{${texNumber(A,4)}\\,\\mathrm{m^2}}=${texNumber(P)}\\,\\mathrm{Pa}=${texNumber(P/1000,2)}\\,\\mathrm{kPa}`;
+      scheduleMath(tex);
+      drawFAScene(F, A, P);
+      drawFAGraph(F, A);
+    }
+
+    function updateHydro() {
+      const h = valueOf('depth');
+      const rho = valueOf('rho');
+      const g = valueOf('gravity');
+      const P = rho * g * h;
+      const baseP = defaults.hydro.depth * defaults.hydro.rho * defaults.hydro.gravity;
+      const ratio = P / baseP;
+      const [level, description] = pressureLevel(P);
+
+      $('pressureMetric').textContent = `${number(P / 1000, 2)} kPa`;
+      $('pressurePa').textContent = `${number(P, 0)} Pa · 게이지압`;
+      $('ratioMetric').textContent = `${number(ratio, 2)}×`;
+      $('ratioSub').textContent = ratio > 1.005 ? '물 1 m보다 큼' : ratio < .995 ? '물 1 m보다 작음' : '물 1 m와 같음';
+      $('levelMetric').textContent = level;
+      $('levelSub').textContent = description;
+      $('graphLabel').textContent = 'P–h 관계';
+      $('insightTitle').textContent = '관찰 포인트';
+      $('insightText').textContent = `같은 유체에서 깊이가 2배가 되면 게이지압도 2배가 됩니다. 용기의 폭이나 모양은 결과에 들어가지 않습니다.`;
+
+      const tex = `P=\\rho gh=(${texNumber(rho)})(${texNumber(g,2)})(${texNumber(h,2)})=${texNumber(P)}\\,\\mathrm{Pa}=${texNumber(P/1000,2)}\\,\\mathrm{kPa}`;
+      scheduleMath(tex);
+      drawHydroScene(h, rho);
+      drawHydroGraph(h, rho, g);
+    }
+
+    function createSvgLine(x1, y1, x2, y2, color, marker) {
+      const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      Object.entries({ x1, y1, x2, y2, stroke: color, 'stroke-width': 4, 'stroke-linecap': 'round' }).forEach(([key, value]) => line.setAttribute(key, value));
+      if (marker) line.setAttribute('marker-end', marker);
+      return line;
+    }
+
+    function drawFAScene(F, A, P) {
+      const normalized = Math.pow((A - 0.0001) / (0.1 - 0.0001), .55);
+      const width = 32 + normalized * 255;
+      const x = 320 - width / 2;
+      const contact = $('contactArea');
+      const block = $('loadBlock');
+      contact.setAttribute('x', x);
+      contact.setAttribute('width', width);
+      block.setAttribute('x', x - 9);
+      block.setAttribute('width', width + 18);
+      $('forceLabel').textContent = `F = ${number(F)} N`;
+      $('areaLabel').textContent = `A = ${number(A,4)} m²`;
+
+      const arrows = $('pressureArrows');
+      arrows.replaceChildren();
+      const arrowCount = Math.max(3, Math.min(13, Math.round(3 + Math.log10(Math.max(P, 1000) / 1000) * 3)));
+      for (let i = 0; i < arrowCount; i++) {
+        const px = x + 8 + (i + .5) * ((width - 16) / arrowCount);
+        const arrow = createSvgLine(px, 270, px, 326, '#f59e0b', 'url(#arrowAmber)');
+        arrow.setAttribute('opacity', .72 + i / arrowCount * .25);
+        arrows.appendChild(arrow);
+      }
+      $('svgDesc').textContent = `힘 ${number(F)} 뉴턴이 면적 ${number(A,4)} 제곱미터에 작용하여 ${number(P/1000,2)} 킬로파스칼의 압력을 만드는 모습입니다.`;
+    }
+
+    function drawHydroScene(h, rho) {
+      const top = 92;
+      const bottom = 370;
+      const y = bottom - (h / 10) * (bottom - top);
+      $('waterRect').setAttribute('y', y);
+      $('waterRect').setAttribute('height', bottom - y);
+      $('surfaceLine').setAttribute('y1', y);
+      $('surfaceLine').setAttribute('y2', y);
+      const probeY = h === 0 ? y : bottom - 7;
+      $('probePoint').setAttribute('cy', probeY);
+      $('depthArrow').setAttribute('y1', y);
+      $('depthArrow').setAttribute('y2', probeY);
+      $('depthLabel').setAttribute('y', Math.max(112, (y + probeY) / 2 + 7));
+      $('depthLabel').textContent = `h = ${number(h,2)} m`;
+      $('fluidLabel').textContent = `ρ = ${number(rho)} kg/m³`;
+
+      const bars = $('pressureBars');
+      bars.replaceChildren();
+      const count = h === 0 ? 0 : 8;
+      for (let i = 0; i < count; i++) {
+        const yy = y + ((i + 1) / (count + 1)) * (bottom - y);
+        const length = 16 + ((yy - y) / Math.max(1, bottom - y)) * 52;
+        const arrow = createSvgLine(142, yy, 142 + length, yy, '#f59e0b', 'url(#arrowAmber)');
+        bars.appendChild(arrow);
+      }
+      $('svgDesc').textContent = `밀도 ${number(rho)} 킬로그램 매 세제곱미터의 유체에서 깊이 ${number(h,2)} 미터까지 압력이 증가하는 모습입니다.`;
+    }
+
+    function setupCanvas() {
+      const rect = canvas.getBoundingClientRect();
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const cssWidth = Math.max(320, Math.round(rect.width));
+      const cssHeight = Math.round(cssWidth / (window.innerWidth <= 1120 ? 2 : 1.28));
+      if (canvas.width !== Math.round(cssWidth * dpr) || canvas.height !== Math.round(cssHeight * dpr)) {
+        canvas.width = Math.round(cssWidth * dpr);
+        canvas.height = Math.round(cssHeight * dpr);
+      }
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      return { width: cssWidth, height: cssHeight };
+    }
+
+    function graphFrame(xLabel, yLabel) {
+      const { width, height } = setupCanvas();
+      const pad = { left: 58, right: 24, top: 50, bottom: 48 };
+      const w = width - pad.left - pad.right;
+      const h = height - pad.top - pad.bottom;
+      ctx.clearRect(0, 0, width, height);
+      ctx.fillStyle = '#f7fbfc';
+      ctx.fillRect(0, 0, width, height);
+      ctx.strokeStyle = '#dce7eb';
+      ctx.lineWidth = 1;
+      for (let i = 0; i <= 5; i++) {
+        const y = pad.top + i * h / 5;
+        ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(pad.left + w, y); ctx.stroke();
+        const x = pad.left + i * w / 5;
+        ctx.beginPath(); ctx.moveTo(x, pad.top); ctx.lineTo(x, pad.top + h); ctx.stroke();
+      }
+      ctx.strokeStyle = '#35516f';
+      ctx.lineWidth = 1.7;
+      ctx.beginPath();
+      ctx.moveTo(pad.left, pad.top);
+      ctx.lineTo(pad.left, pad.top + h);
+      ctx.lineTo(pad.left + w, pad.top + h);
+      ctx.stroke();
+      ctx.fillStyle = '#6b8097';
+      ctx.font = '12px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(xLabel, pad.left + w / 2, height - 13);
+      ctx.save();
+      ctx.translate(16, pad.top + h / 2);
+      ctx.rotate(-Math.PI / 2);
+      ctx.fillText(yLabel, 0, 0);
+      ctx.restore();
+      return { width, height, pad, w, h };
+    }
+
+    function drawPoint(x, y, label, bounds) {
+      ctx.setLineDash([5,5]);
+      ctx.strokeStyle = 'rgba(245,158,11,.72)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(x, bounds.pad.top + bounds.h);
+      ctx.lineTo(x, y);
+      ctx.moveTo(bounds.pad.left, y);
+      ctx.lineTo(x, y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = '#f59e0b';
+      ctx.beginPath(); ctx.arc(x, y, 6, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#10233f';
+      ctx.font = '700 12px system-ui, sans-serif';
+      ctx.textAlign = x > bounds.width * .72 ? 'right' : 'left';
+      ctx.fillText(label, x > bounds.width * .72 ? x - 9 : x + 9, Math.max(bounds.pad.top + 12, y - 10));
+    }
+
+    function drawFAGraph(F, currentA) {
+      const b = graphFrame('접촉 면적 A (m²)', '압력 P (kPa · 로그축)');
+      const minA = .0001;
+      const maxA = .1;
+      const maxP = F / minA;
+      const minP = F / maxA;
+      const logPMin = Math.log10(minP);
+      const logPMax = Math.log10(maxP);
+      ctx.strokeStyle = '#14a6a6';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      for (let i = 0; i <= 180; i++) {
+        const t = i / 180;
+        const A = minA + t * (maxA - minA);
+        const P = F / A;
+        const x = b.pad.left + t * b.w;
+        const y = b.pad.top + b.h - (Math.log10(P) - logPMin) / (logPMax - logPMin) * b.h;
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+      ctx.fillStyle = '#6b8097';
+      ctx.font = '11px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      for (let i = 0; i <= 5; i++) {
+        const A = minA + (maxA - minA) * i / 5;
+        ctx.fillText(i === 0 ? '0.0001' : number(A, 3), b.pad.left + i * b.w / 5, b.pad.top + b.h + 18);
+        const tickP = Math.pow(10, logPMax - (logPMax - logPMin) * i / 5) / 1000;
+        ctx.textAlign = 'right';
+        ctx.fillText(number(tickP, tickP < 10 ? 1 : 0), b.pad.left - 8, b.pad.top + i * b.h / 5 + 4);
+        ctx.textAlign = 'center';
+      }
+      const tCurrent = (currentA - minA) / (maxA - minA);
+      const pCurrent = F / currentA;
+      const x = b.pad.left + tCurrent * b.w;
+      const y = b.pad.top + b.h - (Math.log10(pCurrent) - logPMin) / (logPMax - logPMin) * b.h;
+      drawPoint(x, y, `${number(pCurrent/1000,1)} kPa`, b);
+    }
+
+    function drawHydroGraph(currentH, rho, g) {
+      const b = graphFrame('깊이 h (m)', '게이지압 P (kPa)');
+      const maxH = 10;
+      const maxP = rho * g * maxH;
+      ctx.strokeStyle = '#14a6a6';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(b.pad.left, b.pad.top + b.h);
+      ctx.lineTo(b.pad.left + b.w, b.pad.top);
+      ctx.stroke();
+      ctx.fillStyle = '#6b8097';
+      ctx.font = '11px system-ui, sans-serif';
+      for (let i = 0; i <= 5; i++) {
+        const x = b.pad.left + i * b.w / 5;
+        ctx.textAlign = 'center';
+        ctx.fillText(number(i * 2, 0), x, b.pad.top + b.h + 18);
+        const y = b.pad.top + i * b.h / 5;
+        ctx.textAlign = 'right';
+        ctx.fillText(number((maxP/1000) * (5-i)/5, 1), b.pad.left - 8, y + 4);
+      }
+      const x = b.pad.left + (currentH / maxH) * b.w;
+      const currentP = rho * g * currentH;
+      const y = b.pad.top + b.h - (maxP ? currentP / maxP : 0) * b.h;
+      drawPoint(x, y, `${number(currentP/1000,2)} kPa`, b);
+    }
+
+    $('modeFA').addEventListener('click', () => setMode('fa'));
+    $('modeHydro').addEventListener('click', () => setMode('hydro'));
+
+    document.querySelectorAll('.preset').forEach(button => {
+      button.addEventListener('click', () => setValues(presets[button.dataset.preset]));
+    });
+
+    $('resetButton').addEventListener('click', () => setValues(defaults[state.mode]));
+
+    $('fullscreenButton').addEventListener('click', async () => {
+      try {
+        if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
+        else await document.exitFullscreen();
+      } catch (_) {
+        $('fullscreenButton').title = '이 브라우저에서는 전체 화면을 사용할 수 없습니다.';
+      }
+    });
+
+    document.addEventListener('fullscreenchange', () => {
+      const text = $('fullscreenButton').querySelector('.button-text');
+      text.textContent = document.fullscreenElement ? '화면 복귀' : '전체 화면';
+    });
+
+    let resizeFrame = 0;
+    window.addEventListener('resize', () => {
+      cancelAnimationFrame(resizeFrame);
+      resizeFrame = requestAnimationFrame(update);
+    });
+
+    setMode('fa');
   </script>
 </body>
 </html>
