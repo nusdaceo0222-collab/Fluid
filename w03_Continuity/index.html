@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>연속방정식 시뮬레이터</title>
+  <title>2.4 연속방정식 시뮬레이터 | Fluid Lab</title>
+  <script>window.MathJax={tex:{inlineMath:[['\\(','\\)']],displayMath:[['\\[','\\]']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
   <style>
     :root {
       --bg: #f4f7fb;
@@ -34,6 +35,7 @@
       margin: 0 auto;
       padding: 24px;
     }
+    .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:26px}.brand{font-weight:800;color:#16324f}.brand b{display:inline-grid;place-items:center;width:32px;height:32px;margin-right:8px;border-radius:10px;background:#2449d8;color:#fff}.tools{display:flex;gap:8px}.tools button,.preset{font:inherit;font-size:13px;font-weight:700;border:1px solid var(--line);background:#fff;color:var(--muted);border-radius:10px;padding:9px 12px;cursor:pointer}.tools button:hover,.preset:hover{border-color:var(--accent);color:var(--accent)}.hero{display:grid;grid-template-columns:1fr auto;gap:20px;align-items:end;margin-bottom:22px}.eyebrow{font-size:13px;font-weight:800;letter-spacing:.1em;color:var(--accent)}.hero h1{font-size:38px;letter-spacing:-.05em;margin:5px 0 8px;color:#16324f}.hero-eq{padding:15px 20px;border-radius:16px;background:#f3f8ff;border:1px solid #cfe0f7;color:#16324f;font-size:18px}.presets{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:4px 0 18px}.preset{text-align:left}.preset strong{display:block;color:#16324f}.formula{text-align:center;font-size:16px}.result-row{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;margin-top:16px}.result{padding:13px;border-radius:15px;background:#f3f8ff;border:1px solid #cfe0f7}.result small{display:block;color:var(--muted);font-weight:700}.result b{font-size:22px;color:#16324f}.arrow{font-size:24px;color:var(--accent);font-weight:800}@media(max-width:980px){.hero{grid-template-columns:1fr}.hero-eq{min-width:0}}@media print{.topbar,.tools{display:none}.wrap{padding:0}.card{box-shadow:none}}
 
     h1 {
       margin: 0 0 8px;
@@ -189,15 +191,12 @@
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <h1>연속방정식 시뮬레이터</h1>
-    <div class="subtitle">
-      비압축성 유체의 연속방정식 <strong>Q = A₁V₁ = A₂V₂</strong>를 바탕으로, 관의 직경이 달라질 때 유속과 유량이 어떻게 변하는지 확인하는 HTML 시뮬레이터입니다.
-    </div>
+  <div class="wrap"><div class="topbar"><div class="brand"><b>FL</b>Fluid Lab · Interactive mechanics</div><div class="tools"><button id="resetBtn">↺ 초기화</button><button id="fullBtn">⛶ 전체화면</button></div></div><div class="hero"><div><div class="eyebrow">CHAPTER 2 · SECTION 2.4</div><h1>연속방정식 시뮬레이터</h1><div class="subtitle">관이 좁아질수록 같은 유량을 유지하기 위해 유속이 어떻게 빨라지는지 확인합니다.</div></div><div class="hero-eq">\(Q=A_1V_1=A_2V_2\)</div></div>
 
     <div class="grid">
       <div class="card">
         <h2>조작 패널</h2>
+        <div class="presets"><button class="preset" data-p="nozzle"><strong>노즐 가속</strong>D₂를 작게</button><button class="preset" data-p="expand"><strong>확대관 감속</strong>D₂를 크게</button><button class="preset" data-p="equal"><strong>같은 직경</strong>유속 비교</button><button class="preset" data-p="fast"><strong>빠른 유동</strong>V₁ 증가</button></div>
 
         <div class="control-group">
           <div class="label-row">
@@ -250,10 +249,7 @@
           </div>
         </div>
 
-        <div class="formula" id="formulaBox">
-          A₁V₁ = A₂V₂<br>
-          0.0707 × 2.00 = 0.0177 × 8.00
-        </div>
+        <div class="formula" id="formulaBox"></div>
 
         <div class="note-box">
           관이 좁아지면 같은 유량을 유지하기 위해 유속이 증가합니다. 비압축성, 정상유동 가정에서 연속방정식이 성립합니다.
@@ -309,6 +305,7 @@
           <div class="caption">
             그래프는 단면적이 줄어들수록 유속이 커지는 관계를 보여줍니다. 같은 유량 조건에서 <strong>V ∝ 1/A</strong> 관계가 나타납니다. 원형 관에서는 <strong>A = πD²/4</strong>를 사용합니다.
           </div>
+          <div class="result-row"><div class="result"><small>상류 유속 \(V_1\)</small><b id="upResult">2.00 m/s</b></div><div class="arrow">→</div><div class="result"><small>하류 유속 \(V_2\)</small><b id="downResult">8.00 m/s</b></div></div>
         </div>
       </div>
     </div>
@@ -330,6 +327,7 @@
     const v2Stat = document.getElementById('v2Stat');
     const qStat = document.getElementById('qStat');
     const formulaBox = document.getElementById('formulaBox');
+    const upResult=document.getElementById('upResult'), downResult=document.getElementById('downResult');
 
     const d1Label = document.getElementById('d1Label');
     const d2Label = document.getElementById('d2Label');
@@ -559,7 +557,9 @@
       v2Stat.textContent = `${fmt(v2, 2)} m/s`;
       qStat.textContent = `${fmt(q, 4)} m³/s`;
 
-      formulaBox.innerHTML = `Q = A₁V₁ = A₂V₂<br>${fmt(A1, 4)} × ${fmt(v1, 2)} = ${fmt(A2, 4)} × ${fmt(v2, 2)} = ${fmt(q, 4)} m³/s`;
+      upResult.textContent=`${fmt(v1,2)} m/s`; downResult.textContent=`${fmt(v2,2)} m/s`;
+      formulaBox.innerHTML=`\\[A_1=\\frac{\\pi D_1^2}{4}=${fmt(A1,4)}\\,\\mathrm{m^2}\\]\\[Q=A_1V_1=A_2V_2=${fmt(q,4)}\\,\\mathrm{m^3/s}\\]\\[V_2=\\frac{A_1V_1}{A_2}=${fmt(v2,2)}\\,\\mathrm{m/s}\\]`;
+      if(window.MathJax?.typesetPromise) MathJax.typesetPromise([formulaBox]).catch(()=>{});
 
       d1Label.textContent = `D₁ = ${fmt(d1, 2)} m`;
       d2Label.textContent = `D₂ = ${fmt(d2, 2)} m`;
@@ -572,6 +572,10 @@
     }
 
     [d1Slider, d2Slider, v1Slider, speedSlider].forEach(el => el.addEventListener('input', update));
+    const presets={nozzle:[.30,.15,2],expand:[.15,.30,4],equal:[.25,.25,3],fast:[.30,.15,6]};
+    document.querySelectorAll('[data-p]').forEach(b=>b.addEventListener('click',()=>{const [a,c,v]=presets[b.dataset.p];d1Slider.value=a;d2Slider.value=c;v1Slider.value=v;update()}));
+    document.getElementById('resetBtn').addEventListener('click',()=>{d1Slider.value=.30;d2Slider.value=.15;v1Slider.value=2;speedSlider.value=1;update()});
+    document.getElementById('fullBtn').addEventListener('click',()=>document.fullscreenElement?document.exitFullscreen?.():document.documentElement.requestFullscreen?.());
 
     initParticles();
     update();
