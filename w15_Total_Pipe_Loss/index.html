@@ -3,553 +3,93 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>직관·곡관·밸브 전체 배관손실 종합 시뮬레이터</title>
+  <title>8.12 종합 배관손실 시뮬레이터 | Fluid Lab</title>
+  <script>window.MathJax={tex:{inlineMath:[["\\(","\\)"]],displayMath:[["\\[","\\]"]]},options:{skipHtmlTags:["script","noscript","style","textarea","pre"]}};</script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
   <style>
-    :root {
-      --bg: #f4f7fb;
-      --panel: #ffffff;
-      --line: #d8e0ee;
-      --text: #1f2a44;
-      --muted: #60708f;
-      --accent: #2449d8;
-      --water: #7fb7ff;
-      --pipe: #2f3a4f;
-      --loss: #d64545;
-      --major: #2449d8;
-      --minor: #ff8c42;
-      --good: #21a366;
-      --warn-bg: #fff8ec;
-      --warn-line: #f1dba7;
-      --warn-text: #7a5a05;
-    }
-
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
-      background: linear-gradient(180deg, #eef3fb 0%, #f8fbff 100%);
-      color: var(--text);
-    }
-    .wrap { max-width: 1280px; margin: 0 auto; padding: 24px; }
-    h1 { margin: 0 0 8px; font-size: 32px; }
-    .subtitle { color: var(--muted); line-height: 1.75; margin-bottom: 20px; }
-    .grid { display: grid; grid-template-columns: 420px 1fr; gap: 20px; }
-    .card {
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: 22px;
-      box-shadow: 0 8px 24px rgba(27, 52, 111, 0.08);
-      padding: 18px;
-    }
-    h2 { margin: 0 0 16px; font-size: 20px; }
-    .control-group { margin-bottom: 18px; }
-    .label-row { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 8px; font-weight: 700; }
-    .value { color: var(--accent); }
-    input[type="range"] { width: 100%; accent-color: var(--accent); cursor: pointer; }
-    select {
-      width: 100%;
-      padding: 11px 12px;
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      background: #fbfdff;
-      color: var(--text);
-      font-size: 15px;
-      font-weight: 700;
-    }
-    .stat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 10px; }
-    .stat { border: 1px solid var(--line); border-radius: 16px; padding: 14px; background: #fbfdff; }
-    .stat-title { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
-    .stat-value { font-size: 23px; font-weight: 800; word-break: break-word; }
-    .formula {
-      margin-top: 16px;
-      padding: 14px;
-      border-radius: 16px;
-      background: #f4f8ff;
-      border: 1px dashed #bdd1ff;
-      line-height: 1.9;
-      font-size: 15px;
-    }
-    .note-box {
-      margin-top: 16px;
-      padding: 12px 14px;
-      border-radius: 14px;
-      background: var(--warn-bg);
-      border: 1px solid var(--warn-line);
-      color: var(--warn-text);
-      line-height: 1.7;
-      font-size: 14px;
-    }
-    .state-badge {
-      margin-top: 12px;
-      display: inline-block;
-      padding: 10px 14px;
-      border-radius: 999px;
-      color: white;
-      font-weight: 800;
-      font-size: 15px;
-      background: var(--loss);
-    }
-    .legend { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; color: var(--muted); font-size: 14px; }
-    .swatch { width: 14px; height: 14px; border-radius: 4px; display: inline-block; margin-right: 6px; vertical-align: -2px; }
-    .viewer-grid { display: grid; grid-template-columns: 1fr; gap: 18px; }
-    svg, canvas { width: 100%; max-width: 100%; border: 1px solid var(--line); border-radius: 18px; background: #fff; display: block; }
-    svg { background: #fbfdff; }
-    .caption { color: var(--muted); line-height: 1.7; font-size: 14px; }
-    @media (max-width: 1000px) { .grid { grid-template-columns: 1fr; } }
+    :root{--bg:#f4f7fb;--panel:#fff;--line:#d8e0ee;--text:#1f2a44;--muted:#60708f;--accent:#2449d8;--water:#73b7f3;--pipe:#2f3a4f;--major:#2449d8;--minor:#f08a3c;--loss:#d64545;--good:#16865c;--navy:#16324f;--warn-bg:#fff8ec;--warn-line:#f1dba7;--warn-text:#765506}
+    *{box-sizing:border-box}body{margin:0;font-family:"Segoe UI","Apple SD Gothic Neo","Malgun Gothic",sans-serif;background:linear-gradient(180deg,#eef3fb,#f8fbff);color:var(--text)}button,input,select{font:inherit}.wrap{max-width:1320px;margin:auto;padding:24px}.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:26px}.brand{font-weight:800;color:var(--navy)}.brand b{display:inline-grid;place-items:center;width:34px;height:34px;margin-right:8px;border-radius:8px;background:var(--accent);color:#fff}.tools{display:flex;gap:8px}.tools button,.preset{font-size:13px;font-weight:700;border:1px solid var(--line);background:#fff;color:var(--muted);border-radius:8px;padding:9px 12px;cursor:pointer}.tools button:hover,.preset:hover,.preset.active{border-color:var(--accent);color:var(--accent);background:#f3f7ff}.hero{display:grid;grid-template-columns:1fr auto;gap:22px;align-items:end;margin-bottom:22px}.eyebrow{font-size:13px;font-weight:800;color:var(--accent)}h1{margin:5px 0 8px;font-size:38px;color:var(--navy)}.subtitle{color:var(--muted);line-height:1.7}.hero-eq{padding:15px 20px;border-radius:8px;background:#f3f8ff;border:1px solid #cfe0f7;color:var(--navy);font-size:18px}.grid{display:grid;grid-template-columns:420px 1fr;gap:20px}.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;box-shadow:0 8px 24px rgba(27,52,111,.08);padding:18px}h2{margin:0 0 16px;font-size:20px}.presets{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px}.preset{text-align:left}.preset strong{display:block;color:var(--navy);margin-bottom:2px}.control-group{margin-bottom:15px}.label-row{display:flex;justify-content:space-between;gap:12px;margin-bottom:7px;font-weight:700}.value{color:var(--accent);white-space:nowrap}input[type=range]{width:100%;accent-color:var(--accent);cursor:pointer}select{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:#fbfdff;color:var(--text);font-size:15px;font-weight:700}.stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:10px}.stat{border:1px solid var(--line);border-radius:8px;padding:13px;background:#fbfdff}.stat.primary{background:#fff3f1;border-color:#f1cbc5}.stat-title{font-size:13px;color:var(--muted);margin-bottom:5px}.stat-value{font-size:21px;font-weight:800;word-break:break-word}.badge{margin-top:12px;display:flex;justify-content:space-between;gap:8px;padding:10px 14px;border-radius:8px;color:#fff;font-weight:800;background:var(--loss)}.formula{margin-top:16px;padding:14px;border-radius:8px;background:#f4f8ff;border:1px dashed #bdd1ff;line-height:1.8;font-size:15px;overflow-x:auto}.note{margin-top:14px;padding:12px 14px;border-radius:8px;background:var(--warn-bg);border:1px solid var(--warn-line);color:var(--warn-text);line-height:1.65;font-size:14px}.viewer{display:grid;gap:16px}.legend{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:14px}.swatch{display:inline-block;width:13px;height:13px;border-radius:3px;margin-right:5px;vertical-align:-1px}.pipe-view{width:100%;height:auto;display:block;border:1px solid var(--line);border-radius:8px;background:#fbfdff}.analysis-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.chart-box,.breakdown{border:1px solid var(--line);border-radius:8px;padding:14px;background:#fff}.chart-box canvas{display:block;width:100%;height:250px}.break-row{margin:12px 0}.break-head{display:flex;justify-content:space-between;font-size:14px;font-weight:700}.track{height:12px;margin-top:6px;background:#e8eef8;border-radius:6px;overflow:hidden}.fill{height:100%;transition:width .25s}.summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.summary{padding:12px;border:1px solid var(--line);border-radius:8px;background:#fbfdff}.summary small{display:block;color:var(--muted);margin-bottom:4px}.summary b{color:var(--navy);font-size:17px}.caption{color:var(--muted);line-height:1.65;font-size:14px}
+    @media(max-width:1000px){.grid,.hero{grid-template-columns:1fr}.hero-eq{justify-self:start}}@media(max-width:650px){.wrap{padding:15px}.topbar{align-items:flex-start;gap:10px}.brand{font-size:13px}.tools button{padding:8px}.tools button span{display:none}h1{font-size:29px}.presets,.stat-grid,.analysis-grid,.summary-grid{grid-template-columns:1fr}.card{padding:14px}}@media print{.topbar,.presets{display:none}.wrap{padding:0}.card{box-shadow:none}.grid{grid-template-columns:38% 62%;gap:10px}}@media(prefers-reduced-motion:reduce){*{transition:none!important}}
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <h1>직관·곡관·밸브 전체 배관손실 종합 시뮬레이터</h1>
-    <div class="subtitle">
-      직관의 <strong>주손실</strong>과 곡관·밸브의 <strong>부차손실</strong>을 합산하여 전체 손실수두와 압력손실을 계산합니다. 앞에서 학습한 달시-바이스바흐식, 무디선도, 부차손실식을 종합 적용하는 시뮬레이터입니다.
-    </div>
-
-    <div class="grid">
-      <div class="card">
-        <h2>조작 패널</h2>
-
-        <div class="control-group">
-          <div class="label-row"><span>유량 Q</span><span class="value" id="qValue">0.0200 m³/s</span></div>
-          <input id="qSlider" type="range" min="0.001" max="0.120" step="0.001" value="0.020" />
-        </div>
-
-        <div class="control-group">
-          <div class="label-row"><span>관지름 D</span><span class="value" id="dValue">0.100 m</span></div>
-          <input id="dSlider" type="range" min="0.020" max="0.400" step="0.001" value="0.100" />
-        </div>
-
-        <div class="control-group">
-          <div class="label-row"><span>직관 길이 L</span><span class="value" id="lValue">50 m</span></div>
-          <input id="lSlider" type="range" min="1" max="300" step="1" value="50" />
-        </div>
-
-        <div class="control-group">
-          <div class="label-row"><span>절대조도 ε</span><span class="value" id="epsValue">0.045 mm</span></div>
-          <input id="epsSlider" type="range" min="0.000001" max="0.005" step="0.000001" value="0.000045" />
-        </div>
-
-        <div class="control-group">
-          <div class="label-row"><span>90° 곡관 개수</span><span class="value" id="elbowValue">2 개</span></div>
-          <input id="elbowSlider" type="range" min="0" max="10" step="1" value="2" />
-        </div>
-
-        <div class="control-group">
-          <div class="label-row"><span>곡관 1개당 K</span><span class="value" id="elbowKValue">0.90</span></div>
-          <input id="elbowKSlider" type="range" min="0.10" max="2.00" step="0.05" value="0.90" />
-        </div>
-
-        <div class="control-group">
-          <div class="label-row"><span>밸브 종류</span><span class="value" id="valveTypeValue">글로브밸브</span></div>
-          <select id="valveTypeSelect">
-            <option value="gate">게이트밸브 K=0.15</option>
-            <option value="ball">볼밸브 K=0.05</option>
-            <option value="globe" selected>글로브밸브 K=10.0</option>
-            <option value="check">체크밸브 K=2.0</option>
-            <option value="custom">사용자 지정 K</option>
-          </select>
-        </div>
-
-        <div class="control-group">
-          <div class="label-row"><span>밸브 개수</span><span class="value" id="valveValue">1 개</span></div>
-          <input id="valveSlider" type="range" min="0" max="6" step="1" value="1" />
-        </div>
-
-        <div class="control-group" id="customKGroup">
-          <div class="label-row"><span>사용자 지정 밸브 K</span><span class="value" id="customKValue">1.00</span></div>
-          <input id="customKSlider" type="range" min="0.01" max="20.00" step="0.01" value="1.00" />
-        </div>
-
-        <div class="control-group">
-          <div class="label-row"><span>유체 밀도 ρ</span><span class="value" id="rhoValue">1000 kg/m³</span></div>
-          <input id="rhoSlider" type="range" min="1" max="1500" step="1" value="1000" />
-        </div>
-
-        <div class="control-group">
-          <div class="label-row"><span>점성계수 μ</span><span class="value" id="muValue">0.00100 Pa·s</span></div>
-          <input id="muSlider" type="range" min="0.00001" max="0.05000" step="0.00001" value="0.00100" />
-        </div>
-
-        <div class="stat-grid">
-          <div class="stat"><div class="stat-title">평균유속 V</div><div class="stat-value" id="vStat">2.55 m/s</div></div>
-          <div class="stat"><div class="stat-title">Re / f</div><div class="stat-value" id="refStat">254,648 / 0.018</div></div>
-          <div class="stat"><div class="stat-title">주손실 hf</div><div class="stat-value" id="hfStat">5.85 m</div></div>
-          <div class="stat"><div class="stat-title">부차손실 hm</div><div class="stat-value" id="hmStat">3.91 m</div></div>
-          <div class="stat"><div class="stat-title">전체 손실 hL</div><div class="stat-value" id="hLStat">9.76 m</div></div>
-          <div class="stat"><div class="stat-title">압력손실 ΔP</div><div class="stat-value" id="dpStat">95.7 kPa</div></div>
-        </div>
-
-        <div id="stateBadge" class="state-badge">전체 손실 큼</div>
-
-        <div class="formula" id="formulaBox">
-          hf = f(L/D)(V²/2g)<br>
-          hm = ΣK(V²/2g)<br>
-          hL = hf + hm
-        </div>
-
-        <div class="note-box" id="noteBox">
-          전체 손실은 직관 주손실과 부속품 부차손실의 합입니다. 실제 배관계에서는 둘 중 어느 항이 큰지 비교하는 것이 중요합니다.
-        </div>
+<main class="wrap">
+  <div class="topbar"><div class="brand"><b>FL</b>Fluid Lab · Interactive mechanics</div><div class="tools"><button id="pauseBtn">Ⅱ <span>일시정지</span></button><button id="resetBtn">↺ <span>초기화</span></button><button id="fullBtn">⛶ <span>전체화면</span></button></div></div>
+  <section class="hero"><div><div class="eyebrow">CHAPTER 8 · SECTION 8.12 · SIMULATOR 15 / 15</div><h1>종합 배관손실 시뮬레이터</h1><div class="subtitle">관 마찰과 곡관·밸브의 손실을 합산하고, 필요한 펌프 수두와 동력을 해석합니다.</div></div><div class="hero-eq">\(h_L=\left(f\dfrac{L}{D}+\sum K\right)\dfrac{V^2}{2g}\)</div></section>
+  <div class="grid">
+    <section class="card">
+      <h2>조작 패널</h2>
+      <div class="presets">
+        <button class="preset" data-preset="standard"><strong>기준 배관</strong>물 · 100 mm</button>
+        <button class="preset" data-preset="long"><strong>긴 직관</strong>주손실 우세</button>
+        <button class="preset" data-preset="fittings"><strong>부속품 다수</strong>부차손실 우세</button>
+        <button class="preset" data-preset="oil"><strong>점성 유체</strong>오일 조건</button>
       </div>
-
-      <div class="card">
-        <h2>시각화</h2>
-        <div class="legend">
-          <span><span class="swatch" style="background:#2449d8"></span>주손실</span>
-          <span><span class="swatch" style="background:#ff8c42"></span>부차손실</span>
-          <span><span class="swatch" style="background:#d64545"></span>전체 손실</span>
-          <span><span class="swatch" style="background:#7fb7ff"></span>배관 유동</span>
-        </div>
-
-        <div class="viewer-grid">
-          <svg viewBox="0 0 980 500" aria-label="전체 배관손실 종합 시각화">
-            <defs>
-              <marker id="arrowBlueTotal" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
-                <path d="M 0 0 L 10 5 L 0 10 z" fill="#2449d8"></path>
-              </marker>
-              <marker id="arrowRedTotal" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
-                <path d="M 0 0 L 10 5 L 0 10 z" fill="#d64545"></path>
-              </marker>
-              <linearGradient id="waterTotal" x1="0%" x2="100%" y1="0%" y2="0%">
-                <stop offset="0%" stop-color="#bfe0ff" />
-                <stop offset="100%" stop-color="#7fb7ff" />
-              </linearGradient>
-            </defs>
-
-            <path d="M 100 330 L 310 330 L 360 330 Q 440 330 440 250 L 440 190 Q 440 145 485 145 L 790 145" fill="none" stroke="#2f3a4f" stroke-width="74" stroke-linecap="round" stroke-linejoin="round" />
-            <path d="M 100 330 L 310 330 L 360 330 Q 440 330 440 250 L 440 190 Q 440 145 485 145 L 790 145" fill="none" stroke="url(#waterTotal)" stroke-width="50" stroke-linecap="round" stroke-linejoin="round" />
-            <path d="M 100 330 L 310 330 L 360 330 Q 440 330 440 250 L 440 190 Q 440 145 485 145 L 790 145" fill="none" stroke="#2449d8" stroke-width="4" stroke-dasharray="18 14" opacity="0.72" />
-
-            <g id="particleGroup"></g>
-            <g id="lossMarkGroup"></g>
-
-            <line id="energyLine" x1="110" y1="70" x2="790" y2="155" stroke="#d64545" stroke-width="6" stroke-linecap="round" />
-            <text x="110" y="52" font-size="22" fill="#7a1f1f" font-weight="800">총 에너지선 저하</text>
-            <line id="lossArrow" x1="812" y1="70" x2="812" y2="155" stroke="#d64545" stroke-width="4" marker-end="url(#arrowRedTotal)" />
-            <text id="totalLossLabel" x="832" y="118" font-size="24" fill="#d64545" font-weight="800">hL = 9.76 m</text>
-
-            <line x1="125" y1="395" x2="300" y2="395" stroke="#2449d8" stroke-width="5" marker-end="url(#arrowBlueTotal)" />
-            <text id="vPipeLabel" x="125" y="430" font-size="23" fill="#24324f" font-weight="700">V = 2.55 m/s</text>
-
-            <g transform="translate(610 145)">
-              <polygon points="-38,-24 0,0 -38,24" fill="#fff" stroke="#2f3a4f" stroke-width="5" />
-              <polygon points="38,-24 0,0 38,24" fill="#fff" stroke="#2f3a4f" stroke-width="5" />
-              <line x1="0" y1="-34" x2="0" y2="-62" stroke="#2f3a4f" stroke-width="5" />
-              <circle cx="0" cy="-72" r="15" fill="#fff" stroke="#2f3a4f" stroke-width="5" />
-            </g>
-
-            <text id="majorLabel" x="105" y="250" font-size="23" fill="#2449d8" font-weight="800">직관 주손실 hf = 5.85 m</text>
-            <text id="minorLabel" x="480" y="250" font-size="23" fill="#ff8c42" font-weight="800">곡관+밸브 hm = 3.91 m</text>
-            <text id="mainLabel" x="95" y="470" font-size="28" fill="#24324f" font-weight="800">hL = hf + hm = f(L/D)(V²/2g) + ΣK(V²/2g)</text>
-          </svg>
-
-          <canvas id="graph" width="920" height="330"></canvas>
-          <div class="caption">
-            이 종합 시뮬레이터는 앞 단계의 계산을 모두 연결합니다. <strong>무디선도에서 f 결정 → 직관 주손실 계산 → 곡관·밸브 K 합산 → 전체 손실수두 계산</strong> 순서로 해석합니다.
-          </div>
-        </div>
+      <div class="control-group"><div class="label-row"><span>유량 \(Q\)</span><span class="value" id="qValue"></span></div><input id="q" type="range" min="0.001" max="0.080" step="0.001" value="0.020"></div>
+      <div class="control-group"><div class="label-row"><span>관 지름 \(D\)</span><span class="value" id="dValue"></span></div><input id="d" type="range" min="0.030" max="0.300" step="0.001" value="0.100"></div>
+      <div class="control-group"><div class="label-row"><span>직관 길이 \(L\)</span><span class="value" id="lValue"></span></div><input id="l" type="range" min="1" max="300" step="1" value="50"></div>
+      <div class="control-group"><div class="label-row"><span>절대조도 \(\varepsilon\)</span><span class="value" id="epsValue"></span></div><input id="eps" type="range" min="0.000001" max="0.001500" step="0.000001" value="0.000045"></div>
+      <div class="control-group"><div class="label-row"><span>90° 곡관 개수</span><span class="value" id="elbowValue"></span></div><input id="elbowN" type="range" min="0" max="12" step="1" value="2"></div>
+      <div class="control-group"><div class="label-row"><span>곡관 1개당 \(K_e\)</span><span class="value" id="elbowKValue"></span></div><input id="elbowK" type="range" min="0.10" max="2.00" step="0.05" value="0.90"></div>
+      <div class="control-group"><div class="label-row"><span>밸브 종류</span><span class="value" id="valveName"></span></div><select id="valveType"><option value="0.05">볼밸브 · K=0.05</option><option value="0.15">게이트밸브 · K=0.15</option><option value="2">체크밸브 · K=2.0</option><option value="10" selected>글로브밸브 · K=10.0</option><option value="custom">사용자 지정</option></select></div>
+      <div class="control-group"><div class="label-row"><span>밸브 개수</span><span class="value" id="valveNValue"></span></div><input id="valveN" type="range" min="0" max="6" step="1" value="1"></div>
+      <div class="control-group" id="customGroup" hidden><div class="label-row"><span>사용자 지정 \(K_v\)</span><span class="value" id="customKValue"></span></div><input id="customK" type="range" min="0.01" max="20" step="0.01" value="1"></div>
+      <div class="control-group"><div class="label-row"><span>유체 밀도 \(\rho\)</span><span class="value" id="rhoValue"></span></div><input id="rho" type="range" min="700" max="1300" step="1" value="1000"></div>
+      <div class="control-group"><div class="label-row"><span>점성계수 \(\mu\)</span><span class="value" id="muValue"></span></div><input id="mu" type="range" min="0.0001" max="0.0500" step="0.0001" value="0.0010"></div>
+      <div class="control-group"><div class="label-row"><span>펌프 효율 \(\eta\)</span><span class="value" id="etaValue"></span></div><input id="eta" type="range" min="0.40" max="0.95" step="0.01" value="0.75"></div>
+      <div class="stat-grid">
+        <div class="stat"><div class="stat-title">평균유속 \(V\)</div><div class="stat-value" id="vStat"></div></div>
+        <div class="stat"><div class="stat-title">\(Re\) / \(f\)</div><div class="stat-value" id="refStat"></div></div>
+        <div class="stat"><div class="stat-title">주손실 \(h_f\)</div><div class="stat-value" id="hfStat"></div></div>
+        <div class="stat"><div class="stat-title">부차손실 \(h_m\)</div><div class="stat-value" id="hmStat"></div></div>
+        <div class="stat primary"><div class="stat-title">전체 손실 \(h_L\)</div><div class="stat-value" id="hlStat"></div></div>
+        <div class="stat primary"><div class="stat-title">압력손실 \(\Delta P\)</div><div class="stat-value" id="dpStat"></div></div>
       </div>
-    </div>
+      <div class="badge"><span id="stateText"></span><span id="dominantText"></span></div>
+      <div class="formula" id="formula"></div>
+      <div class="note" id="note"></div>
+    </section>
+    <section class="card viewer">
+      <div><h2>배관계 에너지선</h2><div class="legend"><span><i class="swatch" style="background:var(--major)"></i>주손실</span><span><i class="swatch" style="background:var(--minor)"></i>부차손실</span><span><i class="swatch" style="background:var(--loss)"></i>에너지선</span></div></div>
+      <svg class="pipe-view" viewBox="0 0 980 430" role="img" aria-label="곡관과 밸브가 포함된 배관의 에너지 손실">
+        <defs><linearGradient id="water" x1="0" x2="1"><stop stop-color="#bfe0ff"/><stop offset="1" stop-color="#73b7f3"/></linearGradient><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#d64545"/></marker></defs>
+        <path d="M80 330H350Q430 330 430 250V165Q430 120 475 120H875" fill="none" stroke="#2f3a4f" stroke-width="76" stroke-linecap="round"/>
+        <path d="M80 330H350Q430 330 430 250V165Q430 120 475 120H875" fill="none" stroke="url(#water)" stroke-width="52" stroke-linecap="round"/>
+        <path id="flowPath" d="M80 330H350Q430 330 430 250V165Q430 120 475 120H875" fill="none" stroke="#2449d8" stroke-width="5" stroke-dasharray="18 16" stroke-linecap="round"/>
+        <g transform="translate(650 120)"><polygon points="-37,-24 0,0 -37,24" fill="#fff" stroke="#2f3a4f" stroke-width="5"/><polygon points="37,-24 0,0 37,24" fill="#fff" stroke="#2f3a4f" stroke-width="5"/><line y1="-34" y2="-62" stroke="#2f3a4f" stroke-width="5"/><circle cy="-73" r="14" fill="#fff" stroke="#2f3a4f" stroke-width="5"/></g>
+        <line id="energyLine" x1="85" y1="55" x2="875" y2="160" stroke="#d64545" stroke-width="6" stroke-linecap="round"/><line id="dropArrow" x1="895" y1="55" x2="895" y2="160" stroke="#d64545" stroke-width="4" marker-end="url(#arrow)"/><text x="85" y="38" font-size="21" fill="#8b2525" font-weight="800">에너지선(EGL)</text><text id="lossLabel" x="720" y="205" font-size="22" fill="#d64545" font-weight="800"></text>
+        <text id="majorLabel" x="95" y="270" font-size="20" fill="#2449d8" font-weight="800"></text><text id="minorLabel" x="480" y="205" font-size="20" fill="#d66c20" font-weight="800"></text><text id="speedLabel" x="95" y="390" font-size="22" fill="#16324f" font-weight="800"></text>
+      </svg>
+      <div class="analysis-grid">
+        <div class="chart-box"><canvas id="chart" width="480" height="270"></canvas></div>
+        <div class="breakdown"><h2>손실 구성비</h2><div class="break-row"><div class="break-head"><span>직관 주손실</span><span id="majorPct"></span></div><div class="track"><div id="majorFill" class="fill" style="background:var(--major)"></div></div></div><div class="break-row"><div class="break-head"><span>곡관 손실</span><span id="elbowPct"></span></div><div class="track"><div id="elbowFill" class="fill" style="background:var(--minor)"></div></div></div><div class="break-row"><div class="break-head"><span>밸브 손실</span><span id="valvePct"></span></div><div class="track"><div id="valveFill" class="fill" style="background:#f2b261"></div></div></div><div class="summary-grid"><div class="summary"><small>총 손실계수</small><b id="totalK"></b></div><div class="summary"><small>등가 직관길이</small><b id="equivL"></b></div><div class="summary"><small>필요 펌프동력</small><b id="power"></b></div></div></div>
+      </div>
+      <div class="caption">마찰계수는 층류에서 \(64/Re\), 난류에서 Colebrook 식으로 계산합니다. 펌프동력은 배관 손실만 보상하는 최소 축동력이며 고도차와 토출 압력은 포함하지 않습니다.</div>
+    </section>
   </div>
-
-  <script>
-    const g = 9.81;
-    const valveKTable = {
-      gate: { name: '게이트밸브', K: 0.15 },
-      ball: { name: '볼밸브', K: 0.05 },
-      globe: { name: '글로브밸브', K: 10.0 },
-      check: { name: '체크밸브', K: 2.0 },
-      custom: { name: '사용자 지정 밸브', K: 1.0 }
-    };
-
-    const qSlider = document.getElementById('qSlider');
-    const dSlider = document.getElementById('dSlider');
-    const lSlider = document.getElementById('lSlider');
-    const epsSlider = document.getElementById('epsSlider');
-    const elbowSlider = document.getElementById('elbowSlider');
-    const elbowKSlider = document.getElementById('elbowKSlider');
-    const valveTypeSelect = document.getElementById('valveTypeSelect');
-    const valveSlider = document.getElementById('valveSlider');
-    const customKSlider = document.getElementById('customKSlider');
-    const rhoSlider = document.getElementById('rhoSlider');
-    const muSlider = document.getElementById('muSlider');
-
-    const qValue = document.getElementById('qValue');
-    const dValue = document.getElementById('dValue');
-    const lValue = document.getElementById('lValue');
-    const epsValue = document.getElementById('epsValue');
-    const elbowValue = document.getElementById('elbowValue');
-    const elbowKValue = document.getElementById('elbowKValue');
-    const valveTypeValue = document.getElementById('valveTypeValue');
-    const valveValue = document.getElementById('valveValue');
-    const customKValue = document.getElementById('customKValue');
-    const rhoValue = document.getElementById('rhoValue');
-    const muValue = document.getElementById('muValue');
-    const customKGroup = document.getElementById('customKGroup');
-
-    const vStat = document.getElementById('vStat');
-    const refStat = document.getElementById('refStat');
-    const hfStat = document.getElementById('hfStat');
-    const hmStat = document.getElementById('hmStat');
-    const hLStat = document.getElementById('hLStat');
-    const dpStat = document.getElementById('dpStat');
-    const formulaBox = document.getElementById('formulaBox');
-    const noteBox = document.getElementById('noteBox');
-    const stateBadge = document.getElementById('stateBadge');
-
-    const particleGroup = document.getElementById('particleGroup');
-    const lossMarkGroup = document.getElementById('lossMarkGroup');
-    const totalLossLabel = document.getElementById('totalLossLabel');
-    const vPipeLabel = document.getElementById('vPipeLabel');
-    const majorLabel = document.getElementById('majorLabel');
-    const minorLabel = document.getElementById('minorLabel');
-    const energyLine = document.getElementById('energyLine');
-    const lossArrow = document.getElementById('lossArrow');
-
-    const canvas = document.getElementById('graph');
-    const ctx = canvas.getContext('2d');
-
-    let particles = [];
-    let currentV = 2.5;
-
-    function fmt(num, digits = 2) { return Number(num).toFixed(digits); }
-    function comma(num, digits = 0) { return Number(num).toLocaleString(undefined, { maximumFractionDigits: digits }); }
-    function sci(num) { return Number(num).toExponential(2); }
-    function area(D) { return Math.PI * D * D / 4; }
-
-    function swameeJain(Re, relRough) {
-      return 0.25 / Math.pow(Math.log10(relRough / 3.7 + 5.74 / Math.pow(Re, 0.9)), 2);
-    }
-
-    function colebrook(Re, relRough) {
-      let f = swameeJain(Re, relRough);
-      for (let i = 0; i < 18; i++) {
-        const rhs = -2 * Math.log10(relRough / 3.7 + 2.51 / (Re * Math.sqrt(f)));
-        f = 1 / (rhs * rhs);
-      }
-      return f;
-    }
-
-    function frictionFactor(Re, relRough) {
-      if (Re < 2100) return 64 / Re;
-      if (Re <= 4000) {
-        const fLam = 64 / 2100;
-        const fTur = swameeJain(4000, relRough);
-        const t = (Re - 2100) / (4000 - 2100);
-        return fLam * (1 - t) + fTur * t;
-      }
-      return colebrook(Re, relRough);
-    }
-
-    function methodName(Re) {
-      if (Re < 2100) return '층류 f=64/Re';
-      if (Re <= 4000) return '천이영역 보간';
-      return '난류 Colebrook 근사';
-    }
-
-    function initParticles() {
-      particles = [];
-      for (let i = 0; i < 36; i++) {
-        particles.push({ t: Math.random(), r: 4 + Math.random() * 2, seed: Math.random() * Math.PI * 2 });
-      }
-    }
-
-    function pathPoint(t) {
-      if (t < 0.32) return { x: 100 + t / 0.32 * 260, y: 330 };
-      if (t < 0.55) {
-        const a = (t - 0.32) / 0.23;
-        const theta = Math.PI / 2 * a;
-        return { x: 360 + 80 * Math.sin(theta), y: 330 - 80 * (1 - Math.cos(theta)) };
-      }
-      if (t < 0.68) return { x: 440, y: 250 - (t - 0.55) / 0.13 * 105 };
-      return { x: 440 + (t - 0.68) / 0.32 * 350, y: 145 };
-    }
-
-    function drawParticles() {
-      particleGroup.innerHTML = '';
-      particles.forEach((p, idx) => {
-        const pt = pathPoint(p.t);
-        const wobble = Math.sin(p.seed + performance.now() * 0.004 + idx) * 3;
-        const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-        c.setAttribute('cx', pt.x);
-        c.setAttribute('cy', pt.y + wobble);
-        c.setAttribute('r', p.r);
-        c.setAttribute('fill', '#2449d8');
-        c.setAttribute('opacity', '0.72');
-        particleGroup.appendChild(c);
-      });
-    }
-
-    function animate() {
-      particles.forEach(p => {
-        p.t += 0.0014 + currentV * 0.0004;
-        if (p.t > 1) p.t = 0;
-      });
-      drawParticles();
-      requestAnimationFrame(animate);
-    }
-
-    function drawLossMarks(hf, hm) {
-      lossMarkGroup.innerHTML = '';
-      const majorN = Math.min(16, Math.max(3, Math.round(hf * 1.2)));
-      const minorN = Math.min(12, Math.max(2, Math.round(hm * 1.5)));
-
-      for (let i = 0; i < majorN; i++) {
-        const x = 120 + i * 18;
-        const y = 295 + (i % 2) * 62;
-        const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-        c.setAttribute('cx', x);
-        c.setAttribute('cy', y);
-        c.setAttribute('r', '5');
-        c.setAttribute('fill', '#2449d8');
-        c.setAttribute('opacity', '0.65');
-        lossMarkGroup.appendChild(c);
-      }
-
-      for (let i = 0; i < minorN; i++) {
-        const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        const x = i < minorN / 2 ? 365 + (i % 5) * 18 : 570 + (i % 6) * 18;
-        const y = i < minorN / 2 ? 285 - Math.floor(i / 5) * 24 : 165 + (i % 2) * 26;
-        p.setAttribute('d', `M ${x} ${y} c 18 -16, 34 10, 5 24 c -15 5, -24 -8, -6 -17`);
-        p.setAttribute('fill', 'none');
-        p.setAttribute('stroke', '#ff8c42');
-        p.setAttribute('stroke-width', '3');
-        p.setAttribute('opacity', '0.75');
-        lossMarkGroup.appendChild(p);
-      }
-    }
-
-    function drawGraph(hf, hm, hL, dp, sumK, f, Re) {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      const baseY = 255;
-      const maxH = 170;
-      const items = [
-        { label: '주손실 hf', val: hf, desc: '직관' },
-        { label: '부차손실 hm', val: hm, desc: '곡관·밸브' },
-        { label: '전체 hL', val: hL, desc: '합계' },
-        { label: 'ΣK', val: sumK, desc: '부속품 K' },
-        { label: 'ΔP(kPa)', val: dp / 1000, desc: '압력손실' }
-      ];
-      const maxVal = Math.max(...items.map(i => i.val), 1);
-      const barW = 92;
-      const gap = 68;
-      const startX = 90;
-
-      ctx.fillStyle = '#24324f';
-      ctx.font = 'bold 20px Segoe UI';
-      ctx.fillText('전체 배관손실 구성 비교', 70, 32);
-
-      ctx.strokeStyle = '#d8e0ee';
-      ctx.lineWidth = 1;
-      for (let i = 0; i <= 4; i++) {
-        const y = baseY - (i / 4) * maxH;
-        ctx.beginPath();
-        ctx.moveTo(70, y);
-        ctx.lineTo(canvas.width - 40, y);
-        ctx.stroke();
-      }
-
-      items.forEach((it, i) => {
-        const x = startX + i * (barW + gap);
-        const h = (it.val / maxVal) * maxH;
-        ctx.fillStyle = i === 0 ? '#2449d8' : i === 1 ? '#ff8c42' : i === 2 ? '#d64545' : '#7fb7ff';
-        ctx.fillRect(x, baseY - h, barW, h);
-        ctx.strokeStyle = '#24324f';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(x, baseY - h, barW, h);
-        ctx.fillStyle = '#24324f';
-        ctx.font = 'bold 15px Segoe UI';
-        ctx.fillText(it.label, x - 5, baseY + 24);
-        ctx.font = '13px Segoe UI';
-        ctx.fillText(it.desc, x + 8, baseY + 45);
-        ctx.font = 'bold 14px Segoe UI';
-        ctx.fillText(fmt(it.val, 2), x + 22, baseY - h - 10);
-      });
-
-      ctx.fillStyle = '#60708f';
-      ctx.font = '14px Segoe UI';
-      ctx.fillText(`Re=${comma(Re)}, f=${fmt(f,4)} / 전체손실 hL=${fmt(hL,2)} m`, 70, 315);
-    }
-
-    function update() {
-      const Q = parseFloat(qSlider.value);
-      const D = parseFloat(dSlider.value);
-      const L = parseFloat(lSlider.value);
-      const eps = parseFloat(epsSlider.value);
-      const elbowN = parseInt(elbowSlider.value, 10);
-      const elbowK = parseFloat(elbowKSlider.value);
-      const valveType = valveTypeSelect.value;
-      const valveN = parseInt(valveSlider.value, 10);
-      const customK = parseFloat(customKSlider.value);
-      const rho = parseFloat(rhoSlider.value);
-      const mu = parseFloat(muSlider.value);
-
-      const valveInfo = valveKTable[valveType];
-      const valveK = valveType === 'custom' ? customK : valveInfo.K;
-      const A = area(D);
-      const V = Q / A;
-      const Re = rho * V * D / mu;
-      const rel = eps / D;
-      const f = frictionFactor(Re, rel);
-      const velocityHead = V * V / (2 * g);
-      const hf = f * (L / D) * velocityHead;
-      const sumK = elbowN * elbowK + valveN * valveK;
-      const hm = sumK * velocityHead;
-      const hL = hf + hm;
-      const dp = rho * g * hL;
-      currentV = V;
-
-      qValue.textContent = `${fmt(Q,4)} m³/s`;
-      dValue.textContent = `${fmt(D,3)} m`;
-      lValue.textContent = `${comma(L)} m`;
-      epsValue.textContent = `${fmt(eps * 1000,3)} mm`;
-      elbowValue.textContent = `${elbowN} 개`;
-      elbowKValue.textContent = fmt(elbowK,2);
-      valveTypeValue.textContent = valveInfo.name;
-      valveValue.textContent = `${valveN} 개`;
-      customKValue.textContent = fmt(customK,2);
-      rhoValue.textContent = `${comma(rho)} kg/m³`;
-      muValue.textContent = `${fmt(mu,5)} Pa·s`;
-      customKGroup.style.display = valveType === 'custom' ? 'block' : 'none';
-
-      vStat.textContent = `${fmt(V,2)} m/s`;
-      refStat.textContent = `${comma(Re)} / ${fmt(f,4)}`;
-      hfStat.textContent = `${fmt(hf,2)} m`;
-      hmStat.textContent = `${fmt(hm,2)} m`;
-      hLStat.textContent = `${fmt(hL,2)} m`;
-      dpStat.textContent = `${fmt(dp / 1000,1)} kPa`;
-
-      stateBadge.textContent = hL >= 10 ? '전체 손실 큼' : hL >= 3 ? '전체 손실 중간' : '전체 손실 작음';
-      stateBadge.style.background = hL >= 10 ? '#d64545' : hL >= 3 ? '#ff8c42' : '#21a366';
-
-      formulaBox.innerHTML =
-        `Re = ρVD/μ = ${comma(Re)}, &nbsp; ε/D = ${sci(rel)}, &nbsp; f = ${fmt(f,4)} (${methodName(Re)})<br>` +
-        `hf = f(L/D)(V²/2g) = ${fmt(f,4)}×(${comma(L)}/${fmt(D,3)})×${fmt(velocityHead,3)} = ${fmt(hf,2)} m<br>` +
-        `ΣK = 곡관 ${elbowN}×${fmt(elbowK,2)} + 밸브 ${valveN}×${fmt(valveK,2)} = ${fmt(sumK,2)}<br>` +
-        `hm = ΣK(V²/2g) = ${fmt(sumK,2)}×${fmt(velocityHead,3)} = ${fmt(hm,2)} m<br>` +
-        `hL = hf + hm = ${fmt(hf,2)} + ${fmt(hm,2)} = ${fmt(hL,2)} m, &nbsp; ΔP = ${fmt(dp / 1000,1)} kPa`;
-
-      const dominant = hf > hm ? '현재 조건에서는 직관 길이와 마찰계수에 의한 주손실이 더 큽니다.' : '현재 조건에서는 곡관과 밸브에 의한 부차손실이 더 큽니다.';
-      noteBox.innerHTML = `${dominant} 유속은 주손실과 부차손실 모두에서 V² 항으로 작용하므로, 유량 증가가 전체 손실을 크게 증가시킵니다.`;
-
-      const drop = Math.min(145, 25 + hL * 7);
-      energyLine.setAttribute('y2', String(70 + drop));
-      lossArrow.setAttribute('y2', String(70 + drop));
-      totalLossLabel.textContent = `hL = ${fmt(hL,2)} m`;
-      totalLossLabel.setAttribute('y', String(78 + drop / 2));
-      vPipeLabel.textContent = `V = ${fmt(V,2)} m/s`;
-      majorLabel.textContent = `직관 주손실 hf = ${fmt(hf,2)} m`;
-      minorLabel.textContent = `곡관+밸브 hm = ${fmt(hm,2)} m`;
-
-      drawLossMarks(hf, hm);
-      drawGraph(hf, hm, hL, dp, sumK, f, Re);
-    }
-
-    [qSlider, dSlider, lSlider, epsSlider, elbowSlider, elbowKSlider, valveTypeSelect, valveSlider, customKSlider, rhoSlider, muSlider].forEach(el => el.addEventListener('input', update));
-    valveTypeSelect.addEventListener('change', update);
-    initParticles();
-    update();
-    animate();
-  </script>
+</main>
+<script>
+const g=9.81, $=id=>document.getElementById(id);
+const ids=['q','d','l','eps','elbowN','elbowK','valveType','valveN','customK','rho','mu','eta']; const controls=Object.fromEntries(ids.map(id=>[id,$(id)]));
+const presets={standard:{q:.020,d:.100,l:50,eps:.000045,elbowN:2,elbowK:.90,valveType:'10',valveN:1,customK:1,rho:1000,mu:.001,eta:.75},long:{q:.015,d:.100,l:180,eps:.000045,elbowN:1,elbowK:.90,valveType:'.15',valveN:1,customK:1,rho:1000,mu:.001,eta:.75},fittings:{q:.020,d:.100,l:15,eps:.000045,elbowN:8,elbowK:.90,valveType:'10',valveN:2,customK:1,rho:1000,mu:.001,eta:.75},oil:{q:.010,d:.080,l:50,eps:.000045,elbowN:2,elbowK:.90,valveType:'2',valveN:1,customK:1,rho:850,mu:.030,eta:.70}};
+let paused=false, mathQueue=Promise.resolve();
+function fnum(n,d=2){return Number(n).toFixed(d)} function comma(n,d=0){return Number(n).toLocaleString('ko-KR',{maximumFractionDigits:d})}
+function friction(Re,rr){if(Re<=0)return 0;if(Re<2100)return 64/Re;let f=.25/Math.pow(Math.log10(rr/3.7+5.74/Math.pow(Re,.9)),2);for(let i=0;i<14;i++){const x=-2*Math.log10(rr/3.7+2.51/(Re*Math.sqrt(f)));f=1/(x*x)}return f}
+function typeset(node){if(!window.MathJax?.typesetPromise)return;mathQueue=mathQueue.then(()=>MathJax.typesetClear([node])).then(()=>MathJax.typesetPromise([node])).catch(()=>{})}
+function drawChart(hf,he,hv){const c=$('chart'),ctx=c.getContext('2d'),vals=[hf,he,hv],labels=['직관','곡관','밸브'],colors=['#2449d8','#f08a3c','#f2b261'],max=Math.max(...vals,.01);ctx.clearRect(0,0,c.width,c.height);ctx.fillStyle='#16324f';ctx.font='bold 18px Segoe UI';ctx.fillText('손실수두 구성',18,25);ctx.strokeStyle='#d8e0ee';for(let i=0;i<4;i++){const y=220-i*50;ctx.beginPath();ctx.moveTo(45,y);ctx.lineTo(460,y);ctx.stroke()}vals.forEach((v,i)=>{const x=78+i*135,h=170*v/max;ctx.fillStyle=colors[i];ctx.fillRect(x,220-h,72,h);ctx.fillStyle='#1f2a44';ctx.font='bold 14px Segoe UI';ctx.textAlign='center';ctx.fillText(labels[i],x+36,244);ctx.fillText(`${fnum(v,2)} m`,x+36,210-h);});ctx.textAlign='left'}
+function update(){const v=Object.fromEntries(ids.map(id=>[id,controls[id].value]));const Q=+v.q,D=+v.d,L=+v.l,eps=+v.eps,nE=+v.elbowN,kE=+v.elbowK,nV=+v.valveN,rho=+v.rho,mu=+v.mu,eta=+v.eta,kV=v.valveType==='custom'?+v.customK:+v.valveType;const A=Math.PI*D*D/4,V=Q/A,Re=rho*V*D/mu,rr=eps/D,f=friction(Re,rr),vh=V*V/(2*g),hf=f*L/D*vh,he=nE*kE*vh,hv=nV*kV*vh,hm=he+hv,hL=hf+hm,dp=rho*g*hL,sumK=nE*kE+nV*kV,equivL=sumK*D/f,power=rho*g*Q*hL/eta;
+  $('qValue').textContent=`${fnum(Q,4)} m³/s`; $('dValue').textContent=`${fnum(D,3)} m`; $('lValue').textContent=`${comma(L)} m`; $('epsValue').textContent=`${fnum(eps*1000,3)} mm`; $('elbowValue').textContent=`${nE}개`; $('elbowKValue').textContent=fnum(kE,2); $('valveNValue').textContent=`${nV}개`; $('customKValue').textContent=fnum(kV,2); $('rhoValue').textContent=`${comma(rho)} kg/m³`; $('muValue').textContent=`${fnum(mu,4)} Pa·s`; $('etaValue').textContent=`${Math.round(eta*100)}%`;
+  const names={'0.05':'볼밸브','0.15':'게이트밸브','2':'체크밸브','10':'글로브밸브',custom:'사용자 지정'};$('valveName').textContent=names[v.valveType];$('customGroup').hidden=v.valveType!=='custom';
+  $('vStat').textContent=`${fnum(V,2)} m/s`; $('refStat').textContent=`${comma(Re)} / ${fnum(f,4)}`;$('hfStat').textContent=`${fnum(hf,2)} m`;$('hmStat').textContent=`${fnum(hm,2)} m`;$('hlStat').textContent=`${fnum(hL,2)} m`;$('dpStat').textContent=`${fnum(dp/1000,1)} kPa`;
+  $('stateText').textContent=hL>=10?'손실 큼':hL>=3?'손실 중간':'손실 작음';$('dominantText').textContent=hf>=hm?'주손실 우세':'부차손실 우세';$('stateText').parentElement.style.background=hL>=10?'#d64545':hL>=3?'#f08a3c':'#16865c';
+  $('formula').innerHTML=`\\[Re=\\frac{\\rho VD}{\\mu}=${comma(Re)},\quad f=${fnum(f,4)}\\]\\[h_f=f\\frac{L}{D}\\frac{V^2}{2g}=${fnum(hf,2)}\\,\\mathrm{m}\\]\\[h_m=\\sum K\\frac{V^2}{2g}=(${fnum(sumK,2)})(${fnum(vh,3)})=${fnum(hm,2)}\\,\\mathrm{m}\\]\\[h_L=h_f+h_m=${fnum(hL,2)}\\,\\mathrm{m},\quad \\Delta P=\\rho gh_L=${fnum(dp/1000,1)}\\,\\mathrm{kPa}\\]`;typeset($('formula'));
+  const ratio=hf/hL*100,flowMsg=V>3?'유속이 높습니다. 관경을 키우면 손실을 크게 줄일 수 있습니다.':'유속은 일반적인 학습 범위에 있습니다.';$('note').textContent=`${hf>=hm?'직관 마찰이':'곡관·밸브가'} 전체 손실을 지배합니다. ${flowMsg} 유량이 2배가 되면 난류 영역의 손실은 대체로 약 4배 증가합니다.`;
+  $('majorLabel').textContent=`주손실  h_f = ${fnum(hf,2)} m`;$('minorLabel').textContent=`부차손실  h_m = ${fnum(hm,2)} m`;$('speedLabel').textContent=`Q = ${fnum(Q*1000,1)} L/s   ·   V = ${fnum(V,2)} m/s`;$('lossLabel').textContent=`h_L = ${fnum(hL,2)} m`;
+  const drop=Math.min(125,30+hL*6);$('energyLine').setAttribute('y2',55+drop);$('dropArrow').setAttribute('y2',55+drop);$('lossLabel').setAttribute('y',100+drop);
+  const pcts=[hf/hL*100,he/hL*100,hv/hL*100];[['major',pcts[0]],['elbow',pcts[1]],['valve',pcts[2]]].forEach(([id,p])=>{$(id+'Pct').textContent=`${fnum(p,1)}%`;$(id+'Fill').style.width=`${p}%`});$('totalK').textContent=fnum(f*L/D+sumK,2);$('equivL').textContent=`${fnum(equivL,1)} m`;$('power').textContent=power>=1000?`${fnum(power/1000,2)} kW`:`${fnum(power,0)} W`;drawChart(hf,he,hv);
+}
+ids.forEach(id=>{controls[id].addEventListener('input',update);controls[id].addEventListener('change',update)});document.querySelectorAll('.preset').forEach(b=>b.addEventListener('click',()=>{Object.entries(presets[b.dataset.preset]).forEach(([k,v])=>controls[k].value=v);document.querySelectorAll('.preset').forEach(x=>x.classList.toggle('active',x===b));update()}));$('resetBtn').onclick=()=>{Object.entries(presets.standard).forEach(([k,v])=>controls[k].value=v);update()};$('fullBtn').onclick=()=>document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen();$('pauseBtn').onclick=()=>{paused=!paused;$('flowPath').style.strokeDasharray=paused?'0':'18 16';$('pauseBtn').innerHTML=paused?'▶ <span>재생</span>':'Ⅱ <span>일시정지</span>'};
+let dash=0;function animate(){if(!paused){dash=(dash-1.2)%34;$('flowPath').style.strokeDashoffset=dash}requestAnimationFrame(animate)}update();animate();
+</script>
 </body>
 </html>
