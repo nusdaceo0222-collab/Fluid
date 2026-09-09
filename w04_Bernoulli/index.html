@@ -3,7 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>베르누이 방정식 시뮬레이터</title>
+  <title>3.4 베르누이 방정식 시뮬레이터 | Fluid Lab</title>
+  <script>
+    window.MathJax={tex:{inlineMath:[['\\(','\\)']],displayMath:[['\\[','\\]']]},options:{skipHtmlTags:['script','noscript','style','textarea','pre']}};
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
   <style>
     :root {
       --bg: #f4f7fb;
@@ -33,6 +37,7 @@
       margin: 0 auto;
       padding: 24px;
     }
+    .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:26px}.brand{font-weight:800;color:#16324f}.brand b{display:inline-grid;place-items:center;width:34px;height:34px;margin-right:8px;border-radius:11px;background:var(--accent);color:#fff}.tools{display:flex;gap:8px}.tools button,.preset{font:inherit;font-size:13px;font-weight:700;border:1px solid var(--line);background:#fff;color:var(--muted);border-radius:10px;padding:9px 12px;cursor:pointer}.tools button:hover,.preset:hover{border-color:var(--accent);color:var(--accent)}.hero{display:grid;grid-template-columns:1fr auto;gap:22px;align-items:end;margin-bottom:22px}.eyebrow{font-size:13px;font-weight:800;letter-spacing:.1em;color:var(--accent)}.hero h1{font-size:38px;letter-spacing:-.05em;margin:5px 0 8px;color:#16324f}.hero-eq{padding:15px 20px;border-radius:16px;background:#f3f8ff;border:1px solid #cfe0f7;color:#16324f;font-size:17px}.presets{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:4px 0 18px}.preset{text-align:left}.preset strong{display:block;color:#16324f;margin-bottom:2px}.formula{text-align:center;font-size:16px}.head-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:16px}.head-card{padding:12px;border-radius:14px;border:1px solid var(--line);background:#fbfdff;text-align:center}.head-card small{display:block;color:var(--muted);font-weight:700;margin-bottom:4px}.head-card b{font-size:19px;color:#16324f}.balance{display:flex;align-items:center;justify-content:center;gap:9px;margin-top:10px;color:var(--muted);font-size:13px}.balance span{width:11px;height:11px;border-radius:50%}.balance .pressure{background:#5aa9ff}.balance .velocity{background:#ff8c42}.balance .height{background:#cfd8ea}@media(max-width:980px){.hero{grid-template-columns:1fr}.hero-eq{min-width:0}.head-summary{grid-template-columns:1fr}}@media print{.topbar,.tools{display:none}.wrap{padding:0}.card{box-shadow:none}}@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
     h1 {
       margin: 0 0 8px;
       font-size: 32px;
@@ -160,16 +165,12 @@
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <h1>베르누이 방정식 시뮬레이터</h1>
-    <div class="subtitle">
-      이상유체, 정상유동, 손실 무시 조건에서 <strong>P/γ + V²/2g + z = 일정</strong> 관계를 확인하는 HTML 시뮬레이터입니다.
-      관 직경과 높이 차이를 바꾸면 속도수두, 압력수두, 위치수두의 분배가 어떻게 달라지는지 시각적으로 볼 수 있습니다.
-    </div>
+  <div class="wrap"><div class="topbar"><div class="brand"><b>FL</b>Fluid Lab · Interactive mechanics</div><div class="tools"><button id="pauseBtn">Ⅱ 일시정지</button><button id="resetBtn">↺ 초기화</button><button id="fullBtn">⛶ 전체화면</button></div></div><div class="hero"><div><div class="eyebrow">CHAPTER 3 · SECTION 3.4</div><h1>베르누이 방정식 시뮬레이터</h1><div class="subtitle">압력수두·속도수두·위치수두가 서로 전환되면서도 총수두가 보존되는 과정을 확인합니다.</div></div><div class="hero-eq">\(\displaystyle \frac{P}{\gamma}+\frac{V^2}{2g}+z=H\)</div></div>
 
     <div class="grid">
       <div class="card">
         <h2>조작 패널</h2>
+        <div class="presets"><button class="preset" data-p="venturi"><strong>벤투리 효과</strong>수평 축소관</button><button class="preset" data-p="rise"><strong>상승 관로</strong>위치수두 증가</button><button class="preset" data-p="fall"><strong>하강 관로</strong>위치수두 감소</button><button class="preset" data-p="equal"><strong>같은 직경</strong>높이만 비교</button></div>
 
         <div class="control-group">
           <div class="label-row">
@@ -238,9 +239,8 @@
           </div>
         </div>
 
-        <div class="formula" id="formulaBox">
-          P₁/γ + V₁²/2g + z₁ = P₂/γ + V₂²/2g + z₂
-        </div>
+        <div class="formula" id="formulaBox"></div>
+        <div class="head-summary"><div class="head-card"><small>압력수두 \(P_2/\gamma\)</small><b id="pHeadResult">7.20 m</b></div><div class="head-card"><small>속도수두 \(V_2^2/2g\)</small><b id="vHeadResult">3.26 m</b></div><div class="head-card"><small>위치수두 \(z_2\)</small><b id="zHeadResult">2.00 m</b></div></div><div class="balance"><span class="pressure"></span>압력수두 <span class="velocity"></span>속도수두 <span class="height"></span>위치수두 = 총수두</div>
 
         <div class="note-box" id="noteBox">
           하류가 더 높고 단면이 좁아지면, 위치수두와 속도수두가 증가하는 만큼 압력수두가 감소합니다.
@@ -332,6 +332,9 @@
     const h2Stat = document.getElementById('h2Stat');
     const formulaBox = document.getElementById('formulaBox');
     const noteBox = document.getElementById('noteBox');
+    const pHeadResult=document.getElementById('pHeadResult');
+    const vHeadResult=document.getElementById('vHeadResult');
+    const zHeadResult=document.getElementById('zHeadResult');
 
     const pipeOuter = document.getElementById('pipeOuter');
     const flowPath = document.getElementById('flowPath');
@@ -362,6 +365,8 @@
     let z1 = 0, z2 = 2.0;
     let H1 = 0, H2 = 0;
     let pHead1 = 0, pHead2 = 0, vHead1 = 0, vHead2 = 0;
+    let isPaused = false;
+    let mathFrame = 0;
 
     function fmt(num, digits = 2) { return Number(num).toFixed(digits); }
     function area(d) { return Math.PI * d * d / 4; }
@@ -453,7 +458,7 @@
     }
 
     function animate() {
-      particles.forEach(p => {
+      if(!isPaused) particles.forEach(p => {
         p.x += velocityAtX(p.x) * 0.7 * globalSpeedFactor;
         if (p.x > 785) p.x = 78;
       });
@@ -568,9 +573,12 @@
       p2Stat.textContent = `${fmt(p2kPa,1)} kPa`;
       h1Stat.textContent = `${fmt(H1,2)} m`;
       h2Stat.textContent = `${fmt(H2,2)} m`;
+      pHeadResult.textContent=`${fmt(pHead2,2)} m`;
+      vHeadResult.textContent=`${fmt(vHead2,2)} m`;
+      zHeadResult.textContent=`${fmt(z2,2)} m`;
 
-      formulaBox.innerHTML = `P₁/γ + V₁²/2g + z₁ = P₂/γ + V₂²/2g + z₂<br>` +
-        `${fmt(pHead1,2)} + ${fmt(vHead1,2)} + ${fmt(z1,2)} = ${fmt(pHead2,2)} + ${fmt(vHead2,2)} + ${fmt(z2,2)} = ${fmt(H1,2)} m`;
+      formulaBox.innerHTML=`\\[\\frac{P_1}{\\gamma}+\\frac{V_1^2}{2g}+z_1=\\frac{P_2}{\\gamma}+\\frac{V_2^2}{2g}+z_2\\]\\[${fmt(pHead1,2)}+${fmt(vHead1,2)}+${fmt(z1,2)}=${fmt(pHead2,2)}+${fmt(vHead2,2)}+${fmt(z2,2)}=${fmt(H1,2)}\\,\\mathrm{m}\\]`;
+      cancelAnimationFrame(mathFrame); mathFrame=requestAnimationFrame(()=>{if(window.MathJax?.typesetPromise){MathJax.typesetClear?.([formulaBox]);MathJax.typesetPromise([formulaBox]).catch(()=>{})}});
 
       if (p2kPa < 0) {
         noteBox.innerHTML = `현재 조건에서는 계산된 하류 게이지압이 <strong>${fmt(p2kPa,1)} kPa</strong>로 음압입니다. 실제 시스템에서는 공동현상, 공기 혼입, 손실수두 등을 추가로 검토해야 합니다.`;
@@ -587,6 +595,11 @@
     }
 
     [d1Slider, d2Slider, v1Slider, dzSlider, p1Slider, speedSlider].forEach(el => el.addEventListener('input', update));
+    const presets={venturi:[.30,.15,2,0,100],rise:[.30,.20,2,3,120],fall:[.25,.15,2,-3,80],equal:[.25,.25,3,2,100]};
+    document.querySelectorAll('[data-p]').forEach(b=>b.addEventListener('click',()=>{const p=presets[b.dataset.p];[d1Slider.value,d2Slider.value,v1Slider.value,dzSlider.value,p1Slider.value]=p;update()}));
+    document.getElementById('resetBtn').addEventListener('click',()=>{d1Slider.value=.30;d2Slider.value=.15;v1Slider.value=2;dzSlider.value=2;p1Slider.value=100;speedSlider.value=1;update()});
+    document.getElementById('fullBtn').addEventListener('click',()=>document.fullscreenElement?document.exitFullscreen?.():document.documentElement.requestFullscreen?.());
+    document.getElementById('pauseBtn').addEventListener('click',e=>{isPaused=!isPaused;e.currentTarget.textContent=isPaused?'▶ 재생':'Ⅱ 일시정지'});
 
     initParticles();
     update();
