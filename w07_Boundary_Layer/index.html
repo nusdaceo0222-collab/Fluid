@@ -1,621 +1,82 @@
-
 <!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>점성 변화에 따른 경계층·박리 시뮬레이터</title>
+  <title>6.9 경계층·박리 시뮬레이터 | Fluid Lab</title>
+  <script>window.MathJax={tex:{inlineMath:[['\\(','\\)']],displayMath:[['\\[','\\]']]},options:{skipHtmlTags:['script','noscript','style','textarea','pre']}};</script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
   <style>
-    :root {
-      --bg: #f4f7fb;
-      --panel: #ffffff;
-      --line: #d8e0ee;
-      --text: #1f2a44;
-      --muted: #60708f;
-      --accent: #2449d8;
-      --laminar: #21a366;
-      --transition: #ff8c42;
-      --turbulent: #d64545;
-      --flow: #7fb7ff;
-      --wake: #b9c3d8;
-      --warn-bg: #fff8ec;
-      --warn-line: #f1dba7;
-      --warn-text: #7a5a05;
-    }
-
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
-      background: linear-gradient(180deg, #eef3fb 0%, #f8fbff 100%);
-      color: var(--text);
-    }
-
-    .wrap {
-      max-width: 1320px;
-      margin: 0 auto;
-      padding: 24px;
-    }
-
-    h1 {
-      margin: 0 0 8px;
-      font-size: 32px;
-    }
-
-    .subtitle {
-      color: var(--muted);
-      line-height: 1.75;
-      margin-bottom: 20px;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: 440px 1fr;
-      gap: 20px;
-    }
-
-    .card {
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: 22px;
-      box-shadow: 0 8px 24px rgba(27, 52, 111, 0.08);
-      padding: 18px;
-    }
-
-    h2 {
-      margin: 0 0 16px;
-      font-size: 20px;
-    }
-
-    .control-group { margin-bottom: 18px; }
-
-    .label-row {
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      margin-bottom: 8px;
-      font-weight: 700;
-    }
-
-    .value { color: var(--accent); }
-
-    input[type="range"] {
-      width: 100%;
-      accent-color: var(--accent);
-      cursor: pointer;
-    }
-
-    .stat-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 12px;
-      margin-top: 10px;
-    }
-
-    .stat {
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      padding: 14px;
-      background: #fbfdff;
-    }
-
-    .stat-title {
-      font-size: 13px;
-      color: var(--muted);
-      margin-bottom: 6px;
-    }
-
-    .stat-value {
-      font-size: 22px;
-      font-weight: 800;
-      word-break: break-word;
-    }
-
-    .formula {
-      margin-top: 16px;
-      padding: 14px;
-      border-radius: 16px;
-      background: #f4f8ff;
-      border: 1px dashed #bdd1ff;
-      line-height: 1.9;
-      font-size: 15px;
-    }
-
-    .note-box {
-      margin-top: 16px;
-      padding: 12px 14px;
-      border-radius: 14px;
-      background: var(--warn-bg);
-      border: 1px solid var(--warn-line);
-      color: var(--warn-text);
-      line-height: 1.7;
-      font-size: 14px;
-    }
-
-    .badge {
-      display: inline-block;
-      margin-top: 10px;
-      padding: 9px 14px;
-      border-radius: 999px;
-      color: white;
-      font-weight: 800;
-      font-size: 14px;
-    }
-
-    .legend {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-      margin-bottom: 12px;
-      color: var(--muted);
-      font-size: 14px;
-    }
-
-    .swatch {
-      width: 14px;
-      height: 14px;
-      border-radius: 4px;
-      display: inline-block;
-      margin-right: 6px;
-      vertical-align: -2px;
-    }
-
-    .viewer-grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 18px;
-    }
-
-    svg {
-      width: 100%;
-      height: auto;
-      display: block;
-      background: #fbfdff;
-      border: 1px solid var(--line);
-      border-radius: 18px;
-    }
-
-    canvas {
-      width: 100%;
-      max-width: 100%;
-      border: 1px solid var(--line);
-      border-radius: 18px;
-      background: #fff;
-    }
-
-    .caption {
-      color: var(--muted);
-      line-height: 1.7;
-      font-size: 14px;
-    }
-
-    @media (max-width: 1000px) {
-      .grid { grid-template-columns: 1fr; }
-    }
+    :root{--bg:#f4f7fb;--panel:#fff;--line:#d8e0ee;--text:#1f2a44;--muted:#60708f;--accent:#2449d8;--blue:#5aa9ff;--green:#21a366;--orange:#ff8c42;--red:#d64545;--navy:#16324f;--warn:#7a5a05}
+    *{box-sizing:border-box}body{margin:0;font-family:"Segoe UI","Apple SD Gothic Neo","Malgun Gothic",sans-serif;background:linear-gradient(180deg,#eef3fb,#f8fbff);color:var(--text)}button,input{font:inherit}.wrap{max-width:1280px;margin:auto;padding:24px}.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:26px}.brand{font-weight:800;color:var(--navy)}.brand b{display:inline-grid;place-items:center;width:34px;height:34px;margin-right:8px;border-radius:11px;background:var(--accent);color:#fff}.tools{display:flex;gap:8px}.tools button,.preset{font-size:13px;font-weight:700;border:1px solid var(--line);background:#fff;color:var(--muted);border-radius:10px;padding:9px 12px;cursor:pointer}.tools button:hover,.preset:hover,.preset.active{border-color:var(--accent);color:var(--accent);background:#f3f7ff}.hero{display:grid;grid-template-columns:1fr auto;gap:22px;align-items:end;margin-bottom:22px}.eyebrow{font-size:13px;font-weight:800;letter-spacing:.1em;color:var(--accent)}h1{font-size:38px;letter-spacing:-.05em;margin:5px 0 8px;color:var(--navy)}.subtitle{color:var(--muted);line-height:1.7}.hero-eq{padding:15px 20px;border-radius:16px;background:#f3f8ff;border:1px solid #cfe0f7;color:var(--navy);font-size:18px}.grid{display:grid;grid-template-columns:410px 1fr;gap:20px}.card{background:var(--panel);border:1px solid var(--line);border-radius:22px;box-shadow:0 8px 24px rgba(27,52,111,.08);padding:18px}h2{margin:0 0 16px;font-size:20px}.presets{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:4px 0 18px}.preset{text-align:left}.preset strong{display:block;color:var(--navy);margin-bottom:2px}.control{margin-bottom:17px}.label-row{display:flex;justify-content:space-between;gap:12px;margin-bottom:8px;font-weight:700}.value{color:var(--accent)}input[type=range]{width:100%;accent-color:var(--accent);cursor:pointer}.scale{display:flex;justify-content:space-between;color:#8a97ad;font-size:11px}.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}.stat{border:1px solid var(--line);border-radius:16px;padding:13px;background:#fbfdff}.stat.primary{background:#f3f7ff;border-color:#c7d8ff}.stat small{display:block;color:var(--muted);margin-bottom:5px}.stat b{font-size:20px;color:var(--navy);word-break:break-word}.state{margin-top:12px;padding:12px 14px;border-radius:14px;color:#fff;font-weight:800;display:flex;justify-content:space-between}.state small{font-size:12px;opacity:.9}.formula{margin-top:15px;padding:14px;border-radius:16px;background:#f4f8ff;border:1px dashed #bdd1ff;line-height:1.9;text-align:center;font-size:14px;overflow-x:auto}.note{margin-top:15px;padding:12px 14px;border-radius:14px;background:#fff8ec;border:1px solid #f1dba7;color:var(--warn);line-height:1.65;font-size:14px}.legend{display:flex;gap:13px;flex-wrap:wrap;margin-bottom:12px;color:var(--muted);font-size:13px}.swatch{width:12px;height:12px;border-radius:4px;display:inline-block;margin-right:5px;vertical-align:-1px}.viewer{display:grid;gap:16px}canvas{width:100%;border:1px solid var(--line);border-radius:18px;background:#fbfdff}.process{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:8px;align-items:center}.step{padding:11px;border:1px solid var(--line);border-radius:14px;text-align:center;background:#fbfdff}.step small{display:block;color:var(--muted);font-size:11px;margin-bottom:4px}.step b{font-size:15px;color:var(--navy)}.arrow{color:var(--accent);font-weight:900}.profiles{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.profile{padding:11px;border:1px solid var(--line);border-radius:14px;text-align:center}.profile small{display:block;color:var(--muted);margin-bottom:4px}.profile b{color:var(--navy)}.caption{color:var(--muted);line-height:1.7;font-size:14px}.tag{display:inline-block;padding:3px 8px;border-radius:999px;background:#eaf1ff;color:var(--accent);font-weight:800;font-size:12px;margin-right:5px}
+    @media(max-width:1000px){.grid,.hero{grid-template-columns:1fr}.hero-eq{justify-self:start}}@media(max-width:620px){.wrap{padding:15px}.topbar{align-items:flex-start;gap:10px}.brand{font-size:13px}.tools button{padding:8px}.hero h1{font-size:31px}.presets,.stat-grid,.profiles{grid-template-columns:1fr 1fr}.process{grid-template-columns:1fr}.arrow{transform:rotate(90deg)}.card{padding:15px}}@media print{.topbar,.presets{display:none}.wrap{padding:0}.card{box-shadow:none}.grid{grid-template-columns:38% 62%;gap:10px}}@media(prefers-reduced-motion:reduce){*{transition:none!important}}
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <h1>점성 변화에 따른 경계층·박리 시뮬레이터</h1>
-    <div class="subtitle">
-      점성계수 <strong>μ</strong>와 밀도 <strong>ρ</strong>를 바꾸면 동점성계수 <strong>ν = μ/ρ</strong>가 변하고, 이에 따라 레이놀즈수 <strong>Re = UL/ν</strong>, 경계층 두께, 박리 위치가 어떻게 달라지는지 보여주는 교육용 시뮬레이터입니다. 핵심은 <strong>μ가 0이 아닌 이상 노슬립은 유지되지만, μ가 작을수록 경계층이 얇아지고 Re가 커져 박리 거동이 달라진다</strong>는 점입니다.
-    </div>
+  <main class="wrap">
+    <div class="topbar"><div class="brand"><b>FL</b>Fluid Lab · Interactive mechanics</div><div class="tools"><button id="pauseBtn">Ⅱ 일시정지</button><button id="resetBtn">↺ 초기화</button><button id="fullBtn">⛶ 전체화면</button></div></div>
+    <section class="hero"><div><div class="eyebrow">CHAPTER 6 · SECTION 6.9</div><h1>경계층·박리 시뮬레이터</h1><div class="subtitle">경계층의 성장과 역압력구배에 의한 벽면 전단응력 감소 및 박리를 관찰합니다.</div></div><div class="hero-eq">\(\tau_w=\mu\left.\dfrac{\partial u}{\partial y}\right|_w,\qquad \tau_w=0\;\Rightarrow\;\text{박리}\)</div></section>
 
-    <div class="grid">
-      <div class="card">
+    <section class="grid">
+      <aside class="card">
         <h2>조작 패널</h2>
-
-        <div class="control-group">
-          <div class="label-row">
-            <span>자유류 속도 U∞</span>
-            <span class="value" id="uValue">10.00 m/s</span>
-          </div>
-          <input id="uSlider" type="range" min="1.00" max="40.00" step="0.10" value="10.00" />
+        <div class="presets">
+          <button class="preset" data-preset="laminar"><strong>층류 경계층</strong>점성유 · 저속</button>
+          <button class="preset" data-preset="transition"><strong>천이 조건</strong>\(Re_x\approx5\times10^5\)</button>
+          <button class="preset" data-preset="attached"><strong>부착 유동</strong>약한 역압력구배</button>
+          <button class="preset" data-preset="separated"><strong>박리 유동</strong>강한 역압력구배</button>
         </div>
-
-        <div class="control-group">
-          <div class="label-row">
-            <span>특성길이 L</span>
-            <span class="value" id="lValue">1.00 m</span>
-          </div>
-          <input id="lSlider" type="range" min="0.20" max="5.00" step="0.01" value="1.00" />
-        </div>
-
-        <div class="control-group">
-          <div class="label-row">
-            <span>점성계수 μ</span>
-            <span class="value" id="muValue">0.001000 Pa·s</span>
-          </div>
-          <input id="muSlider" type="range" min="0.000001" max="0.050000" step="0.000001" value="0.001000" />
-        </div>
-
-        <div class="control-group">
-          <div class="label-row">
-            <span>유체 밀도 ρ</span>
-            <span class="value" id="rhoValue">1000.0 kg/m³</span>
-          </div>
-          <input id="rhoSlider" type="range" min="0.5" max="1500.0" step="0.5" value="1000.0" />
-        </div>
-
-        <div class="control-group">
-          <div class="label-row">
-            <span>역압력구배 강도</span>
-            <span class="value" id="pgValue">0.30</span>
-          </div>
-          <input id="pgSlider" type="range" min="0.00" max="1.00" step="0.01" value="0.30" />
-        </div>
-
+        <div class="control"><div class="label-row"><span>자유류 속도 \(U_\infty\)</span><span class="value" id="uValue"></span></div><input id="u" type="range" min="0.1" max="40" step="0.1" value="10"></div>
+        <div class="control"><div class="label-row"><span>선단으로부터 거리 \(x\)</span><span class="value" id="xValue"></span></div><input id="x" type="range" min="0.1" max="5" step="0.01" value="1"></div>
+        <div class="control"><div class="label-row"><span>유체 밀도 \(\rho\)</span><span class="value" id="rhoValue"></span></div><input id="rho" type="range" min="0.5" max="1400" step="0.5" value="998"></div>
+        <div class="control"><div class="label-row"><span>점성계수 \(\mu\)</span><span class="value" id="muValue"></span></div><input id="muLog" type="range" min="-5" max="0" step="0.01" value="-3"><div class="scale"><span>0.00001</span><span>로그 눈금</span><span>1 Pa·s</span></div></div>
+        <div class="control"><div class="label-row"><span>역압력구배 강도 \(G\)</span><span class="value" id="gValue"></span></div><input id="gradient" type="range" min="0" max="1" step="0.01" value="0.3"><div class="scale"><span>없음</span><span>압력 증가 방향 →</span><span>강함</span></div></div>
         <div class="stat-grid">
-          <div class="stat">
-            <div class="stat-title">동점성계수 ν</div>
-            <div class="stat-value" id="nuStat">1.00e-6 m²/s</div>
-          </div>
-          <div class="stat">
-            <div class="stat-title">레이놀즈수 Re</div>
-            <div class="stat-value" id="reStat">1.00e+7</div>
-          </div>
-          <div class="stat">
-            <div class="stat-title">상대 경계층 두께 δ/L</div>
-            <div class="stat-value" id="deltaStat">0.037</div>
-          </div>
-          <div class="stat">
-            <div class="stat-title">박리 위치 x/L</div>
-            <div class="stat-value" id="sepStat">0.77</div>
-          </div>
-          <div class="stat">
-            <div class="stat-title">벽면 조건</div>
-            <div class="stat-value" id="wallStat">u=0 유지</div>
-          </div>
-          <div class="stat">
-            <div class="stat-title">유동 상태</div>
-            <div class="stat-value" id="stateStat">난류 경계층</div>
-          </div>
+          <div class="stat"><small>위치 레이놀즈수 \(Re_x\)</small><b id="reStat"></b></div><div class="stat primary"><small>경계층 두께 \(\delta\)</small><b id="deltaStat"></b></div>
+          <div class="stat"><small>국소 마찰계수 \(C_{f,x}\)</small><b id="cfStat"></b></div><div class="stat"><small>벽면 전단응력 \(\tau_w\)</small><b id="tauStat"></b></div>
+          <div class="stat"><small>예측 박리 위치</small><b id="sepStat"></b></div><div class="stat"><small>벽면 조건</small><b>\(u_w=0\)</b></div>
         </div>
+        <div class="state" id="state"><span id="stateName"></span><small id="stateDetail"></small></div>
+        <div class="formula" id="formula"></div>
+        <div class="note" id="note"></div>
+      </aside>
 
-        <div id="stateBadge" class="badge">난류 경계층</div>
-
-        <div class="formula" id="formulaBox">
-          ν = μ/ρ, Re = UL/ν, μ가 작아지면 ν가 작아지고 Re가 커짐 → 경계층이 얇아지고 박리점이 뒤로 갈 수 있음
+      <section class="card">
+        <h2>경계층 성장과 박리 과정</h2>
+        <div class="legend"><span><i class="swatch" style="background:var(--blue)"></i>자유류</span><span><i class="swatch" style="background:var(--green)"></i>부착 경계층</span><span><i class="swatch" style="background:var(--orange)"></i>박리점</span><span><i class="swatch" style="background:var(--red)"></i>역류·후류</span></div>
+        <div class="viewer">
+          <canvas id="flow" width="900" height="420" aria-label="곡면 위 경계층 성장과 박리 애니메이션"></canvas>
+          <div class="process"><div class="step"><small>① 역압력구배</small><b>흐름 방향 압력 증가</b></div><span class="arrow">→</span><div class="step"><small>② 운동량 감소</small><b>벽면 속도구배 감소</b></div><span class="arrow">→</span><div class="step"><small>③ 박리</small><b>\(\tau_w=0\), 이후 역류</b></div></div>
+          <canvas id="shearGraph" width="900" height="270" aria-label="표면 위치에 따른 벽면 전단응력 변화"></canvas>
+          <div class="profiles"><div class="profile"><small>박리 전</small><b>\(\partial u/\partial y|_w>0\)</b></div><div class="profile"><small>박리점</small><b>\(\partial u/\partial y|_w=0\)</b></div><div class="profile"><small>박리 후</small><b>\(\partial u/\partial y|_w<0\)</b></div></div>
+          <div class="caption"><span class="tag">교육용 모델</span>경계층 두께는 평판 상관식으로 계산합니다. 곡면 위 박리 위치는 역압력구배의 영향을 이해하기 위한 개념적 예측값이며 실제 형상 해석값은 아닙니다.</div>
         </div>
-
-        <div class="note-box" id="noteBox">
-          μ가 매우 작아도 0이 아닌 이상 벽면에서는 노슬립 조건이 유지됩니다. 즉, 벽면 속도는 여전히 0이며 달라지는 것은 경계층 두께와 박리 거동입니다.
-        </div>
-      </div>
-
-      <div class="card">
-        <h2>시각화</h2>
-        <div class="legend">
-          <span><span class="swatch" style="background:#7fb7ff"></span>주유동</span>
-          <span><span class="swatch" style="background:#21a366"></span>층류 경계층</span>
-          <span><span class="swatch" style="background:#ff8c42"></span>천이</span>
-          <span><span class="swatch" style="background:#d64545"></span>난류/후류</span>
-        </div>
-
-        <div class="viewer-grid">
-          <svg viewBox="0 0 980 520" aria-label="점성 변화에 따른 경계층 박리 시각화">
-            <defs>
-              <marker id="arrowBlueVBS" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
-                <path d="M 0 0 L 10 5 L 0 10 z" fill="#2449d8"></path>
-              </marker>
-            </defs>
-
-            <path d="M 70 340 C 240 340, 410 326, 560 300 S 770 258, 910 300" fill="none" stroke="#24324f" stroke-width="8" stroke-linecap="round" />
-
-            <g id="freestreamGroup"></g>
-            <g id="boundaryLayerGroup"></g>
-            <g id="wakeGroup"></g>
-            <g id="wallLayerGroup"></g>
-
-            <circle id="sepPoint" cx="700" cy="280" r="8" fill="#d64545" />
-
-            <line x1="80" y1="92" x2="250" y2="92" stroke="#2449d8" stroke-width="4" marker-end="url(#arrowBlueVBS)" />
-            <text id="uLabel" x="265" y="100" font-size="24" fill="#24324f" font-weight="700">U∞ = 10.0 m/s</text>
-            <text id="muLabel" x="80" y="138" font-size="24" fill="#24324f" font-weight="700">μ = 0.001000 Pa·s</text>
-            <text id="nuLabel" x="80" y="172" font-size="24" fill="#24324f" font-weight="700">ν = 1.00e-6 m²/s</text>
-            <text id="reLabel" x="80" y="206" font-size="24" fill="#24324f" font-weight="700">Re = 1.00e+7</text>
-            <text id="deltaLabel" x="80" y="240" font-size="24" fill="#24324f" font-weight="700">δ/L = 0.037</text>
-            <text id="slipLabel" x="80" y="274" font-size="24" fill="#24324f" font-weight="700">벽면: u = 0 (노슬립)</text>
-            <text id="sepLabel" x="718" y="252" font-size="24" fill="#24324f" font-weight="700">박리점</text>
-            <text id="pgLabel" x="610" y="96" font-size="22" fill="#ff8c42" font-weight="700">역압력구배</text>
-          </svg>
-
-          <canvas id="graph" width="920" height="330"></canvas>
-          <div class="caption">
-            왼쪽 곡선은 표면을 따라 성장하는 경계층을, 점선 이후는 박리 후 후류를 나타냅니다. 아래 그래프는 점성 변화에 따른 상대 경계층 두께와 박리점 이동을 함께 보여줍니다.
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+      </section>
+    </section>
+  </main>
 
   <script>
-    const uSlider = document.getElementById('uSlider');
-    const lSlider = document.getElementById('lSlider');
-    const muSlider = document.getElementById('muSlider');
-    const rhoSlider = document.getElementById('rhoSlider');
-    const pgSlider = document.getElementById('pgSlider');
-
-    const uValue = document.getElementById('uValue');
-    const lValue = document.getElementById('lValue');
-    const muValue = document.getElementById('muValue');
-    const rhoValue = document.getElementById('rhoValue');
-    const pgValue = document.getElementById('pgValue');
-
-    const nuStat = document.getElementById('nuStat');
-    const reStat = document.getElementById('reStat');
-    const deltaStat = document.getElementById('deltaStat');
-    const sepStat = document.getElementById('sepStat');
-    const wallStat = document.getElementById('wallStat');
-    const stateStat = document.getElementById('stateStat');
-    const stateBadge = document.getElementById('stateBadge');
-    const formulaBox = document.getElementById('formulaBox');
-    const noteBox = document.getElementById('noteBox');
-
-    const freestreamGroup = document.getElementById('freestreamGroup');
-    const boundaryLayerGroup = document.getElementById('boundaryLayerGroup');
-    const wakeGroup = document.getElementById('wakeGroup');
-    const wallLayerGroup = document.getElementById('wallLayerGroup');
-    const sepPoint = document.getElementById('sepPoint');
-    const uLabel = document.getElementById('uLabel');
-    const muLabel = document.getElementById('muLabel');
-    const nuLabel = document.getElementById('nuLabel');
-    const reLabel = document.getElementById('reLabel');
-    const deltaLabel = document.getElementById('deltaLabel');
-    const slipLabel = document.getElementById('slipLabel');
-    const sepLabel = document.getElementById('sepLabel');
-    const pgLabel = document.getElementById('pgLabel');
-
-    const canvas = document.getElementById('graph');
-    const ctx = canvas.getContext('2d');
-
-    function fmt(num, digits = 2) { return Number(num).toFixed(digits); }
-    function sci(num) { return num.toExponential(2); }
-
-    function classifyBoundaryLayer(Re) {
-      if (Re < 5e5) return 'laminar';
-      if (Re < 1.5e6) return 'transition';
-      return 'turbulent';
-    }
-
-    function stateInfo(state) {
-      if (state === 'laminar') return { name: '층류 경계층', color: '#21a366' };
-      if (state === 'transition') return { name: '천이 경계층', color: '#ff8c42' };
-      return { name: '난류 경계층', color: '#d64545' };
-    }
-
-    function estimateDeltaRatio(Re, state) {
-      if (state === 'laminar') return Math.min(5 / Math.sqrt(Re), 0.22);
-      if (state === 'transition') return Math.min(0.5 * (5 / Math.sqrt(Re)) + 0.5 * (0.37 / Math.pow(Re, 0.2)), 0.22);
-      return Math.min(0.37 / Math.pow(Re, 0.2), 0.22);
-    }
-
-    function estimateSeparation(pg, state, muNormalized) {
-      let base = 0.90 - 0.36 * pg;
-      if (state === 'laminar') base -= 0.10;
-      if (state === 'turbulent') base += 0.08;
-      // larger viscosity ratio => thicker BL => easier early separation in this concept model
-      base -= 0.12 * muNormalized;
-      return Math.min(Math.max(base, 0.18), 0.98);
-    }
-
-    function surfaceY(x) {
-      if (x < 560) return 340 - ((x - 70) / 490) * 40;
-      return 300 - Math.sin((x - 560) / 350 * Math.PI) * 42;
-    }
-
-    function drawFreestream(state) {
-      freestreamGroup.innerHTML = '';
-      for (let i = 0; i < 7; i++) {
-        const y = 150 + i * 26;
-        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        if (state === 'laminar') {
-          path.setAttribute('d', `M 70 ${y} C 280 ${y}, 580 ${y}, 910 ${y}`);
-        } else if (state === 'transition') {
-          path.setAttribute('d', `M 70 ${y} C 240 ${y-4}, 420 ${y+4}, 620 ${y-3} S 820 ${y+5}, 910 ${y}`);
-        } else {
-          path.setAttribute('d', `M 70 ${y} C 170 ${y-6}, 300 ${y+8}, 430 ${y-5} S 620 ${y+10}, 760 ${y-6} S 860 ${y+8}, 910 ${y}`);
-        }
-        path.setAttribute('fill', 'none');
-        path.setAttribute('stroke', '#7fb7ff');
-        path.setAttribute('stroke-width', '3');
-        freestreamGroup.appendChild(path);
-      }
-    }
-
-    function drawBoundaryLayer(deltaRatio, sepFrac, state) {
-      boundaryLayerGroup.innerHTML = '';
-      const color = state === 'laminar' ? '#21a366' : state === 'transition' ? '#ff8c42' : '#d64545';
-      for (let i = 0; i < 8; i++) {
-        const frac = (i + 1) / 8;
-        let d = `M 78 ${surfaceY(78) - 3}`;
-        for (let x = 78; x <= 910; x += 20) {
-          const xFrac = (x - 78) / 832;
-          let localDelta = 220 * deltaRatio * Math.sqrt(Math.max(xFrac, 0.02)) * frac;
-          if (xFrac > sepFrac) localDelta += 28 + (xFrac - sepFrac) * 190;
-          const y = surfaceY(x) - localDelta;
-          d += ` L ${x} ${y}`;
-        }
-        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        path.setAttribute('d', d);
-        path.setAttribute('fill', 'none');
-        path.setAttribute('stroke', color);
-        path.setAttribute('stroke-width', '2.3');
-        boundaryLayerGroup.appendChild(path);
-      }
-    }
-
-    function drawWake(sepFrac) {
-      wakeGroup.innerHTML = '';
-      const sepX = 78 + 832 * sepFrac;
-      const sepY = surfaceY(sepX);
-      for (let i = 0; i < 6; i++) {
-        const amp = 16 + i * 8;
-        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        path.setAttribute('d', `M ${sepX} ${sepY - 10 + i*5} C ${sepX+35} ${sepY-amp}, ${sepX+120} ${sepY+amp}, 930 ${sepY - 16 + i*6}`);
-        path.setAttribute('fill', 'none');
-        path.setAttribute('stroke', '#b9c3d8');
-        path.setAttribute('stroke-width', '2.4');
-        wakeGroup.appendChild(path);
-      }
-      sepPoint.setAttribute('cx', sepX);
-      sepPoint.setAttribute('cy', sepY);
-      sepLabel.setAttribute('x', Math.min(sepX + 10, 860));
-      sepLabel.setAttribute('y', sepY - 16);
-    }
-
-    function drawWallLayer(deltaRatio) {
-      wallLayerGroup.innerHTML = '';
-      const y0 = 420;
-      const x0 = 120;
-      const h = 70;
-      const maxThick = 120 * deltaRatio / 0.22;
-      for (let i = 0; i < 7; i++) {
-        const frac = i / 6;
-        const len = frac * (70 + maxThick);
-        const yy = y0 - i * 10;
-        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-        line.setAttribute('x1', x0);
-        line.setAttribute('y1', yy);
-        line.setAttribute('x2', x0 + len);
-        line.setAttribute('y2', yy);
-        line.setAttribute('stroke', '#2449d8');
-        line.setAttribute('stroke-width', '3');
-        wallLayerGroup.appendChild(line);
-      }
-    }
-
-    function drawGraph(deltaRatio, sepFrac, mu, nu, Re) {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      const pad = { left: 70, right: 30, top: 30, bottom: 50 };
-      const w = canvas.width - pad.left - pad.right;
-      const h = canvas.height - pad.top - pad.bottom;
-
-      ctx.strokeStyle = '#d6ddeb';
-      for (let i = 0; i <= 5; i++) {
-        const y = pad.top + i * h / 5;
-        ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(pad.left + w, y); ctx.stroke();
-      }
-      ctx.strokeStyle = '#1f2a44';
-      ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(pad.left, pad.top); ctx.lineTo(pad.left, pad.top + h); ctx.lineTo(pad.left + w, pad.top + h); ctx.stroke();
-
-      ctx.fillStyle = '#44506d';
-      ctx.font = '14px Segoe UI';
-      ctx.fillText('점성 변화 효과 비교', 18, 20);
-
-      // bar chart
-      const bars = [
-        { label: 'μ (×1000)', val: mu * 1000, color: '#2449d8', text: fmt(mu,6) },
-        { label: 'δ/L (×100)', val: deltaRatio * 100, color: '#21a366', text: fmt(deltaRatio,3) },
-        { label: '박리 x/L (×100)', val: sepFrac * 100, color: '#d64545', text: fmt(sepFrac,2) }
-      ];
-      const maxVal = 100;
-      bars.forEach((b, i) => {
-        const x = pad.left + 120 + i * 180;
-        const bh = (b.val / maxVal) * 160;
-        ctx.fillStyle = b.color;
-        ctx.fillRect(x, pad.top + 190 - bh, 90, bh);
-        ctx.strokeStyle = '#24324f';
-        ctx.strokeRect(x, pad.top + 190 - bh, 90, bh);
-        ctx.fillStyle = '#24324f';
-        ctx.fillText(b.label, x - 8, pad.top + 220);
-        ctx.font = 'bold 13px Segoe UI';
-        ctx.fillText(b.text, x + 14, pad.top + 190 - bh - 8);
-        ctx.font = '14px Segoe UI';
-      });
-
-      // reynolds gauge
-      const gx = pad.left + 120;
-      const gy = 265;
-      const gw = 520;
-      const gh = 28;
-      const maxRe = 1.2e7;
-      const x500k = gx + (5e5 / maxRe) * gw;
-      const x1500k = gx + (1.5e6 / maxRe) * gw;
-      const curX = gx + (Math.min(Re, maxRe) / maxRe) * gw;
-
-      ctx.fillStyle = '#21a366'; ctx.fillRect(gx, gy, x500k-gx, gh);
-      ctx.fillStyle = '#ff8c42'; ctx.fillRect(x500k, gy, x1500k-x500k, gh);
-      ctx.fillStyle = '#d64545'; ctx.fillRect(x1500k, gy, gx+gw-x1500k, gh);
-      ctx.strokeStyle = '#24324f'; ctx.strokeRect(gx, gy, gw, gh);
-      ctx.fillStyle = '#24324f';
-      ctx.fillText('층류', gx + 16, gy - 8);
-      ctx.fillText('천이', x500k + 12, gy - 8);
-      ctx.fillText('난류', x1500k + 20, gy - 8);
-      ctx.beginPath();
-      ctx.moveTo(curX, gy + gh + 8);
-      ctx.lineTo(curX - 8, gy + gh + 24);
-      ctx.lineTo(curX + 8, gy + gh + 24);
-      ctx.closePath();
-      ctx.fillStyle = '#24324f';
-      ctx.fill();
-      ctx.fillText(`현재 Re = ${sci(Re)}`, Math.max(gx, Math.min(curX - 55, gx + gw - 150)), gy + gh + 44);
-    }
-
-    function update() {
-      const U = parseFloat(uSlider.value);
-      const L = parseFloat(lSlider.value);
-      const mu = parseFloat(muSlider.value);
-      const rho = parseFloat(rhoSlider.value);
-      const pg = parseFloat(pgSlider.value);
-
-      const nu = mu / rho;
-      const Re = U * L / nu;
-      const state = classifyBoundaryLayer(Re);
-      const info = stateInfo(state);
-      const deltaRatio = estimateDeltaRatio(Re, state);
-      const muNorm = Math.min(mu / 0.05, 1);
-      const sepFrac = estimateSeparation(pg, state, muNorm);
-
-      uValue.textContent = `${fmt(U,2)} m/s`;
-      lValue.textContent = `${fmt(L,2)} m`;
-      muValue.textContent = `${fmt(mu,6)} Pa·s`;
-      rhoValue.textContent = `${fmt(rho,1)} kg/m³`;
-      pgValue.textContent = `${fmt(pg,2)}`;
-
-      nuStat.textContent = `${sci(nu)} m²/s`;
-      reStat.textContent = `${sci(Re)}`;
-      deltaStat.textContent = `${fmt(deltaRatio,3)}`;
-      sepStat.textContent = `${fmt(sepFrac,2)}`;
-      wallStat.textContent = `u=0 유지`;
-      stateStat.textContent = info.name;
-
-      stateBadge.textContent = info.name;
-      stateBadge.style.background = info.color;
-
-      formulaBox.innerHTML =
-        `ν = μ/ρ = ${fmt(mu,6)}/${fmt(rho,1)} = ${sci(nu)} m²/s<br>` +
-        `Re = UL/ν = ${fmt(U,2)}×${fmt(L,2)}/${sci(nu)} = ${sci(Re)}<br>` +
-        `μ가 작아질수록 ν가 작아지고 Re가 증가하여 경계층이 얇아지는 경향이 있음. 단, 벽면에서는 여전히 u = 0 (노슬립)`;
-
-      if (mu <= 0.00001) {
-        noteBox.innerHTML = `현재 점성계수는 매우 작지만 <strong>0이 아닙니다</strong>. 따라서 벽면에서는 여전히 <strong>u = 0</strong>인 노슬립 조건이 성립합니다. 다만 경계층이 매우 얇아지고 Re가 커져 난류/박리 거동이 달라질 뿐입니다.`;
-      } else if (state === 'laminar') {
-        noteBox.innerHTML = `현재는 층류 경계층 조건입니다. 점성이 상대적으로 크게 작용해 경계층이 두꺼워지고, 역압력구배에 더 민감하여 박리점이 앞당겨질 수 있습니다.`;
-      } else if (state === 'transition') {
-        noteBox.innerHTML = `현재는 천이 경계층 조건입니다. 점성효과와 관성효과가 경쟁하는 영역이며, 작은 교란에 따라 박리 위치가 변할 수 있습니다.`;
-      } else {
-        noteBox.innerHTML = `현재는 난류 경계층 조건입니다. 점성계수가 작거나 속도가 커서 Re가 증가하면 난류 경계층이 형성되기 쉽고, 난류 경계층은 보통 층류보다 박리에 더 강해 박리점이 뒤로 가는 경향이 있습니다.`;
-      }
-
-      uLabel.textContent = `U∞ = ${fmt(U,1)} m/s`;
-      muLabel.textContent = `μ = ${fmt(mu,6)} Pa·s`;
-      nuLabel.textContent = `ν = ${sci(nu)} m²/s`;
-      reLabel.textContent = `Re = ${sci(Re)}`;
-      deltaLabel.textContent = `δ/L = ${fmt(deltaRatio,3)}`;
-      slipLabel.textContent = `벽면: u = 0 (노슬립)`;
-      pgLabel.textContent = `역압력구배 ${fmt(pg,2)}`;
-
-      drawFreestream(state);
-      drawBoundaryLayer(deltaRatio, sepFrac, state);
-      drawWake(sepFrac);
-      drawWallLayer(deltaRatio);
-      drawGraph(deltaRatio, sepFrac, mu, nu, Re);
-    }
-
-    [uSlider, lSlider, muSlider, rhoSlider, pgSlider].forEach(el => el.addEventListener('input', update));
-    update();
+    const $=id=>document.getElementById(id),controls=['u','x','rho','muLog','gradient'].map($),flow=$('flow'),fc=flow.getContext('2d'),graph=$('shearGraph'),gc=graph.getContext('2d');let mathJob=Promise.resolve(),running=true,last=0,phase=0,model={};
+    const fmt=(n,d=2)=>Number(n).toLocaleString('ko-KR',{minimumFractionDigits:d,maximumFractionDigits:d});
+    function typeset(el){if(!window.MathJax?.typesetPromise)return;mathJob=mathJob.then(()=>MathJax.typesetClear?.([el])).then(()=>MathJax.typesetPromise([el])).catch(()=>{})}
+    function regime(Re){return Re<5e5?'laminar':Re<1.5e6?'transition':'turbulent'}
+    const regimes={laminar:{name:'층류 경계층',color:'#21a366'},transition:{name:'천이 경계층',color:'#ff8c42'},turbulent:{name:'난류 경계층',color:'#d64545'}};
+    function surfaceY(px){const f=(px-65)/760;return 325-72*Math.sin(Math.max(0,Math.min(1,f))*Math.PI)}
+    function drawFlow(){const {U,Re,deltaRatio,sep,reg,G,separated}=model,W=flow.width,H=flow.height,I=regimes[reg];fc.clearRect(0,0,W,H);fc.fillStyle='#f8fbff';fc.fillRect(0,0,W,H);fc.fillStyle='#16324f';fc.font='700 18px Segoe UI';fc.fillText(`U∞ = ${fmt(U,1)} m/s`,55,45);fc.fillText(`Reₓ = ${Re.toExponential(2)}`,670,45);fc.fillStyle='#ff8c42';fc.fillText(`역압력구배 G = ${fmt(G,2)}`,55,75);
+      fc.strokeStyle='#44506d';fc.lineWidth=8;fc.beginPath();for(let px=65;px<=825;px+=5){const y=surfaceY(px);px===65?fc.moveTo(px,y):fc.lineTo(px,y)}fc.stroke();
+      for(let j=0;j<6;j++){fc.strokeStyle='rgba(90,169,255,.55)';fc.lineWidth=2.5;fc.beginPath();for(let px=55;px<=850;px+=5){const y=105+j*30+Math.sin(px*.014+phase+j)*1.5;px===55?fc.moveTo(px,y):fc.lineTo(px,y)}fc.stroke()}
+      const sepPx=65+760*Math.min(sep,1);for(let k=1;k<=7;k++){fc.strokeStyle=separated&&k>4?'#d64545':I.color;fc.globalAlpha=.9-k*.06;fc.lineWidth=2.4;fc.beginPath();for(let px=70;px<=845;px+=6){const xf=(px-65)/760,base=surfaceY(px),grow=105*deltaRatio*Math.sqrt(Math.max(xf,.01))*k/7;let lift=grow;if(separated&&xf>sep)lift+=35+(xf-sep)*150*k/7;const y=base-lift+Math.sin(px*.025+phase+k)*((separated&&xf>sep)?5:0);px===70?fc.moveTo(px,y):fc.lineTo(px,y)}fc.stroke()}fc.globalAlpha=1;
+      if(separated){const sy=surfaceY(sepPx);fc.fillStyle='#ff8c42';fc.beginPath();fc.arc(sepPx,sy,8,0,Math.PI*2);fc.fill();fc.font='800 16px Segoe UI';fc.fillText('박리점',Math.min(sepPx+12,790),sy-15);for(let i=0;i<45;i++){const px=sepPx+20+((i*37+phase*30)%Math.max(40,850-sepPx)),amp=Math.min(55,(px-sepPx)*.25),py=surfaceY(Math.min(px,825))-25+Math.sin(i*3.7+phase*2)*amp;fc.fillStyle=`rgba(214,69,69,${.25+(i%4)*.15})`;fc.beginPath();fc.arc(px,py,2+(i%3),0,Math.PI*2);fc.fill()}}
+      const profXs=[260,500,720];for(const [idx,px] of profXs.entries()){const base=surfaceY(px),xf=(px-65)/760,local=Math.max(28,95*deltaRatio*Math.sqrt(xf)*5);fc.strokeStyle='#2449d8';fc.lineWidth=2;fc.beginPath();for(let y=0;y<=local;y+=3){let vel=Math.min(1,y/local);if(separated&&xf>sep)vel=vel-.28*(1-vel);const xx=px+vel*42;const yy=base-y; y===0?fc.moveTo(xx,yy):fc.lineTo(xx,yy)}fc.stroke();fc.fillStyle='#60708f';fc.font='12px Segoe UI';fc.fillText(['박리 전','압력 증가','후류 부근'][idx],px-15,base+25)}}
+    function animate(ts){if(running){phase+=Math.min((ts-last||16)/1000,.05)*(1+model.U*.08);drawFlow()}last=ts;requestAnimationFrame(animate)}
+    function drawShear(sep,G,separated,tau){const W=graph.width,H=graph.height,p={l:65,r:30,t:28,b:48},w=W-p.l-p.r,h=H-p.t-p.b,X=f=>p.l+f*w,Y=v=>p.t+(1-v)*h*.72;gc.clearRect(0,0,W,H);gc.strokeStyle='#d8e0ee';for(let i=0;i<=4;i++){const y=p.t+i*h/4;gc.beginPath();gc.moveTo(p.l,y);gc.lineTo(W-p.r,y);gc.stroke()}const zero=Y(0);gc.strokeStyle='#16324f';gc.lineWidth=2;gc.beginPath();gc.moveTo(p.l,p.t);gc.lineTo(p.l,H-p.b);gc.lineTo(W-p.r,H-p.b);gc.stroke();gc.setLineDash([6,5]);gc.strokeStyle='#9aa7c2';gc.beginPath();gc.moveTo(p.l,zero);gc.lineTo(W-p.r,zero);gc.stroke();gc.setLineDash([]);gc.fillStyle='#60708f';gc.font='13px Segoe UI';gc.fillText('벽면 전단응력 τw (상대값)',8,17);gc.fillText('표면 위치 x/L',W-110,H-12);gc.fillText('τw = 0',8,zero+4);gc.strokeStyle=separated?'#d64545':'#21a366';gc.lineWidth=4;gc.beginPath();for(let f=0;f<=1;f+=.01){let v=1-Math.pow(f,.72)*(G*1.45+.1);if(separated&&f>sep)v=-.18*(f-sep)/(1-sep);const xx=X(f),yy=Y(v);f===0?gc.moveTo(xx,yy):gc.lineTo(xx,yy)}gc.stroke();if(separated){gc.fillStyle='#ff8c42';gc.beginPath();gc.arc(X(sep),zero,7,0,Math.PI*2);gc.fill();gc.fillStyle='#16324f';gc.font='700 14px Segoe UI';gc.fillText(`박리 x/L = ${fmt(sep,2)}`,Math.min(X(sep)+10,W-165),zero-12)}gc.fillStyle='#16324f';gc.fillText(`현재 위치의 τw ≈ ${fmt(tau,3)} Pa`,W-245,38)}
+    function update(){const U=+$('u').value,x=+$('x').value,rho=+$('rho').value,mu=10**(+$('muLog').value),G=+$('gradient').value,nu=mu/rho,Re=rho*U*x/mu,reg=regime(Re),I=regimes[reg],deltaRatio=reg==='laminar'?Math.min(5/Math.sqrt(Re),.3):reg==='turbulent'?Math.min(.37/Re**.2,.3):Math.min(.5*(5/Math.sqrt(Re)+.37/Re**.2),.3),delta=deltaRatio*x,Cf=reg==='laminar'?.664/Math.sqrt(Re):reg==='turbulent'?.0592/Re**.2:.5*(.664/Math.sqrt(Re)+.0592/Re**.2),crit=reg==='laminar'?.55:reg==='transition'?.70:.85,factor=1-G/crit,tau0=Cf*.5*rho*U*U,tau=tau0*Math.max(factor,0),offset=reg==='laminar'?-.10:reg==='turbulent'?.08:0,sep=Math.max(.18,Math.min(1.08,1.08-.72*G+offset)),separated=G>=crit;
+      model={U,Re,deltaRatio,sep,reg,G,separated};$('uValue').textContent=`${fmt(U,1)} m/s`;$('xValue').textContent=`${fmt(x,2)} m`;$('rhoValue').textContent=`${fmt(rho,1)} kg/m³`;$('muValue').textContent=mu<.01?`${fmt(mu*1000,3)} mPa·s`:`${fmt(mu,4)} Pa·s`;$('gValue').textContent=fmt(G,2);$('reStat').textContent=Re.toExponential(3);$('deltaStat').textContent=delta<.01?`${fmt(delta*1000,2)} mm`:`${fmt(delta,4)} m`;$('cfStat').textContent=Cf.toExponential(3);$('tauStat').textContent=separated?'0 Pa (박리)':`${fmt(tau,3)} Pa`;$('sepStat').textContent=separated?`x/L ≈ ${fmt(sep,2)}`:'표면 내 없음';$('stateName').textContent=separated?'박리 발생':I.name;$('stateDetail').textContent=separated?'후류·역류 형성':'표면에 부착';$('state').style.background=separated?'#d64545':I.color;
+      $('formula').innerHTML=`\\[Re_x=\\frac{\\rho U_\\infty x}{\\mu}=${Re.toExponential(3)},\\qquad \\nu=\\frac{\\mu}{\\rho}=${nu.toExponential(3)}\\,\\mathrm{m^2/s}\\]\\[\\frac{\\delta}{x}\\approx${reg==='laminar'?'\\frac{5}{\\sqrt{Re_x}}':reg==='turbulent'?'\\frac{0.37}{Re_x^{1/5}}':'\\text{층류식과 난류식의 보간}'}=${fmt(deltaRatio,4)}\\]\\[\\tau_w=\\mu\\left.\\frac{\\partial u}{\\partial y}\\right|_w${separated?'=0\\;\\Rightarrow\\;\\text{박리}':' >0\\;\\Rightarrow\\;\\text{부착}'}\\]`;typeset($('formula'));
+      if(separated)$('note').innerHTML='역압력구배로 저속의 경계층 유체가 운동량을 잃어 벽면 전단응력이 0에 도달했습니다. 이후 벽면 부근에 <strong>역류와 후류</strong>가 형성됩니다.';else if(reg==='laminar')$('note').innerHTML='층류 경계층은 혼합이 작아 벽면 부근의 운동량이 낮으므로 강한 역압력구배에 비교적 쉽게 박리할 수 있습니다.';else $('note').innerHTML='현재 경계층은 표면에 부착되어 있습니다. 역압력구배를 높이면 속도분포의 벽면 기울기가 작아지고 박리점에 가까워집니다.';drawFlow();drawShear(sep,G,separated,tau)}
+    const presets={laminar:{U:.5,x:.5,rho:870,mu:.25,G:.35},transition:{U:1.01,x:.5,rho:998,mu:.001002,G:.35},attached:{U:10,x:1,rho:998,mu:.001002,G:.25},separated:{U:10,x:1,rho:998,mu:.001002,G:.92}};
+    function applyPreset(name){const p=presets[name];$('u').value=p.U;$('x').value=p.x;$('rho').value=p.rho;$('muLog').value=Math.log10(p.mu);$('gradient').value=p.G;document.querySelectorAll('.preset').forEach(b=>b.classList.toggle('active',b.dataset.preset===name));update()}
+    document.querySelectorAll('.preset').forEach(b=>b.addEventListener('click',()=>applyPreset(b.dataset.preset)));controls.forEach(el=>el.addEventListener('input',()=>{document.querySelectorAll('.preset').forEach(b=>b.classList.remove('active'));update()}));$('pauseBtn').addEventListener('click',e=>{running=!running;e.currentTarget.textContent=running?'Ⅱ 일시정지':'▶ 재생'});$('resetBtn').addEventListener('click',()=>applyPreset('attached'));$('fullBtn').addEventListener('click',()=>document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen());applyPreset('attached');requestAnimationFrame(animate);
   </script>
 </body>
 </html>
