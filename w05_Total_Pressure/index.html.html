@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>3.9 정압·동압 시뮬레이터 | Fluid Lab</title>
+  <script>
+    window.MathJax={tex:{inlineMath:[['\\(','\\)']],displayMath:[['\\[','\\]']]},options:{skipHtmlTags:['script','noscript','style','textarea','pre']}};
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+  <style>
+    :root{--bg:#f4f7fb;--panel:#fff;--line:#d8e0ee;--text:#1f2a44;--muted:#60708f;--accent:#2449d8;--blue:#5aa9ff;--orange:#ff8c42;--green:#21a366;--navy:#16324f;--warn:#7a5a05}
+    *{box-sizing:border-box}body{margin:0;font-family:"Segoe UI","Apple SD Gothic Neo","Malgun Gothic",sans-serif;background:linear-gradient(180deg,#eef3fb 0%,#f8fbff 100%);color:var(--text)}button,input{font:inherit}.wrap{max-width:1280px;margin:auto;padding:24px}.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:26px}.brand{font-weight:800;color:var(--navy)}.brand b{display:inline-grid;place-items:center;width:34px;height:34px;margin-right:8px;border-radius:11px;background:var(--accent);color:#fff}.tools{display:flex;gap:8px}.tools button,.preset{font-size:13px;font-weight:700;border:1px solid var(--line);background:#fff;color:var(--muted);border-radius:10px;padding:9px 12px;cursor:pointer}.tools button:hover,.preset:hover,.preset.active{border-color:var(--accent);color:var(--accent);background:#f3f7ff}.hero{display:grid;grid-template-columns:1fr auto;gap:22px;align-items:end;margin-bottom:22px}.eyebrow{font-size:13px;font-weight:800;letter-spacing:.1em;color:var(--accent)}h1{font-size:38px;letter-spacing:-.05em;margin:5px 0 8px;color:var(--navy)}.subtitle{color:var(--muted);line-height:1.7}.hero-eq{padding:15px 20px;border-radius:16px;background:#f3f8ff;border:1px solid #cfe0f7;color:var(--navy);font-size:19px}.grid{display:grid;grid-template-columns:410px 1fr;gap:20px}.card{background:var(--panel);border:1px solid var(--line);border-radius:22px;box-shadow:0 8px 24px rgba(27,52,111,.08);padding:18px}h2{margin:0 0 16px;font-size:20px}.presets{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:4px 0 18px}.preset{text-align:left}.preset strong{display:block;color:var(--navy);margin-bottom:2px}.control{margin-bottom:17px}.label-row{display:flex;justify-content:space-between;gap:12px;margin-bottom:8px;font-weight:700}.value{color:var(--accent)}input[type=range]{width:100%;accent-color:var(--accent);cursor:pointer}.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}.stat{border:1px solid var(--line);border-radius:16px;padding:13px;background:#fbfdff}.stat.total{background:#effaf4;border-color:#bfe5ce}.stat small{display:block;color:var(--muted);margin-bottom:5px}.stat b{font-size:22px;color:var(--navy)}.formula{margin-top:15px;padding:14px;border-radius:16px;background:#f4f8ff;border:1px dashed #bdd1ff;line-height:1.9;text-align:center;font-size:15px;overflow-x:auto}.note{margin-top:15px;padding:12px 14px;border-radius:14px;background:#fff8ec;border:1px solid #f1dba7;color:var(--warn);line-height:1.65;font-size:14px}.legend{display:flex;gap:13px;flex-wrap:wrap;margin-bottom:12px;color:var(--muted);font-size:13px}.swatch{width:12px;height:12px;border-radius:4px;display:inline-block;margin-right:5px;vertical-align:-1px}.viewer{display:grid;gap:16px}.diagram{width:100%;display:block;background:#fbfdff;border:1px solid var(--line);border-radius:18px}.pressure-build{display:grid;grid-template-columns:1fr 1fr;gap:12px}.mini{border:1px solid var(--line);border-radius:16px;padding:14px}.mini-title{font-weight:800;color:var(--navy);margin-bottom:10px}.bar-track{height:34px;border-radius:10px;background:#edf1f7;overflow:hidden;display:flex}.bar-static{background:var(--blue)}.bar-dynamic{background:var(--orange)}.bar-labels{display:flex;justify-content:space-between;color:var(--muted);font-size:12px;margin-top:7px}.speed-read{display:flex;align-items:center;justify-content:center;min-height:70px;font-size:23px;font-weight:800;color:var(--accent)}canvas{width:100%;max-width:100%;border:1px solid var(--line);border-radius:18px;background:#fff}.caption{color:var(--muted);line-height:1.7;font-size:14px}.tag{display:inline-block;padding:3px 8px;border-radius:999px;background:#eaf1ff;color:var(--accent);font-weight:800;font-size:12px;margin-right:5px}
+    @media(max-width:1000px){.grid,.hero{grid-template-columns:1fr}.hero-eq{justify-self:start}}@media(max-width:620px){.wrap{padding:15px}.topbar{align-items:flex-start;gap:12px}.brand{font-size:13px}.tools button{padding:8px}.hero h1{font-size:31px}.presets,.stat-grid,.pressure-build{grid-template-columns:1fr}.card{padding:15px}.diagram text{font-size:15px}}@media print{.topbar,.tools,.presets{display:none}.wrap{padding:0}.card{box-shadow:none}.grid{grid-template-columns:38% 62%;gap:10px}}@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <div class="topbar"><div class="brand"><b>FL</b>Fluid Lab · Interactive mechanics</div><div class="tools"><button id="resetBtn">↺ 초기화</button><button id="fullBtn">⛶ 전체화면</button></div></div>
+    <section class="hero">
+      <div><div class="eyebrow">CHAPTER 3 · SECTION 3.9</div><h1>정압·동압 시뮬레이터</h1><div class="subtitle">피토–정압관의 두 압력 차로 동압을 구하고, 유속과 전압의 관계를 관찰합니다.</div></div>
+      <div class="hero-eq">\(P_t=P_s+q=P_s+\frac12\rho V^2\)</div>
+    </section>
+
+    <section class="grid">
+      <aside class="card">
+        <h2>조작 패널</h2>
+        <div class="presets">
+          <button class="preset" data-preset="air"><strong>공기 덕트</strong>표준 공기 · 20 m/s</button>
+          <button class="preset" data-preset="water"><strong>물 배관</strong>물 · 3 m/s</button>
+          <button class="preset" data-preset="slow"><strong>저속 흐름</strong>동압 변화 관찰</button>
+          <button class="preset" data-preset="vacuum"><strong>음의 정압</strong>전압과 비교</button>
+        </div>
+        <div class="control"><div class="label-row"><span>유속 \(V\)</span><span class="value" id="vValue"></span></div><input id="v" type="range" min="0" max="60" step="0.1" value="20"></div>
+        <div class="control"><div class="label-row"><span>유체 밀도 \(\rho\)</span><span class="value" id="rhoValue"></span></div><input id="rho" type="range" min="0.5" max="1200" step="0.1" value="1.2"></div>
+        <div class="control"><div class="label-row"><span>정압 \(P_s\) (게이지)</span><span class="value" id="psValue"></span></div><input id="ps" type="range" min="-5000" max="20000" step="10" value="0"></div>
+        <div class="control"><div class="label-row"><span>마노미터액 밀도 \(\rho_m\)</span><span class="value" id="rhomValue"></span></div><input id="rhom" type="range" min="500" max="13600" step="10" value="1000"></div>
+        <div class="control"><div class="label-row"><span>중력가속도 \(g\)</span><span class="value" id="gValue"></span></div><input id="g" type="range" min="1.62" max="15" step="0.01" value="9.81"></div>
+        <div class="stat-grid">
+          <div class="stat"><small>정압 \(P_s\)</small><b id="psStat"></b></div><div class="stat"><small>동압 \(q\)</small><b id="qStat"></b></div>
+          <div class="stat total"><small>전압(정체압) \(P_t\)</small><b id="ptStat"></b></div><div class="stat"><small>높이차 \(\Delta h\)</small><b id="dhStat"></b></div>
+        </div>
+        <div class="formula" id="formula"></div>
+        <div class="note" id="note"></div>
+      </aside>
+
+      <section class="card">
+        <h2>피토–정압관 측정 원리</h2>
+        <div class="legend"><span><i class="swatch" style="background:var(--blue)"></i>정압</span><span><i class="swatch" style="background:var(--orange)"></i>동압</span><span><i class="swatch" style="background:var(--green)"></i>전압</span></div>
+        <div class="viewer">
+          <svg class="diagram" viewBox="0 0 920 440" role="img" aria-label="피토 정압관과 차압 마노미터">
+            <defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#2449d8"/></marker><linearGradient id="pipeWater" x1="0" x2="1"><stop stop-color="#dff0ff"/><stop offset="1" stop-color="#b9ddff"/></linearGradient></defs>
+            <rect x="45" y="130" width="610" height="120" rx="28" fill="url(#pipeWater)" stroke="#16324f" stroke-width="7"/>
+            <g id="arrows"></g>
+            <path d="M470 190H355V335" fill="none" stroke="#ff8c42" stroke-width="13" stroke-linecap="round"/><path d="M470 170V95H705V335" fill="none" stroke="#2449d8" stroke-width="9" stroke-linecap="round"/><circle cx="470" cy="130" r="7" fill="#2449d8"/>
+            <path d="M355 335V360Q355 405 400 405H660Q705 405 705 360V335" fill="none" stroke="#16324f" stroke-width="10"/>
+            <path id="fluid" d="M350 310V360Q350 410 400 410H660Q710 410 710 360V265H700V360Q700 400 660 400H400Q360 400 360 360V310Z" fill="#5c667a" opacity=".9"/>
+            <line id="leftLevel" x1="335" x2="375" y1="310" y2="310" stroke="#ff8c42" stroke-width="4"/><line id="rightLevel" x1="685" x2="725" y1="265" y2="265" stroke="#2449d8" stroke-width="4"/>
+            <line id="dhLine" x1="760" x2="760" y1="310" y2="265" stroke="#2449d8" stroke-width="3" marker-end="url(#arr)"/><text id="dhLabel" x="775" y="292" fill="#2449d8" font-size="19" font-weight="800">Δh</text>
+            <text x="324" y="292" fill="#ff8c42" font-size="18" font-weight="800">정체압 Pₜ</text><text x="650" y="80" fill="#2449d8" font-size="18" font-weight="800">정압 Pₛ</text>
+            <text id="flowLabel" x="70" y="105" fill="#16324f" font-size="20" font-weight="800"></text><text x="70" y="285" fill="#60708f" font-size="16">피토관 입구에서 유체가 정지하여 V = 0</text>
+            <g transform="translate(675 135)"><rect width="200" height="96" rx="15" fill="#fff" stroke="#d8e0ee"/><text x="18" y="29" fill="#60708f" font-size="15">차압 = 동압</text><text id="qDiagram" x="18" y="62" fill="#ff8c42" font-size="22" font-weight="800"></text><text x="18" y="84" fill="#60708f" font-size="13">Pₜ − Pₛ = ½ρV²</text></g>
+          </svg>
+
+          <div class="pressure-build">
+            <div class="mini"><div class="mini-title">전압의 구성</div><div class="bar-track"><div class="bar-static" id="staticBar"></div><div class="bar-dynamic" id="dynamicBar"></div></div><div class="bar-labels"><span>정압 \(P_s\)</span><span>＋ 동압 \(q\)</span><span>＝ 전압 \(P_t\)</span></div></div>
+            <div class="mini"><div class="mini-title">차압으로 계산한 유속</div><div class="speed-read" id="speedRead"></div></div>
+          </div>
+          <canvas id="graph" width="900" height="280" aria-label="유속에 따른 동압 곡선"></canvas>
+          <div class="caption"><span class="tag">관찰</span>유속이 2배가 되면 동압은 4배가 됩니다. 정압은 기준 압력이고, 동압은 유체 운동에너지의 압력 표현이며, 전압은 두 압력의 합입니다.</div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    const $=id=>document.getElementById(id);const inputs=['v','rho','ps','rhom','g'].map($);let mathJob=Promise.resolve();
+    const fmt=(n,d=1)=>Number(n).toLocaleString('ko-KR',{minimumFractionDigits:d,maximumFractionDigits:d});
+    const pressure=n=>Math.abs(n)>=1000?`${fmt(n/1000,2)} kPa`:`${fmt(n,1)} Pa`;
+    function typeset(el){if(!window.MathJax?.typesetPromise)return;mathJob=mathJob.then(()=>MathJax.typesetClear?.([el])).then(()=>MathJax.typesetPromise([el])).catch(()=>{});}
+    function arrows(v){const g=$('arrows');g.innerHTML='';const count=5,len=55+Math.min(v,60)*2.2;for(let i=0;i<count;i++){const y=153+i*19;const l=document.createElementNS('http://www.w3.org/2000/svg','line');l.setAttribute('x1','75');l.setAttribute('y1',y);l.setAttribute('x2',Math.min(75+len,320));l.setAttribute('y2',y);l.setAttribute('stroke','#2449d8');l.setAttribute('stroke-width','5');l.setAttribute('marker-end','url(#arr)');g.appendChild(l)}}
+    function graph(rho,v){const c=$('graph'),x=c.getContext('2d'),W=c.width,H=c.height,p={l:65,r:25,t:25,b:48};x.clearRect(0,0,W,H);const vmax=60,qmax=.5*rho*vmax*vmax||1;const X=s=>p.l+s/vmax*(W-p.l-p.r),Y=q=>p.t+(1-q/qmax)*(H-p.t-p.b);x.font='13px Segoe UI';x.fillStyle='#60708f';x.strokeStyle='#d8e0ee';for(let i=0;i<=4;i++){const yy=p.t+i*(H-p.t-p.b)/4;x.beginPath();x.moveTo(p.l,yy);x.lineTo(W-p.r,yy);x.stroke();x.fillText(fmt(qmax*(4-i)/4,0),8,yy+4)}x.strokeStyle='#16324f';x.lineWidth=2;x.beginPath();x.moveTo(p.l,p.t);x.lineTo(p.l,H-p.b);x.lineTo(W-p.r,H-p.b);x.stroke();x.fillText('동압 q (Pa)',8,16);x.fillText('유속 V (m/s)',W-105,H-12);x.strokeStyle='#ff8c42';x.lineWidth=4;x.beginPath();for(let s=0;s<=vmax;s++){const xx=X(s),yy=Y(.5*rho*s*s);s?x.lineTo(xx,yy):x.moveTo(xx,yy)}x.stroke();const q=.5*rho*v*v;x.fillStyle='#2449d8';x.beginPath();x.arc(X(v),Y(q),7,0,Math.PI*2);x.fill();x.fillStyle='#16324f';x.font='bold 14px Segoe UI';x.fillText(`현재: ${fmt(v,1)} m/s, ${pressure(q)}`,Math.min(X(v)+12,W-220),Math.max(Y(q)-10,22))}
+    function update(){const v=+$('v').value,rho=+$('rho').value,ps=+$('ps').value,rhom=+$('rhom').value,g=+$('g').value,q=.5*rho*v*v,pt=ps+q,den=(rhom-rho)*g,dh=den>0?q/den:0,vCalc=Math.sqrt(Math.max(2*q/rho,0));
+      $('vValue').textContent=`${fmt(v,1)} m/s`;$('rhoValue').textContent=`${fmt(rho,1)} kg/m³`;$('psValue').textContent=pressure(ps);$('rhomValue').textContent=`${fmt(rhom,0)} kg/m³`;$('gValue').textContent=`${fmt(g,2)} m/s²`;
+      $('psStat').textContent=pressure(ps);$('qStat').textContent=pressure(q);$('ptStat').textContent=pressure(pt);$('dhStat').textContent=dh<.1?`${fmt(dh*1000,2)} mm`:`${fmt(dh,3)} m`;
+      $('formula').innerHTML=`\\[q=P_t-P_s=\\frac12\\rho V^2=\\frac12(${fmt(rho,1)})(${fmt(v,1)})^2=${fmt(q,1)}\\,\\mathrm{Pa}\\]\\[P_t=P_s+q=${fmt(ps,1)}+${fmt(q,1)}=${fmt(pt,1)}\\,\\mathrm{Pa}\\]\\[V=\\sqrt{\\frac{2(P_t-P_s)}{\\rho}}=${fmt(vCalc,2)}\\,\\mathrm{m/s}\\]`;typeset($('formula'));
+      if(v===0)$('note').innerHTML='유속이 0이면 동압과 마노미터 높이차가 0이므로 <strong>정압과 전압이 같습니다.</strong>';else if(rho<5)$('note').innerHTML=`공기 조건입니다. 유속을 2배로 바꾸어 동압이 <strong>4배</strong>가 되는지 확인해 보세요.`;else $('note').innerHTML=`액체는 밀도가 커서 같은 유속에서도 동압이 큽니다. 현재 전압은 정압보다 <strong>${pressure(q)}</strong> 높습니다.`;
+      $('flowLabel').textContent=`자유흐름  V = ${fmt(v,1)} m/s`;$('qDiagram').textContent=`q = ${pressure(q)}`;$('speedRead').textContent=`V = ${fmt(vCalc,2)} m/s`;arrows(v);
+      const left=310,delta=Math.min(dh*800,100),right=left-delta;$('rightLevel').setAttribute('y1',right);$('rightLevel').setAttribute('y2',right);$('dhLine').setAttribute('y1',left);$('dhLine').setAttribute('y2',right);$('dhLabel').setAttribute('y',(left+right)/2+5);$('dhLabel').textContent=`Δh ${dh<.1?fmt(dh*1000,1)+' mm':fmt(dh,3)+' m'}`;
+      const total=Math.abs(ps)+q||1;$('staticBar').style.width=`${Math.abs(ps)/total*100}%`;$('dynamicBar').style.width=`${q/total*100}%`;graph(rho,v)
+    }
+    const presets={air:{v:20,rho:1.2,ps:0,rhom:1000,g:9.81},water:{v:3,rho:1000,ps:100000,rhom:13600,g:9.81},slow:{v:5,rho:1.2,ps:500,rhom:1000,g:9.81},vacuum:{v:30,rho:1.2,ps:-1000,rhom:1000,g:9.81}};
+    document.querySelectorAll('.preset').forEach(b=>b.addEventListener('click',()=>{const p=presets[b.dataset.preset];Object.entries(p).forEach(([k,val])=>$(k).value=val);document.querySelectorAll('.preset').forEach(x=>x.classList.toggle('active',x===b));update()}));inputs.forEach(el=>el.addEventListener('input',()=>{document.querySelectorAll('.preset').forEach(x=>x.classList.remove('active'));update()}));
+    $('resetBtn').addEventListener('click',()=>{Object.entries(presets.air).forEach(([k,val])=>$(k).value=val);document.querySelectorAll('.preset').forEach(x=>x.classList.toggle('active',x.dataset.preset==='air'));update()});$('fullBtn').addEventListener('click',()=>document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen());
+    update();
+  </script>
+</body>
+</html>
