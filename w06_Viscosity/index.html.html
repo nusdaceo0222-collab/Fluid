@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>4.6 점성계수 시뮬레이터 | Fluid Lab</title>
+  <script>window.MathJax={tex:{inlineMath:[['\\(','\\)']],displayMath:[['\\[','\\]']]},options:{skipHtmlTags:['script','noscript','style','textarea','pre']}};</script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+  <style>
+    :root{--bg:#f4f7fb;--panel:#fff;--line:#d8e0ee;--text:#1f2a44;--muted:#60708f;--accent:#2449d8;--blue:#5aa9ff;--orange:#ff8c42;--green:#21a366;--navy:#16324f;--warn:#7a5a05}
+    *{box-sizing:border-box}body{margin:0;font-family:"Segoe UI","Apple SD Gothic Neo","Malgun Gothic",sans-serif;background:linear-gradient(180deg,#eef3fb,#f8fbff);color:var(--text)}button,input{font:inherit}.wrap{max-width:1280px;margin:auto;padding:24px}.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:26px}.brand{font-weight:800;color:var(--navy)}.brand b{display:inline-grid;place-items:center;width:34px;height:34px;margin-right:8px;border-radius:11px;background:var(--accent);color:#fff}.tools{display:flex;gap:8px}.tools button,.preset{font-size:13px;font-weight:700;border:1px solid var(--line);background:#fff;color:var(--muted);border-radius:10px;padding:9px 12px;cursor:pointer}.tools button:hover,.preset:hover,.preset.active{border-color:var(--accent);color:var(--accent);background:#f3f7ff}.hero{display:grid;grid-template-columns:1fr auto;gap:22px;align-items:end;margin-bottom:22px}.eyebrow{font-size:13px;font-weight:800;letter-spacing:.1em;color:var(--accent)}h1{font-size:38px;letter-spacing:-.05em;margin:5px 0 8px;color:var(--navy)}.subtitle{color:var(--muted);line-height:1.7}.hero-eq{padding:15px 20px;border-radius:16px;background:#f3f8ff;border:1px solid #cfe0f7;color:var(--navy);font-size:19px}.grid{display:grid;grid-template-columns:410px 1fr;gap:20px}.card{background:var(--panel);border:1px solid var(--line);border-radius:22px;box-shadow:0 8px 24px rgba(27,52,111,.08);padding:18px}h2{margin:0 0 16px;font-size:20px}.presets{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:4px 0 18px}.preset{text-align:left}.preset strong{display:block;color:var(--navy);margin-bottom:2px}.control{margin-bottom:17px}.label-row{display:flex;justify-content:space-between;gap:12px;margin-bottom:8px;font-weight:700}.value{color:var(--accent)}input[type=range]{width:100%;accent-color:var(--accent);cursor:pointer}.scale{display:flex;justify-content:space-between;color:#8a97ad;font-size:11px;margin-top:2px}.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}.stat{border:1px solid var(--line);border-radius:16px;padding:13px;background:#fbfdff}.stat.primary{background:#effaf4;border-color:#bfe5ce}.stat small{display:block;color:var(--muted);margin-bottom:5px}.stat b{font-size:21px;color:var(--navy);word-break:break-word}.formula{margin-top:15px;padding:14px;border-radius:16px;background:#f4f8ff;border:1px dashed #bdd1ff;line-height:1.9;text-align:center;font-size:15px;overflow-x:auto}.note{margin-top:15px;padding:12px 14px;border-radius:14px;background:#fff8ec;border:1px solid #f1dba7;color:var(--warn);line-height:1.65;font-size:14px}.legend{display:flex;gap:13px;flex-wrap:wrap;margin-bottom:12px;color:var(--muted);font-size:13px}.swatch{width:12px;height:12px;border-radius:4px;display:inline-block;margin-right:5px;vertical-align:-1px}.viewer{display:grid;gap:16px}.diagram{width:100%;display:block;background:#fbfdff;border:1px solid var(--line);border-radius:18px}.relation{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}.relation-card{padding:13px;border:1px solid var(--line);border-radius:15px;text-align:center;background:#fbfdff}.relation-card small{display:block;color:var(--muted);margin-bottom:5px}.relation-card b{font-size:19px;color:var(--navy)}.relation-card.active{border-color:#bfe5ce;background:#effaf4}canvas{width:100%;border:1px solid var(--line);border-radius:18px;background:#fff}.caption{color:var(--muted);line-height:1.7;font-size:14px}.tag{display:inline-block;padding:3px 8px;border-radius:999px;background:#eaf1ff;color:var(--accent);font-weight:800;font-size:12px;margin-right:5px}
+    @media(max-width:1000px){.grid,.hero{grid-template-columns:1fr}.hero-eq{justify-self:start}}@media(max-width:620px){.wrap{padding:15px}.topbar{align-items:flex-start;gap:10px}.brand{font-size:13px}.hero h1{font-size:31px}.presets,.stat-grid,.relation{grid-template-columns:1fr}.card{padding:15px}}@media print{.topbar,.presets{display:none}.wrap{padding:0}.card{box-shadow:none}.grid{grid-template-columns:38% 62%;gap:10px}}@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <div class="topbar"><div class="brand"><b>FL</b>Fluid Lab · Interactive mechanics</div><div class="tools"><button id="resetBtn">↺ 초기화</button><button id="fullBtn">⛶ 전체화면</button></div></div>
+    <section class="hero"><div><div class="eyebrow">CHAPTER 4 · SECTION 4.6</div><h1>점성계수 시뮬레이터</h1><div class="subtitle">평행판 사이의 전단유동으로 점성계수와 동점성계수의 의미를 탐구합니다.</div></div><div class="hero-eq">\(\tau=\mu\dfrac{du}{dy},\qquad \nu=\dfrac{\mu}{\rho}\)</div></section>
+
+    <section class="grid">
+      <aside class="card">
+        <h2>조작 패널</h2>
+        <div class="presets">
+          <button class="preset" data-preset="water"><strong>물 20 °C</strong>\(\mu\approx1.00\,\mathrm{mPa\!\cdot\!s}\)</button>
+          <button class="preset" data-preset="air"><strong>공기 20 °C</strong>매우 작은 점성</button>
+          <button class="preset" data-preset="oil"><strong>윤활유</strong>중간 점성</button>
+          <button class="preset" data-preset="glycerin"><strong>글리세린</strong>매우 큰 점성</button>
+        </div>
+        <div class="control"><div class="label-row"><span>윗판 속도 \(U\)</span><span class="value" id="uValue"></span></div><input id="u" type="range" min="0.02" max="5" step="0.01" value="1"></div>
+        <div class="control"><div class="label-row"><span>판 사이 거리 \(h\)</span><span class="value" id="hValue"></span></div><input id="h" type="range" min="0.001" max="0.05" step="0.001" value="0.01"></div>
+        <div class="control"><div class="label-row"><span>측정 전단응력 \(\tau\)</span><span class="value" id="tauValue"></span></div><input id="tauLog" type="range" min="-4" max="1.5" step="0.01" value="-1"><div class="scale"><span>0.0001 Pa</span><span>로그 눈금</span><span>31.6 Pa</span></div></div>
+        <div class="control"><div class="label-row"><span>유체 밀도 \(\rho\)</span><span class="value" id="rhoValue"></span></div><input id="rho" type="range" min="0.5" max="1400" step="0.5" value="998"></div>
+        <div class="stat-grid">
+          <div class="stat"><small>속도구배 \(du/dy\)</small><b id="gradStat"></b></div>
+          <div class="stat primary"><small>점성계수 \(\mu\)</small><b id="muStat"></b></div>
+          <div class="stat"><small>동점성계수 \(\nu\)</small><b id="nuStat"></b></div>
+          <div class="stat"><small>단위 환산</small><b id="unitStat"></b></div>
+        </div>
+        <div class="formula" id="formula"></div>
+        <div class="note" id="note"></div>
+      </aside>
+
+      <section class="card">
+        <h2>뉴턴의 점성법칙</h2>
+        <div class="legend"><span><i class="swatch" style="background:var(--blue)"></i>유체층</span><span><i class="swatch" style="background:var(--accent)"></i>속도분포</span><span><i class="swatch" style="background:var(--orange)"></i>전단응력</span><span><i class="swatch" style="background:var(--green)"></i>점성 기울기</span></div>
+        <div class="viewer">
+          <svg class="diagram" viewBox="0 0 920 430" role="img" aria-label="평행판 사이 쿠에트 유동의 선형 속도분포">
+            <defs><marker id="blueArrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#2449d8"/></marker><marker id="orangeArrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#ff8c42"/></marker><linearGradient id="fluidGrad" x1="0" y1="1" x2="0" y2="0"><stop stop-color="#dff0ff"/><stop offset="1" stop-color="#8bc5ff"/></linearGradient></defs>
+            <rect x="60" y="90" width="530" height="30" rx="5" fill="#44506d"/><rect x="60" y="330" width="530" height="30" rx="5" fill="#44506d"/><rect x="60" y="120" width="530" height="210" fill="url(#fluidGrad)"/>
+            <line id="plateArrow" x1="100" y1="68" x2="310" y2="68" stroke="#2449d8" stroke-width="5" marker-end="url(#blueArrow)"/><text id="uLabel" x="330" y="76" fill="#16324f" font-size="21" font-weight="800"></text>
+            <line x1="620" y1="120" x2="620" y2="330" stroke="#2449d8" stroke-width="3" marker-end="url(#blueArrow)"/><text id="hLabel" x="638" y="230" fill="#2449d8" font-size="20" font-weight="800"></text>
+            <g id="layerArrows"></g>
+            <path d="M690 330H850L850 120" fill="none" stroke="#2449d8" stroke-width="4"/><path d="M690 330L850 120" fill="none" stroke="#21a366" stroke-width="5"/><text x="690" y="365" fill="#60708f" font-size="16">u = 0</text><text id="topSpeed" x="805" y="105" fill="#60708f" font-size="16"></text><text x="705" y="65" fill="#16324f" font-size="19" font-weight="800">선형 속도분포</text>
+            <line x1="665" y1="145" x2="780" y2="145" stroke="#ff8c42" stroke-width="4" marker-end="url(#orangeArrow)"/><text id="tauLabel" x="665" y="132" fill="#ff8c42" font-size="18" font-weight="800"></text>
+            <text x="75" y="390" fill="#60708f" font-size="15">아랫판: 점착조건으로 u = 0</text><text x="75" y="415" fill="#60708f" font-size="15">윗판: u = U, 유체층은 판의 운동에 저항</text>
+          </svg>
+          <div class="relation">
+            <div class="relation-card"><small>원인</small><b id="causeRead"></b></div><div class="relation-card active"><small>유체의 성질</small><b id="propertyRead"></b></div><div class="relation-card"><small>결과</small><b id="effectRead"></b></div>
+          </div>
+          <canvas id="graph" width="900" height="290" aria-label="전단속도와 전단응력의 선형 관계"></canvas>
+          <div class="caption"><span class="tag">핵심</span>뉴턴 유체에서는 전단응력과 속도구배가 비례하며, 점성계수 \(\mu\)는 \(\tau\)–\(du/dy\) 그래프의 기울기입니다. 동점성계수는 점성효과와 관성효과의 비를 나타냅니다.</div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    const $=id=>document.getElementById(id),controls=['u','h','tauLog','rho'].map($);let mathJob=Promise.resolve();
+    const fmt=(n,d=2)=>Number(n).toLocaleString('ko-KR',{minimumFractionDigits:d,maximumFractionDigits:d});
+    const sci=n=>n.toExponential(2).replace('e','×10^');
+    function typeset(el){if(!window.MathJax?.typesetPromise)return;mathJob=mathJob.then(()=>MathJax.typesetClear?.([el])).then(()=>MathJax.typesetPromise([el])).catch(()=>{})}
+    function viscosityText(mu){if(mu<.01)return `${fmt(mu*1000,3)} mPa·s`;return `${fmt(mu,4)} Pa·s`}
+    function drawLayers(U){const g=$('layerArrows');g.innerHTML='';for(let i=0;i<=7;i++){const f=i/7,y=315-f*180,len=25+f*Math.min(240,70+U*45),l=document.createElementNS('http://www.w3.org/2000/svg','line');l.setAttribute('x1','100');l.setAttribute('y1',y);l.setAttribute('x2',100+len);l.setAttribute('y2',y);l.setAttribute('stroke','#2449d8');l.setAttribute('stroke-width','4');l.setAttribute('marker-end','url(#blueArrow)');g.appendChild(l)}}
+    function drawGraph(mu,grad){const c=$('graph'),x=c.getContext('2d'),W=c.width,H=c.height,p={l:72,r:30,t:25,b:52},maxX=Math.max(grad*1.5,100),maxY=mu*maxX||1,X=v=>p.l+v/maxX*(W-p.l-p.r),Y=v=>H-p.b-v/maxY*(H-p.t-p.b);x.clearRect(0,0,W,H);x.strokeStyle='#d8e0ee';x.lineWidth=1;x.font='13px Segoe UI';x.fillStyle='#60708f';for(let i=0;i<=5;i++){const yy=p.t+i*(H-p.t-p.b)/5;x.beginPath();x.moveTo(p.l,yy);x.lineTo(W-p.r,yy);x.stroke();x.fillText(fmt(maxY*(5-i)/5,maxY<.1?3:1),8,yy+4)}x.strokeStyle='#16324f';x.lineWidth=2;x.beginPath();x.moveTo(p.l,p.t);x.lineTo(p.l,H-p.b);x.lineTo(W-p.r,H-p.b);x.stroke();x.fillText('전단응력 τ (Pa)',8,16);x.fillText('속도구배 du/dy (s⁻¹)',W-175,H-13);x.strokeStyle='#21a366';x.lineWidth=4;x.beginPath();x.moveTo(X(0),Y(0));x.lineTo(X(maxX),Y(maxY));x.stroke();x.fillStyle='#2449d8';x.beginPath();x.arc(X(grad),Y(mu*grad),7,0,Math.PI*2);x.fill();x.fillStyle='#16324f';x.font='bold 14px Segoe UI';x.fillText(`기울기 μ = ${viscosityText(mu)}`,W-255,44)}
+    function update(){const U=+$('u').value,h=+$('h').value,tau=10**(+$('tauLog').value),rho=+$('rho').value,grad=U/h,mu=tau/grad,nu=mu/rho,cSt=nu*1e6;
+      $('uValue').textContent=`${fmt(U,2)} m/s`;$('hValue').textContent=`${fmt(h*1000,1)} mm`;$('tauValue').textContent=`${fmt(tau,tau<.01?5:3)} Pa`;$('rhoValue').textContent=`${fmt(rho,1)} kg/m³`;
+      $('gradStat').textContent=`${fmt(grad,1)} s⁻¹`;$('muStat').textContent=viscosityText(mu);$('nuStat').textContent=`${nu.toExponential(3)} m²/s`;$('unitStat').textContent=`${fmt(cSt,cSt<1?3:2)} cSt`;
+      $('formula').innerHTML=`\\[\\frac{du}{dy}=\\frac{U}{h}=\\frac{${fmt(U,2)}}{${fmt(h,3)}}=${fmt(grad,1)}\\,\\mathrm{s^{-1}}\\]\\[\\mu=\\frac{\\tau}{du/dy}=\\frac{${fmt(tau,tau<.01?5:3)}}{${fmt(grad,1)}}=${mu.toExponential(3)}\\,\\mathrm{Pa\\!\\cdot\\!s}\\]\\[\\nu=\\frac{\\mu}{\\rho}=${nu.toExponential(3)}\\,\\mathrm{m^2/s}=${fmt(cSt,3)}\\,\\mathrm{cSt}\\]`;typeset($('formula'));
+      if(mu<5e-5)$('note').innerHTML='공기와 같은 저점성 유체에 가까운 조건입니다. 작은 전단응력도 측정할 수 있도록 전단응력 슬라이더는 <strong>로그 눈금</strong>을 사용합니다.';else if(mu>.5)$('note').innerHTML='점성이 매우 큰 조건입니다. 같은 속도구배를 만들려면 큰 전단응력이 필요하므로 판을 움직이기 어렵습니다.';else $('note').innerHTML='점성계수 μ는 전단응력과 속도구배의 비입니다. 밀도만 바꾸면 μ는 그대로지만 동점성계수 ν는 변합니다.';
+      $('uLabel').textContent=`윗판 U = ${fmt(U,2)} m/s`;$('hLabel').textContent=`h = ${fmt(h*1000,1)} mm`;$('tauLabel').textContent=`τ = ${fmt(tau,tau<.01?5:2)} Pa`;$('topSpeed').textContent=`u = ${fmt(U,2)} m/s`;$('causeRead').textContent=`du/dy = ${fmt(grad,1)} s⁻¹`;$('propertyRead').textContent=`μ = ${viscosityText(mu)}`;$('effectRead').textContent=`τ = ${fmt(tau,tau<.01?5:2)} Pa`;drawLayers(U);drawGraph(mu,grad)
+    }
+    const presets={water:{u:1,h:.01,mu:.001002,rho:998},air:{u:1,h:.01,mu:1.81e-5,rho:1.204},oil:{u:.2,h:.01,mu:.25,rho:870},glycerin:{u:.1,h:.01,mu:1.49,rho:1260}};
+    function applyPreset(name){const p=presets[name],tau=p.mu*p.u/p.h;$('u').value=p.u;$('h').value=p.h;$('rho').value=p.rho;$('tauLog').value=Math.log10(tau);document.querySelectorAll('.preset').forEach(b=>b.classList.toggle('active',b.dataset.preset===name));update()}
+    document.querySelectorAll('.preset').forEach(b=>b.addEventListener('click',()=>applyPreset(b.dataset.preset)));controls.forEach(el=>el.addEventListener('input',()=>{document.querySelectorAll('.preset').forEach(b=>b.classList.remove('active'));update()}));$('resetBtn').addEventListener('click',()=>applyPreset('water'));$('fullBtn').addEventListener('click',()=>document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen());applyPreset('water');
+  </script>
+</body>
+</html>
