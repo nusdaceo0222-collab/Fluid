@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>확대관·축소관 부차손실 시뮬레이터</title>
+  <title>8.8 확대관·축소관 시뮬레이터 | Fluid Lab</title>
+  <script>window.MathJax={tex:{inlineMath:[['\\(','\\)']],displayMath:[['\\[','\\]']]},options:{skipHtmlTags:['script','noscript','style','textarea','pre']}};</script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
   <style>
     :root {
       --bg: #f4f7fb;
@@ -20,6 +22,7 @@
       --warn-bg: #fff8ec;
       --warn-line: #f1dba7;
       --warn-text: #7a5a05;
+      --navy: #16324f;
     }
 
     * { box-sizing: border-box; }
@@ -34,7 +37,11 @@
       margin: 0 auto;
       padding: 24px;
     }
-    h1 { margin: 0 0 8px; font-size: 32px; }
+    button,input,select{font:inherit}
+    .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:26px}.brand{font-weight:800;color:var(--navy)}.brand b{display:inline-grid;place-items:center;width:34px;height:34px;margin-right:8px;border-radius:8px;background:var(--accent);color:#fff}.tools{display:flex;gap:8px}.tools button,.preset{font-size:13px;font-weight:700;border:1px solid var(--line);background:#fff;color:var(--muted);border-radius:8px;padding:9px 12px;cursor:pointer}.tools button:hover,.preset:hover,.preset.active{border-color:var(--accent);color:var(--accent);background:#f3f7ff}
+    .hero{display:grid;grid-template-columns:1fr auto;gap:22px;align-items:end;margin-bottom:22px}.eyebrow{font-size:13px;font-weight:800;color:var(--accent)}
+    h1 { margin: 5px 0 8px; font-size: 38px; color:var(--navy); }
+    .hero-eq{padding:15px 20px;border-radius:8px;background:#f3f8ff;border:1px solid #cfe0f7;color:var(--navy);font-size:18px}
     .subtitle {
       color: var(--muted);
       line-height: 1.75;
@@ -48,11 +55,12 @@
     .card {
       background: var(--panel);
       border: 1px solid var(--line);
-      border-radius: 22px;
+      border-radius: 8px;
       box-shadow: 0 8px 24px rgba(27, 52, 111, 0.08);
       padding: 18px;
     }
     h2 { margin: 0 0 16px; font-size: 20px; }
+    .presets{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:4px 0 18px}.preset{text-align:left}.preset strong{display:block;color:var(--navy);margin-bottom:2px}
     .control-group { margin-bottom: 18px; }
     .label-row {
       display: flex;
@@ -89,6 +97,7 @@
       padding: 14px;
       background: #fbfdff;
     }
+    .stat.primary{background:#fff3f1;border-color:#f1cbc5}
     .stat-title {
       font-size: 13px;
       color: var(--muted);
@@ -120,7 +129,8 @@
     }
     .state-badge {
       margin-top: 12px;
-      display: inline-block;
+      display: flex;
+      justify-content:space-between;
       padding: 10px 14px;
       border-radius: 999px;
       color: white;
@@ -165,19 +175,23 @@
       background: #fff;
     }
     .caption { color: var(--muted); line-height: 1.7; font-size: 14px; }
-    @media (max-width: 1000px) { .grid { grid-template-columns: 1fr; } }
+    .compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.compare-card{padding:12px;border:1px solid var(--line);border-radius:8px;background:#fbfdff}.compare-card.active{border-color:var(--accent);background:#f3f7ff}.compare-card small{display:block;color:var(--muted);margin-bottom:5px}.compare-card b{font-size:18px;color:var(--navy)}.ratio-track{height:10px;border-radius:5px;background:#e8eef8;overflow:hidden;margin:10px 0}.ratio-fill{height:100%;background:var(--accent)}
+    @media (max-width: 1000px) { .grid,.hero { grid-template-columns: 1fr; }.hero-eq{justify-self:start} }
+    @media(max-width:620px){.wrap{padding:15px}.topbar{align-items:flex-start;gap:10px}.brand{font-size:13px}.tools button{padding:8px}h1{font-size:30px}.presets,.stat-grid,.compare-grid{grid-template-columns:1fr}.card{padding:15px}}
+    @media print{.topbar,.presets{display:none}.wrap{padding:0}.card{box-shadow:none}.grid{grid-template-columns:38% 62%;gap:10px}}
+    @media(prefers-reduced-motion:reduce){*{transition:none!important}}
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <h1>확대관·축소관 부차손실 시뮬레이터</h1>
-    <div class="subtitle">
-      관 지름이 갑자기 변할 때 발생하는 <strong>부차손실수두</strong>를 계산합니다. 확대관에서는 급확대 손실을 <strong>h<sub>m</sub> = (V₁−V₂)²/2g</strong>로 계산하고, 축소관에서는 <strong>h<sub>m</sub> = K V₂²/2g</strong> 형태로 계산합니다.
-    </div>
+  <main class="wrap">
+    <div class="topbar"><div class="brand"><b>FL</b>Fluid Lab · Interactive mechanics</div><div class="tools"><button id="pauseBtn">Ⅱ 일시정지</button><button id="resetBtn">↺ 초기화</button><button id="fullBtn">⛶ 전체화면</button></div></div>
+    <section class="hero"><div><div class="eyebrow">CHAPTER 8 · SECTION 8.8</div><h1>확대관·축소관 시뮬레이터</h1><div class="subtitle">단면적의 급격한 변화가 만드는 속도 변화, 박리와 부차손실을 비교합니다.</div></div><div class="hero-eq">\(h_{L,e}=\dfrac{(V_s-V_L)^2}{2g},\quad h_{L,c}=K_c\dfrac{V_s^2}{2g}\)</div></section>
 
     <div class="grid">
       <div class="card">
         <h2>조작 패널</h2>
+
+        <div class="presets"><button class="preset" data-preset="standard"><strong>기준 조건</strong>80 → 160 mm</button><button class="preset" data-preset="mild"><strong>완만한 변화</strong>100 → 140 mm</button><button class="preset" data-preset="strong"><strong>큰 지름비</strong>60 → 200 mm</button><button class="preset" data-preset="highflow"><strong>고유량</strong>유량 40 L/s</button></div>
 
         <div class="control-group">
           <div class="label-row">
@@ -192,7 +206,7 @@
 
         <div class="control-group">
           <div class="label-row">
-            <span>작은 관 지름 D₁</span>
+            <span>작은 관 지름 D<sub>s</sub></span>
             <span class="value" id="d1Value">0.080 m</span>
           </div>
           <input id="d1Slider" type="range" min="0.020" max="0.250" step="0.001" value="0.080" />
@@ -200,7 +214,7 @@
 
         <div class="control-group">
           <div class="label-row">
-            <span>큰 관 지름 D₂</span>
+            <span>큰 관 지름 D<sub>L</sub></span>
             <span class="value" id="d2Value">0.160 m</span>
           </div>
           <input id="d2Slider" type="range" min="0.030" max="0.400" step="0.001" value="0.160" />
@@ -232,29 +246,29 @@
 
         <div class="stat-grid">
           <div class="stat">
-            <div class="stat-title">작은 관 속도 V₁</div>
+            <div class="stat-title">작은 관 속도 \(V_s\)</div>
             <div class="stat-value" id="v1Stat">3.98 m/s</div>
           </div>
           <div class="stat">
-            <div class="stat-title">큰 관 속도 V₂</div>
+            <div class="stat-title">큰 관 속도 \(V_L\)</div>
             <div class="stat-value" id="v2Stat">0.99 m/s</div>
           </div>
-          <div class="stat">
-            <div class="stat-title">부차손실수두 hm</div>
+          <div class="stat primary">
+            <div class="stat-title">부차손실수두 \(h_L\)</div>
             <div class="stat-value" id="hmStat">0.46 m</div>
           </div>
           <div class="stat">
-            <div class="stat-title">압력손실 ΔP</div>
+            <div class="stat-title">압력손실 \(\Delta P\)</div>
             <div class="stat-value" id="dpStat">4.5 kPa</div>
           </div>
         </div>
 
-        <div id="stateBadge" class="state-badge">확대손실</div>
+        <div id="stateBadge" class="state-badge"><span id="stateText">급확대 손실</span><small id="ratioText">면적비 4.00</small></div>
 
         <div class="formula" id="formulaBox">
-          확대관: hm = (V₁−V₂)²/2g<br>
-          hm = (3.98−0.99)²/(2×9.81) = 0.46 m<br>
-          ΔP = ρghm = 4.5 kPa
+          \(A_s=\pi D_s^2/4,\quad A_L=\pi D_L^2/4\)<br>
+          \(h_{L,e}=(V_s-V_L)^2/(2g)\)<br>
+          \(\Delta P=\rho g h_L\)
         </div>
 
         <div class="note-box" id="noteBox">
@@ -306,13 +320,14 @@
           </svg>
 
           <canvas id="graph" width="920" height="330"></canvas>
+          <div><h2>동일 조건 손실 비교</h2><div class="compare-grid"><div class="compare-card" id="expCompare"><small>급확대 손실수두</small><b id="expLoss">0.455 m</b></div><div class="compare-card" id="conCompare"><small>급축소 손실수두</small><b id="conLoss">0.323 m</b></div></div><div class="ratio-track"><div id="ratioFill" class="ratio-fill" style="width:50%"></div></div><div class="caption" id="doubleHint">유량이 2배가 되면 손실수두는 약 4배가 됩니다.</div></div>
           <div class="caption">
             확대관·축소관 손실은 배관이 길어서 생기는 주손실이 아니라, <strong>단면 변화</strong> 때문에 생기는 부차손실입니다. 유속이 커질수록 속도수두가 커져 손실도 증가합니다.
           </div>
         </div>
       </div>
     </div>
-  </div>
+  </main>
 
   <script>
     const g = 9.81;
@@ -339,6 +354,14 @@
     const formulaBox = document.getElementById('formulaBox');
     const noteBox = document.getElementById('noteBox');
     const stateBadge = document.getElementById('stateBadge');
+    const stateText = document.getElementById('stateText');
+    const ratioText = document.getElementById('ratioText');
+    const expLoss = document.getElementById('expLoss');
+    const conLoss = document.getElementById('conLoss');
+    const expCompare = document.getElementById('expCompare');
+    const conCompare = document.getElementById('conCompare');
+    const ratioFill = document.getElementById('ratioFill');
+    const doubleHint = document.getElementById('doubleHint');
 
     const pipeGroup = document.getElementById('pipeGroup');
     const streamGroup = document.getElementById('streamGroup');
@@ -357,6 +380,8 @@
     let particles = [];
     let currentSpeed = 2;
     let currentMode = 'expansion';
+    let paused = false;
+    let mathQueue = Promise.resolve();
 
     function fmt(num, digits = 2) { return Number(num).toFixed(digits); }
     function comma(num, digits = 0) { return Number(num).toLocaleString(undefined, { maximumFractionDigits: digits }); }
@@ -486,12 +511,20 @@
     }
 
     function animate() {
-      particles.forEach(p => {
-        p.x += 0.7 + currentSpeed * 0.20;
-        if (p.x > 810) p.x = 100;
-      });
-      drawParticles();
+      if (!paused) {
+        particles.forEach(p => {
+          p.x += 0.7 + currentSpeed * 0.20;
+          if (p.x > 810) p.x = 100;
+        });
+        drawParticles();
+      }
       requestAnimationFrame(animate);
+    }
+
+    function typeset(element) {
+      if (!window.MathJax?.typesetPromise) return;
+      mathQueue = mathQueue.then(() => MathJax.typesetClear?.([element]))
+        .then(() => MathJax.typesetPromise([element])).catch(() => {});
     }
 
     function drawGraph(Vsmall, Vlarge, hm, dp, mode, K) {
@@ -568,21 +601,25 @@
 
       const Vsmall = Q / area(D1);
       const Vlarge = Q / area(D2);
+      const areaRatio = area(D2) / area(D1);
+      const kExpansion = Math.pow(1 - area(D1) / area(D2), 2);
+      const hmExpansion = kExpansion * Vsmall * Vsmall / (2 * g);
+      const hmContraction = K * Vsmall * Vsmall / (2 * g);
       let hm;
       let formula;
       let note;
       let badge;
 
       if (mode === 'expansion') {
-        hm = Math.pow(Vsmall - Vlarge, 2) / (2 * g);
-        formula = `확대관: hm = (V₁−V₂)²/2g<br>` +
-          `hm = (${fmt(Vsmall,2)}−${fmt(Vlarge,2)})²/(2×9.81) = ${fmt(hm,3)} m<br>`;
+        hm = hmExpansion;
+        formula = `\\(K_e=\\left(1-\\dfrac{A_s}{A_L}\\right)^2=${fmt(kExpansion,3)}\\)<br>` +
+          `\\(h_{L,e}=\\dfrac{(V_s-V_L)^2}{2g}=\\dfrac{(${fmt(Vsmall,2)}-${fmt(Vlarge,2)})^2}{2\\times9.81}=${fmt(hm,3)}\\,\\mathrm{m}\\)<br>`;
         note = '확대관에서는 빠른 유동이 갑자기 넓은 관으로 들어가면서 박리와 와류가 발생하고, 속도차가 손실로 전환됩니다.';
         badge = '확대손실';
       } else {
-        hm = K * Vsmall * Vsmall / (2 * g);
-        formula = `축소관: hm = K V₁²/2g<br>` +
-          `hm = ${fmt(K,2)}×${fmt(Vsmall,2)}²/(2×9.81) = ${fmt(hm,3)} m<br>`;
+        hm = hmContraction;
+        formula = `\\(h_{L,c}=K_c\\dfrac{V_s^2}{2g}\\)<br>` +
+          `\\(h_{L,c}=${fmt(K,2)}\\times\\dfrac{${fmt(Vsmall,2)}^2}{2\\times9.81}=${fmt(hm,3)}\\,\\mathrm{m}\\)<br>`;
         note = '축소관에서는 유동이 좁은 관으로 모이면서 수축부와 재확대 과정에서 손실이 발생합니다. 여기서는 작은 관 속도 V₁ 기준으로 계산합니다.';
         badge = '축소손실';
       }
@@ -604,10 +641,20 @@
       hmStat.textContent = `${fmt(hm,3)} m`;
       dpStat.textContent = `${fmt(dp / 1000,2)} kPa`;
 
-      stateBadge.textContent = badge;
+      stateText.textContent = badge;
+      ratioText.textContent = `면적비 Aᴸ/Aₛ = ${fmt(areaRatio,2)}`;
       stateBadge.style.background = hm >= 2 ? '#d64545' : hm >= 0.5 ? '#ff8c42' : '#21a366';
-      formulaBox.innerHTML = formula + `ΔP = ρghm = ${comma(rho)}×9.81×${fmt(hm,3)} = ${fmt(dp / 1000,2)} kPa`;
+      formulaBox.innerHTML = formula + `\\(\\Delta P=\\rho g h_L=${comma(rho)}\\times9.81\\times${fmt(hm,3)}=${fmt(dp / 1000,2)}\\,\\mathrm{kPa}\\)`;
       noteBox.innerHTML = note;
+      typeset(formulaBox);
+
+      expLoss.textContent = `${fmt(hmExpansion,3)} m · ${fmt(rho*g*hmExpansion/1000,2)} kPa`;
+      conLoss.textContent = `${fmt(hmContraction,3)} m · ${fmt(rho*g*hmContraction/1000,2)} kPa`;
+      expCompare.classList.toggle('active', mode === 'expansion');
+      conCompare.classList.toggle('active', mode === 'contraction');
+      const totalCompare = hmExpansion + hmContraction || 1;
+      ratioFill.style.width = `${Math.max(4, Math.min(96, hmExpansion / totalCompare * 100))}%`;
+      doubleHint.textContent = `현재 지름비 ${fmt(D2/D1,2)}에서 유량을 2배로 하면 선택한 손실수두는 ${fmt(hm*4,3)} m로 약 4배가 됩니다.`;
 
       drawPipe(mode);
       drawStreams(mode);
@@ -622,11 +669,11 @@
       if (mode === 'expansion') {
         leftVLabel.textContent = `V₁ = ${fmt(Vsmall,2)} m/s`;
         rightVLabel.textContent = `V₂ = ${fmt(Vlarge,2)} m/s`;
-        mainLabel.textContent = '확대관 손실: hm = (V₁−V₂)²/2g';
+        mainLabel.textContent = '급확대 손실: hL = (Vs−VL)²/2g';
       } else {
         leftVLabel.textContent = `V₂ = ${fmt(Vlarge,2)} m/s`;
         rightVLabel.textContent = `V₁ = ${fmt(Vsmall,2)} m/s`;
-        mainLabel.textContent = '축소관 손실: hm = K V₁²/2g';
+        mainLabel.textContent = '급축소 손실: hL = Kc Vs²/2g';
       }
 
       drawGraph(Vsmall, Vlarge, hm, dp, mode, K);
@@ -634,6 +681,23 @@
 
     [modeSelect, d1Slider, d2Slider, qSlider, kSlider, rhoSlider].forEach(el => el.addEventListener('input', update));
     modeSelect.addEventListener('change', update);
+    document.querySelectorAll('.preset').forEach(button => button.addEventListener('click', () => {
+      const presets = {
+        standard:{mode:'expansion',d1:.080,d2:.160,q:.020,k:.40,rho:1000},
+        mild:{mode:'expansion',d1:.100,d2:.140,q:.020,k:.25,rho:1000},
+        strong:{mode:'expansion',d1:.060,d2:.200,q:.020,k:.55,rho:1000},
+        highflow:{mode:'contraction',d1:.100,d2:.200,q:.040,k:.40,rho:1000}
+      };
+      const p = presets[button.dataset.preset];
+      modeSelect.value=p.mode; d1Slider.value=p.d1; d2Slider.value=p.d2; qSlider.value=p.q; kSlider.value=p.k; rhoSlider.value=p.rho;
+      document.querySelectorAll('.preset').forEach(b => b.classList.toggle('active', b === button));
+      update();
+    }));
+    expCompare.addEventListener('click',()=>{modeSelect.value='expansion';update();});
+    conCompare.addEventListener('click',()=>{modeSelect.value='contraction';update();});
+    document.getElementById('pauseBtn').addEventListener('click', e => {paused=!paused;e.currentTarget.textContent=paused?'▶ 재생':'Ⅱ 일시정지';});
+    document.getElementById('resetBtn').addEventListener('click',()=>document.querySelector('[data-preset="standard"]').click());
+    document.getElementById('fullBtn').addEventListener('click',()=>document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen());
     initParticles();
     update();
     animate();
