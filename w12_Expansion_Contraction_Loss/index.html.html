@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>8.4 곡관·밸브 부차손실 시뮬레이터 | Fluid Lab</title>
+  <title>8.8 확대관·축소관 시뮬레이터 | Fluid Lab</title>
   <script>window.MathJax={tex:{inlineMath:[['\\(','\\)']],displayMath:[['\\[','\\]']]},options:{skipHtmlTags:['script','noscript','style','textarea','pre']}};</script>
   <script defer src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
   <style>
@@ -32,23 +32,49 @@
       background: linear-gradient(180deg, #eef3fb 0%, #f8fbff 100%);
       color: var(--text);
     }
-    button,input,select{font:inherit}.wrap { max-width: 1280px; margin: 0 auto; padding: 24px; }
-    .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:26px}.brand{font-weight:800;color:var(--navy)}.brand b{display:inline-grid;place-items:center;width:34px;height:34px;margin-right:8px;border-radius:11px;background:var(--accent);color:#fff}.tools{display:flex;gap:8px}.tools button,.preset{font-size:13px;font-weight:700;border:1px solid var(--line);background:#fff;color:var(--muted);border-radius:10px;padding:9px 12px;cursor:pointer}.tools button:hover,.preset:hover,.preset.active{border-color:var(--accent);color:var(--accent);background:#f3f7ff}
-    .hero{display:grid;grid-template-columns:1fr auto;gap:22px;align-items:end;margin-bottom:22px}.eyebrow{font-size:13px;font-weight:800;letter-spacing:.1em;color:var(--accent)}h1{font-size:38px;letter-spacing:-.05em;margin:5px 0 8px;color:var(--navy)}.subtitle{color:var(--muted);line-height:1.7}.hero-eq{padding:15px 20px;border-radius:16px;background:#f3f8ff;border:1px solid #cfe0f7;color:var(--navy);font-size:18px}
-    .grid { display: grid; grid-template-columns: 420px 1fr; gap: 20px; }
+    .wrap {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    button,input,select{font:inherit}
+    .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:26px}.brand{font-weight:800;color:var(--navy)}.brand b{display:inline-grid;place-items:center;width:34px;height:34px;margin-right:8px;border-radius:8px;background:var(--accent);color:#fff}.tools{display:flex;gap:8px}.tools button,.preset{font-size:13px;font-weight:700;border:1px solid var(--line);background:#fff;color:var(--muted);border-radius:8px;padding:9px 12px;cursor:pointer}.tools button:hover,.preset:hover,.preset.active{border-color:var(--accent);color:var(--accent);background:#f3f7ff}
+    .hero{display:grid;grid-template-columns:1fr auto;gap:22px;align-items:end;margin-bottom:22px}.eyebrow{font-size:13px;font-weight:800;color:var(--accent)}
+    h1 { margin: 5px 0 8px; font-size: 38px; color:var(--navy); }
+    .hero-eq{padding:15px 20px;border-radius:8px;background:#f3f8ff;border:1px solid #cfe0f7;color:var(--navy);font-size:18px}
+    .subtitle {
+      color: var(--muted);
+      line-height: 1.75;
+      margin-bottom: 20px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 420px 1fr;
+      gap: 20px;
+    }
     .card {
       background: var(--panel);
       border: 1px solid var(--line);
-      border-radius: 22px;
+      border-radius: 8px;
       box-shadow: 0 8px 24px rgba(27, 52, 111, 0.08);
       padding: 18px;
     }
     h2 { margin: 0 0 16px; font-size: 20px; }
     .presets{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:4px 0 18px}.preset{text-align:left}.preset strong{display:block;color:var(--navy);margin-bottom:2px}
     .control-group { margin-bottom: 18px; }
-    .label-row { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 8px; font-weight: 700; }
+    .label-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
     .value { color: var(--accent); }
-    input[type="range"] { width: 100%; accent-color: var(--accent); cursor: pointer; }
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
     select {
       width: 100%;
       padding: 11px 12px;
@@ -59,11 +85,29 @@
       font-size: 15px;
       font-weight: 700;
     }
-    .stat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 10px; }
-    .stat { border: 1px solid var(--line); border-radius: 16px; padding: 14px; background: #fbfdff; }
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-top: 10px;
+    }
+    .stat {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+      background: #fbfdff;
+    }
     .stat.primary{background:#fff3f1;border-color:#f1cbc5}
-    .stat-title { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
-    .stat-value { font-size: 23px; font-weight: 800; word-break: break-word; }
+    .stat-title {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .stat-value {
+      font-size: 23px;
+      font-weight: 800;
+      word-break: break-word;
+    }
     .formula {
       margin-top: 16px;
       padding: 14px;
@@ -85,7 +129,8 @@
     }
     .state-badge {
       margin-top: 12px;
-      display: flex;justify-content:space-between;
+      display: flex;
+      justify-content:space-between;
       padding: 10px 14px;
       border-radius: 999px;
       color: white;
@@ -93,15 +138,46 @@
       font-size: 15px;
       background: var(--loss);
     }
-    .legend { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; color: var(--muted); font-size: 14px; }
-    .swatch { width: 14px; height: 14px; border-radius: 4px; display: inline-block; margin-right: 6px; vertical-align: -2px; }
-    .viewer-grid { display: grid; grid-template-columns: 1fr; gap: 18px; }
-    svg, canvas { width: 100%; max-width: 100%; border: 1px solid var(--line); border-radius: 18px; background: #fff; display: block; }
-    svg { background: #fbfdff; }
+    .legend {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .swatch {
+      width: 14px;
+      height: 14px;
+      border-radius: 4px;
+      display: inline-block;
+      margin-right: 6px;
+      vertical-align: -2px;
+    }
+    .viewer-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 18px;
+    }
+    svg {
+      width: 100%;
+      height: auto;
+      display: block;
+      background: #fbfdff;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+    }
+    canvas {
+      width: 100%;
+      max-width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: #fff;
+    }
     .caption { color: var(--muted); line-height: 1.7; font-size: 14px; }
-    .share-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.share{padding:11px 8px;border:1px solid var(--line);border-radius:14px;text-align:center;background:#fbfdff}.share small{display:block;color:var(--muted);font-size:11px;margin-bottom:4px}.share b{font-size:16px;color:var(--navy)}.compare{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center}.compare-card{padding:12px;border:1px solid var(--line);border-radius:14px;text-align:center}.compare-card small{display:block;color:var(--muted);margin-bottom:5px}.compare-card b{color:var(--navy);font-size:17px}.arrow{color:var(--accent);font-weight:900}.tag{display:inline-block;padding:3px 8px;border-radius:999px;background:#eaf1ff;color:var(--accent);font-weight:800;font-size:12px;margin-right:5px}
+    .compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.compare-card{padding:12px;border:1px solid var(--line);border-radius:8px;background:#fbfdff}.compare-card.active{border-color:var(--accent);background:#f3f7ff}.compare-card small{display:block;color:var(--muted);margin-bottom:5px}.compare-card b{font-size:18px;color:var(--navy)}.ratio-track{height:10px;border-radius:5px;background:#e8eef8;overflow:hidden;margin:10px 0}.ratio-fill{height:100%;background:var(--accent)}
     @media (max-width: 1000px) { .grid,.hero { grid-template-columns: 1fr; }.hero-eq{justify-self:start} }
-    @media(max-width:620px){.wrap{padding:15px}.topbar{align-items:flex-start;gap:10px}.brand{font-size:13px}.tools button{padding:8px}h1{font-size:30px}.presets,.stat-grid,.share-grid{grid-template-columns:1fr 1fr}.compare{grid-template-columns:1fr}.arrow{transform:rotate(90deg)}.card{padding:15px}}
+    @media(max-width:620px){.wrap{padding:15px}.topbar{align-items:flex-start;gap:10px}.brand{font-size:13px}.tools button{padding:8px}h1{font-size:30px}.presets,.stat-grid,.compare-grid{grid-template-columns:1fr}.card{padding:15px}}
     @media print{.topbar,.presets{display:none}.wrap{padding:0}.card{box-shadow:none}.grid{grid-template-columns:38% 62%;gap:10px}}
     @media(prefers-reduced-motion:reduce){*{transition:none!important}}
   </style>
@@ -109,137 +185,144 @@
 <body>
   <main class="wrap">
     <div class="topbar"><div class="brand"><b>FL</b>Fluid Lab · Interactive mechanics</div><div class="tools"><button id="pauseBtn">Ⅱ 일시정지</button><button id="resetBtn">↺ 초기화</button><button id="fullBtn">⛶ 전체화면</button></div></div>
-    <section class="hero"><div><div class="eyebrow">CHAPTER 8 · SECTION 8.4</div><h1>곡관·밸브 부차손실 시뮬레이터</h1><div class="subtitle">배관 부속품의 방향 변화와 유로 저항이 만드는 손실을 비교하고, 전체 손실계수로 합산합니다.</div></div><div class="hero-eq">\(h_m=\sum K\dfrac{V^2}{2g},\qquad \Delta P=\rho gh_m\)</div></section>
+    <section class="hero"><div><div class="eyebrow">CHAPTER 8 · SECTION 8.8</div><h1>확대관·축소관 시뮬레이터</h1><div class="subtitle">단면적의 급격한 변화가 만드는 속도 변화, 박리와 부차손실을 비교합니다.</div></div><div class="hero-eq">\(h_{L,e}=\dfrac{(V_s-V_L)^2}{2g},\quad h_{L,c}=K_c\dfrac{V_s^2}{2g}\)</div></section>
 
     <div class="grid">
       <div class="card">
         <h2>조작 패널</h2>
-        <div class="presets"><button class="preset" data-preset="standard"><strong>기준 배관</strong>곡관 2 + 글로브 1</button><button class="preset" data-preset="low"><strong>저손실 배관</strong>완전개방 볼밸브</button><button class="preset" data-preset="many"><strong>곡관 다수</strong>90° 곡관 10개</button><button class="preset" data-preset="compare"><strong>밸브 3개</strong>종류별 비교</button></div>
+
+        <div class="presets"><button class="preset" data-preset="standard"><strong>기준 조건</strong>80 → 160 mm</button><button class="preset" data-preset="mild"><strong>완만한 변화</strong>100 → 140 mm</button><button class="preset" data-preset="strong"><strong>큰 지름비</strong>60 → 200 mm</button><button class="preset" data-preset="highflow"><strong>고유량</strong>유량 40 L/s</button></div>
 
         <div class="control-group">
-          <div class="label-row"><span>유량 Q</span><span class="value" id="qValue">0.0200 m³/s</span></div>
-          <input id="qSlider" type="range" min="0.001" max="0.120" step="0.001" value="0.020" />
-        </div>
-
-        <div class="control-group">
-          <div class="label-row"><span>관지름 D</span><span class="value" id="dValue">0.100 m</span></div>
-          <input id="dSlider" type="range" min="0.020" max="0.400" step="0.001" value="0.100" />
-        </div>
-
-        <div class="control-group">
-          <div class="label-row"><span>90° 곡관 개수</span><span class="value" id="elbowValue">2 개</span></div>
-          <input id="elbowSlider" type="range" min="0" max="10" step="1" value="2" />
-        </div>
-
-        <div class="control-group">
-          <div class="label-row"><span>곡관 1개당 K</span><span class="value" id="elbowKValue">0.90</span></div>
-          <input id="elbowKSlider" type="range" min="0.10" max="2.00" step="0.05" value="0.90" />
-        </div>
-
-        <div class="control-group">
-          <div class="label-row"><span>밸브 종류</span><span class="value" id="valveTypeValue">글로브밸브</span></div>
-          <select id="valveTypeSelect">
-            <option value="gate">게이트밸브, 완전개방 K=0.15</option>
-            <option value="ball">볼밸브, 완전개방 K=0.05</option>
-            <option value="globe" selected>글로브밸브 K=10.0</option>
-            <option value="check">체크밸브 K=2.0</option>
-            <option value="custom">사용자 지정 K</option>
+          <div class="label-row">
+            <span>관 형상 선택</span>
+            <span class="value" id="modeValue">확대관</span>
+          </div>
+          <select id="modeSelect">
+            <option value="expansion" selected>확대관: 작은 관 → 큰 관</option>
+            <option value="contraction">축소관: 큰 관 → 작은 관</option>
           </select>
         </div>
 
         <div class="control-group">
-          <div class="label-row"><span>밸브 개수</span><span class="value" id="valveValue">1 개</span></div>
-          <input id="valveSlider" type="range" min="0" max="6" step="1" value="1" />
-        </div>
-
-        <div class="control-group" id="customKGroup">
-          <div class="label-row"><span>사용자 지정 밸브 K</span><span class="value" id="customKValue">1.00</span></div>
-          <input id="customKSlider" type="range" min="0.01" max="20.00" step="0.01" value="1.00" />
+          <div class="label-row">
+            <span>작은 관 지름 D<sub>s</sub></span>
+            <span class="value" id="d1Value">0.080 m</span>
+          </div>
+          <input id="d1Slider" type="range" min="0.020" max="0.250" step="0.001" value="0.080" />
         </div>
 
         <div class="control-group">
-          <div class="label-row"><span>유체 밀도 ρ</span><span class="value" id="rhoValue">1000 kg/m³</span></div>
+          <div class="label-row">
+            <span>큰 관 지름 D<sub>L</sub></span>
+            <span class="value" id="d2Value">0.160 m</span>
+          </div>
+          <input id="d2Slider" type="range" min="0.030" max="0.400" step="0.001" value="0.160" />
+        </div>
+
+        <div class="control-group">
+          <div class="label-row">
+            <span>유량 Q</span>
+            <span class="value" id="qValue">0.0200 m³/s</span>
+          </div>
+          <input id="qSlider" type="range" min="0.001" max="0.120" step="0.001" value="0.020" />
+        </div>
+
+        <div class="control-group" id="kGroup">
+          <div class="label-row">
+            <span>축소관 손실계수 K</span>
+            <span class="value" id="kValue">0.40</span>
+          </div>
+          <input id="kSlider" type="range" min="0.05" max="1.00" step="0.01" value="0.40" />
+        </div>
+
+        <div class="control-group">
+          <div class="label-row">
+            <span>유체 밀도 ρ</span>
+            <span class="value" id="rhoValue">1000 kg/m³</span>
+          </div>
           <input id="rhoSlider" type="range" min="1" max="1500" step="1" value="1000" />
         </div>
 
         <div class="stat-grid">
-          <div class="stat"><div class="stat-title">평균유속 V</div><div class="stat-value" id="vStat">2.55 m/s</div></div>
-          <div class="stat"><div class="stat-title">속도수두 V²/2g</div><div class="stat-value" id="vhStat">0.331 m</div></div>
-          <div class="stat"><div class="stat-title">전체 손실계수 ΣK</div><div class="stat-value" id="sumKStat">11.80</div></div>
-          <div class="stat primary"><div class="stat-title">부차손실수두 \(h_m\)</div><div class="stat-value" id="hmStat">3.91 m</div></div>
-          <div class="stat"><div class="stat-title">압력손실 \(\Delta P\)</div><div class="stat-value" id="dpStat">38.3 kPa</div></div>
-          <div class="stat"><div class="stat-title">지배 손실</div><div class="stat-value" id="dominantStat">밸브</div></div>
+          <div class="stat">
+            <div class="stat-title">작은 관 속도 \(V_s\)</div>
+            <div class="stat-value" id="v1Stat">3.98 m/s</div>
+          </div>
+          <div class="stat">
+            <div class="stat-title">큰 관 속도 \(V_L\)</div>
+            <div class="stat-value" id="v2Stat">0.99 m/s</div>
+          </div>
+          <div class="stat primary">
+            <div class="stat-title">부차손실수두 \(h_L\)</div>
+            <div class="stat-value" id="hmStat">0.46 m</div>
+          </div>
+          <div class="stat">
+            <div class="stat-title">압력손실 \(\Delta P\)</div>
+            <div class="stat-value" id="dpStat">4.5 kPa</div>
+          </div>
         </div>
 
-        <div id="stateBadge" class="state-badge"><span id="lossLevel">부차손실 큼</span><small id="lossRatio">밸브 85%</small></div>
+        <div id="stateBadge" class="state-badge"><span id="stateText">급확대 손실</span><small id="ratioText">면적비 4.00</small></div>
 
         <div class="formula" id="formulaBox">
-          ΣK = 곡관 2×0.90 + 밸브 1×10.00 = 11.80<br>
-          hm = ΣK·V²/2g = 11.80×0.331 = 3.91 m<br>
-          ΔP = ρghm = 38.3 kPa
+          \(A_s=\pi D_s^2/4,\quad A_L=\pi D_L^2/4\)<br>
+          \(h_{L,e}=(V_s-V_L)^2/(2g)\)<br>
+          \(\Delta P=\rho g h_L\)
         </div>
 
         <div class="note-box" id="noteBox">
-          글로브밸브는 유로가 크게 꺾이므로 손실계수 K가 큽니다. 같은 유량에서도 밸브 종류에 따라 부차손실이 크게 달라집니다.
+          확대관에서는 빠른 유동이 갑자기 넓은 관으로 들어가면서 박리와 와류가 발생하고, 속도차가 손실로 전환됩니다.
         </div>
       </div>
 
       <div class="card">
         <h2>시각화</h2>
         <div class="legend">
-          <span><span class="swatch" style="background:#7fb7ff"></span>배관 유동</span>
-          <span><span class="swatch" style="background:#d64545"></span>손실 발생 위치</span>
-          <span><span class="swatch" style="background:#ff8c42"></span>에너지선 저하</span>
-          <span><span class="swatch" style="background:#2449d8"></span>계산 기준</span>
+          <span><span class="swatch" style="background:#7fb7ff"></span>배관 내 유동</span>
+          <span><span class="swatch" style="background:#d64545"></span>손실 영역</span>
+          <span><span class="swatch" style="background:#ff8c42"></span>에너지 손실</span>
+          <span><span class="swatch" style="background:#2449d8"></span>속도·치수 표시</span>
         </div>
 
         <div class="viewer-grid">
-          <svg viewBox="0 0 980 500" aria-label="곡관 밸브 부차손실 시각화">
+          <svg viewBox="0 0 980 500" aria-label="확대관 축소관 부차손실 시각화">
             <defs>
-              <marker id="arrowBlueFitting" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+              <marker id="arrowBlueMinor" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
                 <path d="M 0 0 L 10 5 L 0 10 z" fill="#2449d8"></path>
               </marker>
-              <marker id="arrowRedFitting" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+              <marker id="arrowRedMinor" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
                 <path d="M 0 0 L 10 5 L 0 10 z" fill="#d64545"></path>
               </marker>
-              <linearGradient id="waterFitting" x1="0%" x2="100%" y1="0%" y2="0%">
+              <linearGradient id="waterMinor" x1="0%" x2="100%" y1="0%" y2="0%">
                 <stop offset="0%" stop-color="#bfe0ff" />
                 <stop offset="100%" stop-color="#7fb7ff" />
               </linearGradient>
             </defs>
 
-            <path d="M 100 320 L 360 320 Q 440 320 440 240 L 440 195 Q 440 145 490 145 L 790 145" fill="none" stroke="#2f3a4f" stroke-width="74" stroke-linecap="round" stroke-linejoin="round" />
-            <path d="M 100 320 L 360 320 Q 440 320 440 240 L 440 195 Q 440 145 490 145 L 790 145" fill="none" stroke="url(#waterFitting)" stroke-width="50" stroke-linecap="round" stroke-linejoin="round" />
-            <path d="M 100 320 L 360 320 Q 440 320 440 240 L 440 195 Q 440 145 490 145 L 790 145" fill="none" stroke="#2449d8" stroke-width="4" stroke-dasharray="18 14" opacity="0.75" />
-
-            <g id="lossGroup"></g>
+            <g id="pipeGroup"></g>
+            <g id="streamGroup"></g>
+            <g id="vortexGroup"></g>
             <g id="particleGroup"></g>
 
-            <line id="energyLine" x1="110" y1="70" x2="790" y2="130" stroke="#ff8c42" stroke-width="6" stroke-linecap="round" />
-            <text x="110" y="52" font-size="22" fill="#7a5a05" font-weight="800">에너지선 저하</text>
-            <line id="lossArrow" x1="812" y1="70" x2="812" y2="130" stroke="#d64545" stroke-width="4" marker-end="url(#arrowRedFitting)" />
-            <text id="hmPipeLabel" x="832" y="105" font-size="24" fill="#d64545" font-weight="800">hm = 3.91 m</text>
+            <line id="energyLine" x1="110" y1="85" x2="780" y2="135" stroke="#ff8c42" stroke-width="6" stroke-linecap="round" />
+            <text x="110" y="68" font-size="22" fill="#7a5a05" font-weight="800">에너지선 저하</text>
+            <line id="lossArrow" x1="800" y1="85" x2="800" y2="135" stroke="#d64545" stroke-width="4" marker-end="url(#arrowRedMinor)" />
+            <text id="hmPipeLabel" x="820" y="116" font-size="24" fill="#d64545" font-weight="800">hm = 0.46 m</text>
 
-            <line x1="135" y1="385" x2="300" y2="385" stroke="#2449d8" stroke-width="5" marker-end="url(#arrowBlueFitting)" />
-            <text id="vPipeLabel" x="135" y="425" font-size="23" fill="#24324f" font-weight="700">V = 2.55 m/s</text>
+            <line x1="125" y1="395" x2="315" y2="395" stroke="#2449d8" stroke-width="5" marker-end="url(#arrowBlueMinor)" />
+            <text id="leftVLabel" x="130" y="430" font-size="23" fill="#24324f" font-weight="700">V₁ = 3.98 m/s</text>
 
-            <g id="valveSymbol" transform="translate(610 145)">
-              <polygon points="-38,-24 0,0 -38,24" fill="#fff" stroke="#2f3a4f" stroke-width="5" />
-              <polygon points="38,-24 0,0 38,24" fill="#fff" stroke="#2f3a4f" stroke-width="5" />
-              <line x1="0" y1="-34" x2="0" y2="-62" stroke="#2f3a4f" stroke-width="5" />
-              <circle cx="0" cy="-72" r="15" fill="#fff" stroke="#2f3a4f" stroke-width="5" />
-            </g>
+            <line x1="610" y1="395" x2="800" y2="395" stroke="#2449d8" stroke-width="5" marker-end="url(#arrowBlueMinor)" />
+            <text id="rightVLabel" x="615" y="430" font-size="23" fill="#24324f" font-weight="700">V₂ = 0.99 m/s</text>
 
-            <text id="elbowLabel" x="315" y="235" font-size="24" fill="#d64545" font-weight="800">곡관 손실</text>
-            <text id="valveLabel" x="555" y="238" font-size="24" fill="#d64545" font-weight="800">밸브 손실</text>
-            <text id="mainLabel" x="95" y="470" font-size="28" fill="#24324f" font-weight="800">hm = ΣK · V²/2g</text>
+            <text id="mainLabel" x="95" y="470" font-size="28" fill="#24324f" font-weight="800">확대관 손실: hm = (V₁−V₂)²/2g</text>
           </svg>
 
           <canvas id="graph" width="920" height="330"></canvas>
-          <div class="share-grid"><div class="share"><small>곡관 손실 비율</small><b id="elbowShare">15%</b></div><div class="share"><small>밸브 손실 비율</small><b id="valveShare">85%</b></div><div class="share"><small>등가 직관 길이</small><b id="equivHint">\(L_e/D=\sum K/f\)</b></div></div>
-          <div class="compare"><div class="compare-card"><small>현재 유량</small><b id="currentLoss"></b></div><span class="arrow">유량 2배 →</span><div class="compare-card"><small>같은 \(K\), \(D\)일 때</small><b id="doubleLoss"></b></div></div>
+          <div><h2>동일 조건 손실 비교</h2><div class="compare-grid"><div class="compare-card" id="expCompare"><small>급확대 손실수두</small><b id="expLoss">0.455 m</b></div><div class="compare-card" id="conCompare"><small>급축소 손실수두</small><b id="conLoss">0.323 m</b></div></div><div class="ratio-track"><div id="ratioFill" class="ratio-fill" style="width:50%"></div></div><div class="caption" id="doubleHint">유량이 2배가 되면 손실수두는 약 4배가 됩니다.</div></div>
           <div class="caption">
-            <span class="tag">부차손실</span>곡관과 밸브 손실은 <strong>유동 방향 변화, 유로 축소, 박리, 와류</strong> 때문에 발생합니다. 각 부속품의 \(K\)를 더한 뒤 속도수두를 곱합니다.
+            확대관·축소관 손실은 배관이 길어서 생기는 주손실이 아니라, <strong>단면 변화</strong> 때문에 생기는 부차손실입니다. 유속이 커질수록 속도수두가 커져 손실도 증가합니다.
           </div>
         </div>
       </div>
@@ -248,157 +331,222 @@
 
   <script>
     const g = 9.81;
-    const valveKTable = {
-      gate: { name: '게이트밸브', K: 0.15, note: '게이트밸브는 완전 개방 시 유로 방해가 작아 손실계수 K가 비교적 작습니다.' },
-      ball: { name: '볼밸브', K: 0.05, note: '볼밸브는 완전 개방 시 직선 유로에 가까워 손실계수 K가 매우 작습니다.' },
-      globe: { name: '글로브밸브', K: 10.0, note: '글로브밸브는 유로가 크게 꺾이므로 손실계수 K가 큽니다. 같은 유량에서도 밸브 종류에 따라 부차손실이 크게 달라집니다.' },
-      check: { name: '체크밸브', K: 2.0, note: '체크밸브는 역류 방지 구조 때문에 일반 직선 밸브보다 손실이 크게 발생할 수 있습니다.' },
-      custom: { name: '사용자 지정 밸브', K: 1.0, note: '사용자 지정 K값으로 특정 부속품이나 밸브의 손실을 비교할 수 있습니다.' }
-    };
 
+    const modeSelect = document.getElementById('modeSelect');
+    const d1Slider = document.getElementById('d1Slider');
+    const d2Slider = document.getElementById('d2Slider');
     const qSlider = document.getElementById('qSlider');
-    const dSlider = document.getElementById('dSlider');
-    const elbowSlider = document.getElementById('elbowSlider');
-    const elbowKSlider = document.getElementById('elbowKSlider');
-    const valveTypeSelect = document.getElementById('valveTypeSelect');
-    const valveSlider = document.getElementById('valveSlider');
-    const customKSlider = document.getElementById('customKSlider');
+    const kSlider = document.getElementById('kSlider');
     const rhoSlider = document.getElementById('rhoSlider');
 
+    const modeValue = document.getElementById('modeValue');
+    const d1Value = document.getElementById('d1Value');
+    const d2Value = document.getElementById('d2Value');
     const qValue = document.getElementById('qValue');
-    const dValue = document.getElementById('dValue');
-    const elbowValue = document.getElementById('elbowValue');
-    const elbowKValue = document.getElementById('elbowKValue');
-    const valveTypeValue = document.getElementById('valveTypeValue');
-    const valveValue = document.getElementById('valveValue');
-    const customKValue = document.getElementById('customKValue');
+    const kValue = document.getElementById('kValue');
     const rhoValue = document.getElementById('rhoValue');
-    const customKGroup = document.getElementById('customKGroup');
+    const kGroup = document.getElementById('kGroup');
 
-    const vStat = document.getElementById('vStat');
-    const vhStat = document.getElementById('vhStat');
-    const sumKStat = document.getElementById('sumKStat');
+    const v1Stat = document.getElementById('v1Stat');
+    const v2Stat = document.getElementById('v2Stat');
     const hmStat = document.getElementById('hmStat');
     const dpStat = document.getElementById('dpStat');
-    const dominantStat = document.getElementById('dominantStat');
     const formulaBox = document.getElementById('formulaBox');
     const noteBox = document.getElementById('noteBox');
     const stateBadge = document.getElementById('stateBadge');
+    const stateText = document.getElementById('stateText');
+    const ratioText = document.getElementById('ratioText');
+    const expLoss = document.getElementById('expLoss');
+    const conLoss = document.getElementById('conLoss');
+    const expCompare = document.getElementById('expCompare');
+    const conCompare = document.getElementById('conCompare');
+    const ratioFill = document.getElementById('ratioFill');
+    const doubleHint = document.getElementById('doubleHint');
 
-    const lossGroup = document.getElementById('lossGroup');
+    const pipeGroup = document.getElementById('pipeGroup');
+    const streamGroup = document.getElementById('streamGroup');
+    const vortexGroup = document.getElementById('vortexGroup');
     const particleGroup = document.getElementById('particleGroup');
     const hmPipeLabel = document.getElementById('hmPipeLabel');
-    const vPipeLabel = document.getElementById('vPipeLabel');
+    const leftVLabel = document.getElementById('leftVLabel');
+    const rightVLabel = document.getElementById('rightVLabel');
+    const mainLabel = document.getElementById('mainLabel');
     const energyLine = document.getElementById('energyLine');
     const lossArrow = document.getElementById('lossArrow');
-    const elbowLabel = document.getElementById('elbowLabel');
-    const valveLabel = document.getElementById('valveLabel');
 
     const canvas = document.getElementById('graph');
     const ctx = canvas.getContext('2d');
 
     let particles = [];
-    let currentV = 2.5;
-    let running = true;
-    let mathJob = Promise.resolve();
+    let currentSpeed = 2;
+    let currentMode = 'expansion';
+    let paused = false;
+    let mathQueue = Promise.resolve();
 
     function fmt(num, digits = 2) { return Number(num).toFixed(digits); }
     function comma(num, digits = 0) { return Number(num).toLocaleString(undefined, { maximumFractionDigits: digits }); }
+
     function area(D) { return Math.PI * D * D / 4; }
-    function typeset(el) {
-      if (!window.MathJax?.typesetPromise) return;
-      mathJob = mathJob.then(() => MathJax.typesetClear?.([el])).then(() => MathJax.typesetPromise([el])).catch(() => {});
+
+    function ensureDiameters() {
+      let d1 = parseFloat(d1Slider.value);
+      let d2 = parseFloat(d2Slider.value);
+      if (d2 <= d1) {
+        d2 = Math.min(0.400, d1 + 0.010);
+        d2Slider.value = d2.toFixed(3);
+      }
     }
 
     function initParticles() {
       particles = [];
       for (let i = 0; i < 34; i++) {
         particles.push({
-          t: Math.random(),
-          r: 4 + Math.random() * 2,
-          seed: Math.random() * Math.PI * 2
+          x: 100 + Math.random() * 720,
+          y: 230 + Math.random() * 70,
+          seed: Math.random() * Math.PI * 2,
+          r: 4 + Math.random() * 2
         });
       }
     }
 
-    function pathPoint(t) {
-      if (t < 0.35) return { x: 100 + t / 0.35 * 260, y: 320 };
-      if (t < 0.58) {
-        const a = (t - 0.35) / 0.23;
-        const theta = Math.PI / 2 * a;
-        return { x: 360 + 80 * Math.sin(theta), y: 320 - 80 * (1 - Math.cos(theta)) };
+    function pipePath(mode) {
+      if (mode === 'expansion') {
+        return 'M 90 260 L 390 260 L 460 195 L 820 195 L 820 345 L 460 345 L 390 280 L 90 280 Z';
       }
-      if (t < 0.70) return { x: 440, y: 240 - (t - 0.58) / 0.12 * 95 };
-      return { x: 440 + (t - 0.70) / 0.30 * 350, y: 145 };
+      return 'M 90 195 L 450 195 L 520 260 L 820 260 L 820 280 L 520 280 L 450 345 L 90 345 Z';
+    }
+
+    function waterPath(mode) {
+      if (mode === 'expansion') {
+        return 'M 95 263 L 395 263 L 462 205 L 812 205 L 812 335 L 462 335 L 395 277 L 95 277 Z';
+      }
+      return 'M 95 205 L 445 205 L 518 263 L 812 263 L 812 277 L 518 277 L 445 335 L 95 335 Z';
+    }
+
+    function drawPipe(mode) {
+      pipeGroup.innerHTML = '';
+      const pipe = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      pipe.setAttribute('d', pipePath(mode));
+      pipe.setAttribute('fill', '#d9ecff');
+      pipe.setAttribute('stroke', '#2f3a4f');
+      pipe.setAttribute('stroke-width', '8');
+      pipe.setAttribute('stroke-linejoin', 'round');
+      pipeGroup.appendChild(pipe);
+
+      const water = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      water.setAttribute('d', waterPath(mode));
+      water.setAttribute('fill', 'url(#waterMinor)');
+      water.setAttribute('opacity', '0.92');
+      pipeGroup.appendChild(water);
+
+      const d1Text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      d1Text.setAttribute('x', mode === 'expansion' ? '105' : '105');
+      d1Text.setAttribute('y', mode === 'expansion' ? '245' : '185');
+      d1Text.setAttribute('font-size', '22');
+      d1Text.setAttribute('fill', '#24324f');
+      d1Text.setAttribute('font-weight', '800');
+      d1Text.textContent = mode === 'expansion' ? '작은 관 D₁' : '큰 관 D₂';
+      pipeGroup.appendChild(d1Text);
+
+      const d2Text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      d2Text.setAttribute('x', '620');
+      d2Text.setAttribute('y', mode === 'expansion' ? '185' : '245');
+      d2Text.setAttribute('font-size', '22');
+      d2Text.setAttribute('fill', '#24324f');
+      d2Text.setAttribute('font-weight', '800');
+      d2Text.textContent = mode === 'expansion' ? '큰 관 D₂' : '작은 관 D₁';
+      pipeGroup.appendChild(d2Text);
+    }
+
+    function drawStreams(mode) {
+      streamGroup.innerHTML = '';
+      for (let i = 0; i < 5; i++) {
+        const y = 252 + i * 9;
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        if (mode === 'expansion') {
+          const y2 = 225 + i * 22;
+          line.setAttribute('d', `M 110 ${y} C 250 ${y}, 360 ${y}, 455 ${y2} S 650 ${y2}, 790 ${y2}`);
+        } else {
+          const y1 = 225 + i * 22;
+          const y2 = 253 + i * 7;
+          line.setAttribute('d', `M 110 ${y1} C 280 ${y1}, 380 ${y1}, 515 ${y2} S 660 ${y2}, 790 ${y2}`);
+        }
+        line.setAttribute('fill', 'none');
+        line.setAttribute('stroke', '#2449d8');
+        line.setAttribute('stroke-width', '3');
+        line.setAttribute('opacity', '0.55');
+        streamGroup.appendChild(line);
+      }
+    }
+
+    function drawVortices(mode, intensity) {
+      vortexGroup.innerHTML = '';
+      const count = Math.min(8, Math.max(2, Math.round(2 + intensity * 5)));
+      for (let i = 0; i < count; i++) {
+        const c = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        const x = mode === 'expansion' ? 500 + i * 34 : 430 + i * 18;
+        const y = mode === 'expansion' ? (i % 2 === 0 ? 220 : 315) : (i % 2 === 0 ? 220 : 320);
+        const r = 14 + intensity * 10;
+        c.setAttribute('d', `M ${x} ${y} c ${r} -${r}, ${r*2} ${r}, 0 ${r*1.5} c -${r} ${r/2}, -${r*1.5} -${r/2}, -${r/3} -${r}`);
+        c.setAttribute('fill', 'none');
+        c.setAttribute('stroke', '#d64545');
+        c.setAttribute('stroke-width', '3');
+        c.setAttribute('opacity', '0.65');
+        vortexGroup.appendChild(c);
+      }
     }
 
     function drawParticles() {
       particleGroup.innerHTML = '';
       particles.forEach((p, idx) => {
-        const pt = pathPoint(p.t);
-        const wobble = Math.sin(p.seed + performance.now() * 0.004 + idx) * 3;
+        const yy = p.y + Math.sin(p.seed + performance.now() * 0.004 + idx) * 3.5;
         const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-        c.setAttribute('cx', pt.x);
-        c.setAttribute('cy', pt.y + wobble);
+        c.setAttribute('cx', p.x);
+        c.setAttribute('cy', Math.min(Math.max(yy, 210), 330));
         c.setAttribute('r', p.r);
         c.setAttribute('fill', '#2449d8');
-        c.setAttribute('opacity', '0.72');
+        c.setAttribute('opacity', '0.70');
         particleGroup.appendChild(c);
       });
     }
 
     function animate() {
-      if (running) {
+      if (!paused) {
         particles.forEach(p => {
-          p.t += 0.0015 + Math.min(currentV, 12) * 0.00045;
-          if (p.t > 1) p.t = 0;
+          p.x += 0.7 + currentSpeed * 0.20;
+          if (p.x > 810) p.x = 100;
         });
         drawParticles();
       }
       requestAnimationFrame(animate);
     }
 
-    function drawLossMarks(elbowN, valveN, elbowK, valveK) {
-      lossGroup.innerHTML = '';
-      const elbowIntensity = Math.min(1, elbowN * elbowK / 6);
-      const valveIntensity = Math.min(1, valveN * valveK / 12);
-
-      for (let i = 0; i < Math.max(2, Math.round(3 + elbowIntensity * 8)); i++) {
-        const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        const x = 360 + (i % 4) * 18;
-        const y = 285 - Math.floor(i / 4) * 22;
-        p.setAttribute('d', `M ${x} ${y} c 18 -18, 38 12, 5 25 c -16 7, -26 -8, -8 -18`);
-        p.setAttribute('fill', 'none');
-        p.setAttribute('stroke', '#d64545');
-        p.setAttribute('stroke-width', '3');
-        p.setAttribute('opacity', '0.70');
-        lossGroup.appendChild(p);
-      }
-
-      for (let i = 0; i < Math.max(1, Math.round(2 + valveIntensity * 8)); i++) {
-        const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        const x = 570 + i * 16;
-        const y = 165 + (i % 2) * 26;
-        p.setAttribute('d', `M ${x} ${y} c 18 -14, 30 10, 3 22 c -12 5, -20 -6, -5 -15`);
-        p.setAttribute('fill', 'none');
-        p.setAttribute('stroke', '#d64545');
-        p.setAttribute('stroke-width', '3');
-        p.setAttribute('opacity', '0.70');
-        lossGroup.appendChild(p);
-      }
+    function typeset(element) {
+      if (!window.MathJax?.typesetPromise) return;
+      mathQueue = mathQueue.then(() => MathJax.typesetClear?.([element]))
+        .then(() => MathJax.typesetPromise([element])).catch(() => {});
     }
 
-    function drawGraph(elbowLoss, valveLoss, totalLoss, elbowKsum, valveKsum, dp) {
+    function drawGraph(Vsmall, Vlarge, hm, dp, mode, K) {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       const baseY = 255;
       const maxH = 170;
-      const items = [
-        { label: '곡관 ΣK', val: elbowKsum, desc: '곡관 K 합' },
-        { label: '밸브 ΣK', val: valveKsum, desc: '밸브 K 합' },
-        { label: '곡관 hm', val: elbowLoss, desc: '곡관 손실' },
-        { label: '밸브 hm', val: valveLoss, desc: '밸브 손실' },
-        { label: '전체 hm', val: totalLoss, desc: '총 손실' }
-      ];
+      const items = mode === 'expansion'
+        ? [
+          { label: 'V₁', val: Vsmall, desc: '작은 관 속도' },
+          { label: 'V₂', val: Vlarge, desc: '큰 관 속도' },
+          { label: 'V₁−V₂', val: Math.abs(Vsmall - Vlarge), desc: '속도차' },
+          { label: 'hm', val: hm, desc: '손실수두' },
+          { label: 'ΔP(kPa)', val: dp / 1000, desc: '압력손실' }
+        ]
+        : [
+          { label: 'V₂', val: Vlarge, desc: '큰 관 속도' },
+          { label: 'V₁', val: Vsmall, desc: '작은 관 속도' },
+          { label: 'K', val: K, desc: '손실계수' },
+          { label: 'hm', val: hm, desc: '손실수두' },
+          { label: 'ΔP(kPa)', val: dp / 1000, desc: '압력손실' }
+        ];
+
       const maxVal = Math.max(...items.map(i => i.val), 1);
       const barW = 92;
       const gap = 68;
@@ -406,7 +554,7 @@
 
       ctx.fillStyle = '#24324f';
       ctx.font = 'bold 20px Segoe UI';
-      ctx.fillText('곡관·밸브 손실 비교', 70, 32);
+      ctx.fillText(mode === 'expansion' ? '확대관 손실 영향 비교' : '축소관 손실 영향 비교', 70, 32);
 
       ctx.strokeStyle = '#d8e0ee';
       ctx.lineWidth = 1;
@@ -421,7 +569,8 @@
       items.forEach((it, i) => {
         const x = startX + i * (barW + gap);
         const h = (it.val / maxVal) * maxH;
-        ctx.fillStyle = i === 4 ? '#d64545' : i >= 2 ? '#ff8c42' : '#7fb7ff';
+        ctx.fillStyle = i >= 3 ? '#d64545' : '#7fb7ff';
+        if (i === 2) ctx.fillStyle = '#ff8c42';
         ctx.fillRect(x, baseY - h, barW, h);
         ctx.strokeStyle = '#24324f';
         ctx.lineWidth = 2;
@@ -429,106 +578,128 @@
 
         ctx.fillStyle = '#24324f';
         ctx.font = 'bold 15px Segoe UI';
-        ctx.fillText(it.label, x - 4, baseY + 24);
+        ctx.fillText(it.label, x + 22, baseY + 24);
         ctx.font = '13px Segoe UI';
-        ctx.fillText(it.desc, x + 4, baseY + 45);
+        ctx.fillText(it.desc, x - 4, baseY + 45);
         ctx.font = 'bold 14px Segoe UI';
-        ctx.fillText(fmt(it.val, 2), x + 22, baseY - h - 10);
+        ctx.fillText(fmt(it.val, 2), x + 20, baseY - h - 10);
       });
 
       ctx.fillStyle = '#60708f';
       ctx.font = '14px Segoe UI';
-      ctx.fillText(`압력손실 ΔP = ${fmt(dp / 1000, 2)} kPa`, 70, 315);
+      ctx.fillText(mode === 'expansion' ? '확대관에서는 속도차가 클수록 손실이 커집니다.' : '축소관에서는 작은 관 속도와 손실계수 K가 손실을 좌우합니다.', 70, 315);
     }
 
     function update() {
+      ensureDiameters();
+      const mode = modeSelect.value;
+      const D1 = parseFloat(d1Slider.value); // small
+      const D2 = parseFloat(d2Slider.value); // large
       const Q = parseFloat(qSlider.value);
-      const D = parseFloat(dSlider.value);
-      const elbowN = parseInt(elbowSlider.value, 10);
-      const elbowK = parseFloat(elbowKSlider.value);
-      const valveN = parseInt(valveSlider.value, 10);
-      const valveType = valveTypeSelect.value;
-      const customK = parseFloat(customKSlider.value);
+      const K = parseFloat(kSlider.value);
       const rho = parseFloat(rhoSlider.value);
 
-      const valveInfo = valveKTable[valveType];
-      const valveK = valveType === 'custom' ? customK : valveInfo.K;
-      const V = Q / area(D);
-      const velocityHead = V * V / (2 * g);
-      const elbowKsum = elbowN * elbowK;
-      const valveKsum = valveN * valveK;
-      const sumK = elbowKsum + valveKsum;
-      const elbowLoss = elbowKsum * velocityHead;
-      const valveLoss = valveKsum * velocityHead;
-      const hm = sumK * velocityHead;
+      const Vsmall = Q / area(D1);
+      const Vlarge = Q / area(D2);
+      const areaRatio = area(D2) / area(D1);
+      const kExpansion = Math.pow(1 - area(D1) / area(D2), 2);
+      const hmExpansion = kExpansion * Vsmall * Vsmall / (2 * g);
+      const hmContraction = K * Vsmall * Vsmall / (2 * g);
+      let hm;
+      let formula;
+      let note;
+      let badge;
+
+      if (mode === 'expansion') {
+        hm = hmExpansion;
+        formula = `\\(K_e=\\left(1-\\dfrac{A_s}{A_L}\\right)^2=${fmt(kExpansion,3)}\\)<br>` +
+          `\\(h_{L,e}=\\dfrac{(V_s-V_L)^2}{2g}=\\dfrac{(${fmt(Vsmall,2)}-${fmt(Vlarge,2)})^2}{2\\times9.81}=${fmt(hm,3)}\\,\\mathrm{m}\\)<br>`;
+        note = '확대관에서는 빠른 유동이 갑자기 넓은 관으로 들어가면서 박리와 와류가 발생하고, 속도차가 손실로 전환됩니다.';
+        badge = '확대손실';
+      } else {
+        hm = hmContraction;
+        formula = `\\(h_{L,c}=K_c\\dfrac{V_s^2}{2g}\\)<br>` +
+          `\\(h_{L,c}=${fmt(K,2)}\\times\\dfrac{${fmt(Vsmall,2)}^2}{2\\times9.81}=${fmt(hm,3)}\\,\\mathrm{m}\\)<br>`;
+        note = '축소관에서는 유동이 좁은 관으로 모이면서 수축부와 재확대 과정에서 손실이 발생합니다. 여기서는 작은 관 속도 V₁ 기준으로 계산합니다.';
+        badge = '축소손실';
+      }
+
       const dp = rho * g * hm;
-      currentV = V;
+      currentSpeed = Math.max(Vsmall, Vlarge);
+      currentMode = mode;
 
+      modeValue.textContent = mode === 'expansion' ? '확대관' : '축소관';
+      d1Value.textContent = `${fmt(D1,3)} m`;
+      d2Value.textContent = `${fmt(D2,3)} m`;
       qValue.textContent = `${fmt(Q,4)} m³/s`;
-      dValue.textContent = `${fmt(D,3)} m`;
-      elbowValue.textContent = `${elbowN} 개`;
-      elbowKValue.textContent = fmt(elbowK,2);
-      valveTypeValue.textContent = valveInfo.name;
-      valveValue.textContent = `${valveN} 개`;
-      customKValue.textContent = fmt(customK,2);
+      kValue.textContent = fmt(K,2);
       rhoValue.textContent = `${comma(rho)} kg/m³`;
-      customKGroup.style.display = valveType === 'custom' ? 'block' : 'none';
+      kGroup.style.display = mode === 'expansion' ? 'none' : 'block';
 
-      vStat.textContent = `${fmt(V,2)} m/s`;
-      vhStat.textContent = `${fmt(velocityHead,3)} m`;
-      sumKStat.textContent = fmt(sumK,2);
-      hmStat.textContent = `${fmt(hm,2)} m`;
-      dpStat.textContent = dp >= 1000000 ? `${fmt(dp / 1000000,2)} MPa` : `${fmt(dp / 1000,1)} kPa`;
-      const dominant = sumK === 0 ? '없음' : elbowKsum > valveKsum ? '곡관' : valveKsum > elbowKsum ? '밸브' : '동일';
-      dominantStat.textContent = dominant;
+      v1Stat.textContent = `${fmt(Vsmall,2)} m/s`;
+      v2Stat.textContent = `${fmt(Vlarge,2)} m/s`;
+      hmStat.textContent = `${fmt(hm,3)} m`;
+      dpStat.textContent = `${fmt(dp / 1000,2)} kPa`;
 
-      document.getElementById('lossLevel').textContent = hm >= 5 ? '부차손실 큼' : hm >= 1 ? '부차손실 중간' : '부차손실 작음';
-      stateBadge.style.background = hm >= 5 ? '#d64545' : hm >= 1 ? '#ff8c42' : '#21a366';
-      const elbowPct = sumK ? elbowKsum / sumK * 100 : 0;
-      const valvePct = sumK ? valveKsum / sumK * 100 : 0;
-      document.getElementById('lossRatio').textContent = sumK ? `${dominant} ${fmt(Math.max(elbowPct,valvePct),0)}%` : '부속품 없음';
-
-      formulaBox.innerHTML =
-        `\\[A=\\frac{\\pi D^2}{4},\\qquad V=\\frac QA=${fmt(V,2)}\\,\\mathrm{m/s}\\]` +
-        `\\[\\sum K=(${elbowN})(${fmt(elbowK,2)})+(${valveN})(${fmt(valveK,2)})=${fmt(sumK,2)}\\]` +
-        `\\[h_m=\\sum K\\frac{V^2}{2g}=(${fmt(sumK,2)})(${fmt(velocityHead,3)})=${fmt(hm,2)}\\,\\mathrm m\\]` +
-        `\\[\\Delta P=\\rho gh_m=${fmt(dp / 1000,2)}\\,\\mathrm{kPa}\\]`;
+      stateText.textContent = badge;
+      ratioText.textContent = `면적비 Aᴸ/Aₛ = ${fmt(areaRatio,2)}`;
+      stateBadge.style.background = hm >= 2 ? '#d64545' : hm >= 0.5 ? '#ff8c42' : '#21a366';
+      formulaBox.innerHTML = formula + `\\(\\Delta P=\\rho g h_L=${comma(rho)}\\times9.81\\times${fmt(hm,3)}=${fmt(dp / 1000,2)}\\,\\mathrm{kPa}\\)`;
+      noteBox.innerHTML = note;
       typeset(formulaBox);
 
-      noteBox.innerHTML = valveInfo.note + ' 곡관 개수와 밸브 개수가 증가하면 ΣK가 증가하여 전체 부차손실이 커집니다.';
+      expLoss.textContent = `${fmt(hmExpansion,3)} m · ${fmt(rho*g*hmExpansion/1000,2)} kPa`;
+      conLoss.textContent = `${fmt(hmContraction,3)} m · ${fmt(rho*g*hmContraction/1000,2)} kPa`;
+      expCompare.classList.toggle('active', mode === 'expansion');
+      conCompare.classList.toggle('active', mode === 'contraction');
+      const totalCompare = hmExpansion + hmContraction || 1;
+      ratioFill.style.width = `${Math.max(4, Math.min(96, hmExpansion / totalCompare * 100))}%`;
+      doubleHint.textContent = `현재 지름비 ${fmt(D2/D1,2)}에서 유량을 2배로 하면 선택한 손실수두는 ${fmt(hm*4,3)} m로 약 4배가 됩니다.`;
 
-      const drop = Math.min(135, 25 + hm * 9);
-      energyLine.setAttribute('y2', String(70 + drop));
-      lossArrow.setAttribute('y2', String(70 + drop));
-      hmPipeLabel.textContent = `hm = ${fmt(hm,2)} m`;
-      hmPipeLabel.setAttribute('y', String(78 + drop / 2));
-      vPipeLabel.textContent = `V = ${fmt(V,2)} m/s`;
-      elbowLabel.textContent = `곡관 ${elbowN}개, ΣK=${fmt(elbowKsum,2)}`;
-      valveLabel.textContent = `${valveInfo.name} ${valveN}개, ΣK=${fmt(valveKsum,2)}`;
+      drawPipe(mode);
+      drawStreams(mode);
+      drawVortices(mode, Math.min(1.2, hm));
 
-      drawLossMarks(elbowN, valveN, elbowK, valveK);
-      drawGraph(elbowLoss, valveLoss, hm, elbowKsum, valveKsum, dp);
-      document.getElementById('elbowShare').textContent = `${fmt(elbowPct,0)}%`;
-      document.getElementById('valveShare').textContent = `${fmt(valvePct,0)}%`;
-      document.getElementById('currentLoss').textContent = `hₘ = ${fmt(hm,2)} m`;
-      document.getElementById('doubleLoss').textContent = `hₘ = ${fmt(hm*4,2)} m`;
+      const drop = Math.min(120, 22 + hm * 24);
+      energyLine.setAttribute('y2', String(85 + drop));
+      lossArrow.setAttribute('y2', String(85 + drop));
+      hmPipeLabel.textContent = `hm = ${fmt(hm,3)} m`;
+      hmPipeLabel.setAttribute('y', String(92 + drop / 2));
+
+      if (mode === 'expansion') {
+        leftVLabel.textContent = `V₁ = ${fmt(Vsmall,2)} m/s`;
+        rightVLabel.textContent = `V₂ = ${fmt(Vlarge,2)} m/s`;
+        mainLabel.textContent = '급확대 손실: hL = (Vs−VL)²/2g';
+      } else {
+        leftVLabel.textContent = `V₂ = ${fmt(Vlarge,2)} m/s`;
+        rightVLabel.textContent = `V₁ = ${fmt(Vsmall,2)} m/s`;
+        mainLabel.textContent = '급축소 손실: hL = Kc Vs²/2g';
+      }
+
+      drawGraph(Vsmall, Vlarge, hm, dp, mode, K);
     }
 
-    const presets = {
-      standard:{Q:.02,D:.1,en:2,ek:.9,type:'globe',vn:1,rho:999},
-      low:{Q:.02,D:.1,en:2,ek:.25,type:'ball',vn:1,rho:999},
-      many:{Q:.02,D:.1,en:10,ek:.9,type:'gate',vn:0,rho:999},
-      compare:{Q:.02,D:.1,en:0,ek:.9,type:'gate',vn:3,rho:999}
-    };
-    function applyPreset(name){const p=presets[name];qSlider.value=p.Q;dSlider.value=p.D;elbowSlider.value=p.en;elbowKSlider.value=p.ek;valveTypeSelect.value=p.type;valveSlider.value=p.vn;rhoSlider.value=p.rho;document.querySelectorAll('.preset').forEach(b=>b.classList.toggle('active',b.dataset.preset===name));update()}
-    document.querySelectorAll('.preset').forEach(b=>b.addEventListener('click',()=>applyPreset(b.dataset.preset)));
-    [qSlider, dSlider, elbowSlider, elbowKSlider, valveTypeSelect, valveSlider, customKSlider, rhoSlider].forEach(el => el.addEventListener('input', () => {document.querySelectorAll('.preset').forEach(b=>b.classList.remove('active'));update()}));
-    valveTypeSelect.addEventListener('change', update);
-    document.getElementById('pauseBtn').addEventListener('click',e=>{running=!running;e.currentTarget.textContent=running?'Ⅱ 일시정지':'▶ 재생'});
-    document.getElementById('resetBtn').addEventListener('click',()=>applyPreset('standard'));
+    [modeSelect, d1Slider, d2Slider, qSlider, kSlider, rhoSlider].forEach(el => el.addEventListener('input', update));
+    modeSelect.addEventListener('change', update);
+    document.querySelectorAll('.preset').forEach(button => button.addEventListener('click', () => {
+      const presets = {
+        standard:{mode:'expansion',d1:.080,d2:.160,q:.020,k:.40,rho:1000},
+        mild:{mode:'expansion',d1:.100,d2:.140,q:.020,k:.25,rho:1000},
+        strong:{mode:'expansion',d1:.060,d2:.200,q:.020,k:.55,rho:1000},
+        highflow:{mode:'contraction',d1:.100,d2:.200,q:.040,k:.40,rho:1000}
+      };
+      const p = presets[button.dataset.preset];
+      modeSelect.value=p.mode; d1Slider.value=p.d1; d2Slider.value=p.d2; qSlider.value=p.q; kSlider.value=p.k; rhoSlider.value=p.rho;
+      document.querySelectorAll('.preset').forEach(b => b.classList.toggle('active', b === button));
+      update();
+    }));
+    expCompare.addEventListener('click',()=>{modeSelect.value='expansion';update();});
+    conCompare.addEventListener('click',()=>{modeSelect.value='contraction';update();});
+    document.getElementById('pauseBtn').addEventListener('click', e => {paused=!paused;e.currentTarget.textContent=paused?'▶ 재생':'Ⅱ 일시정지';});
+    document.getElementById('resetBtn').addEventListener('click',()=>document.querySelector('[data-preset="standard"]').click());
     document.getElementById('fullBtn').addEventListener('click',()=>document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen());
     initParticles();
-    applyPreset('standard');
+    update();
     animate();
   </script>
 </body>
