@@ -3,537 +3,73 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>레이놀즈수 관내유동 시뮬레이터</title>
+  <title>5.5 레이놀즈수 시뮬레이터 | Fluid Lab</title>
+  <script>window.MathJax={tex:{inlineMath:[['\\(','\\)']],displayMath:[['\\[','\\]']]},options:{skipHtmlTags:['script','noscript','style','textarea','pre']}};</script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
   <style>
-    :root {
-      --bg: #f4f7fb;
-      --panel: #ffffff;
-      --line: #d8e0ee;
-      --text: #1f2a44;
-      --muted: #60708f;
-      --accent: #2449d8;
-      --laminar: #21a366;
-      --transition: #ff8c42;
-      --turbulent: #d64545;
-      --water: #7fb7ff;
-      --warn-bg: #fff8ec;
-      --warn-line: #f1dba7;
-      --warn-text: #7a5a05;
-    }
-
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
-      background: linear-gradient(180deg, #eef3fb 0%, #f8fbff 100%);
-      color: var(--text);
-    }
-    .wrap {
-      max-width: 1280px;
-      margin: 0 auto;
-      padding: 24px;
-    }
-    h1 { margin: 0 0 8px; font-size: 32px; }
-    .subtitle {
-      color: var(--muted);
-      line-height: 1.75;
-      margin-bottom: 20px;
-    }
-    .grid {
-      display: grid;
-      grid-template-columns: 420px 1fr;
-      gap: 20px;
-    }
-    .card {
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: 22px;
-      box-shadow: 0 8px 24px rgba(27, 52, 111, 0.08);
-      padding: 18px;
-    }
-    h2 { margin: 0 0 16px; font-size: 20px; }
-    .control-group { margin-bottom: 18px; }
-    .label-row {
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      margin-bottom: 8px;
-      font-weight: 700;
-    }
-    .value { color: var(--accent); }
-    input[type="range"] {
-      width: 100%;
-      accent-color: var(--accent);
-      cursor: pointer;
-    }
-    .stat-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 12px;
-      margin-top: 10px;
-    }
-    .stat {
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      padding: 14px;
-      background: #fbfdff;
-    }
-    .stat-title {
-      font-size: 13px;
-      color: var(--muted);
-      margin-bottom: 6px;
-    }
-    .stat-value {
-      font-size: 24px;
-      font-weight: 800;
-      word-break: break-word;
-    }
-    .formula {
-      margin-top: 16px;
-      padding: 14px;
-      border-radius: 16px;
-      background: #f4f8ff;
-      border: 1px dashed #bdd1ff;
-      line-height: 1.9;
-      font-size: 15px;
-    }
-    .note-box {
-      margin-top: 16px;
-      padding: 12px 14px;
-      border-radius: 14px;
-      background: var(--warn-bg);
-      border: 1px solid var(--warn-line);
-      color: var(--warn-text);
-      line-height: 1.7;
-      font-size: 14px;
-    }
-    .state-badge {
-      margin-top: 12px;
-      display: inline-block;
-      padding: 10px 14px;
-      border-radius: 999px;
-      color: white;
-      font-weight: 800;
-      font-size: 15px;
-    }
-    .legend {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-      margin-bottom: 12px;
-      color: var(--muted);
-      font-size: 14px;
-    }
-    .swatch {
-      width: 14px;
-      height: 14px;
-      border-radius: 4px;
-      display: inline-block;
-      margin-right: 6px;
-      vertical-align: -2px;
-    }
-    .viewer-grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 18px;
-    }
-    svg {
-      width: 100%;
-      height: auto;
-      display: block;
-      background: #fbfdff;
-      border: 1px solid var(--line);
-      border-radius: 18px;
-    }
-    canvas {
-      width: 100%;
-      max-width: 100%;
-      border: 1px solid var(--line);
-      border-radius: 18px;
-      background: #fff;
-    }
-    .caption { color: var(--muted); line-height: 1.7; font-size: 14px; }
-    @media (max-width: 1000px) { .grid { grid-template-columns: 1fr; } }
+    :root{--bg:#f4f7fb;--panel:#fff;--line:#d8e0ee;--text:#1f2a44;--muted:#60708f;--accent:#2449d8;--blue:#5aa9ff;--green:#21a366;--orange:#ff8c42;--red:#d64545;--navy:#16324f;--warn:#7a5a05}
+    *{box-sizing:border-box}body{margin:0;font-family:"Segoe UI","Apple SD Gothic Neo","Malgun Gothic",sans-serif;background:linear-gradient(180deg,#eef3fb,#f8fbff);color:var(--text)}button,input{font:inherit}.wrap{max-width:1280px;margin:auto;padding:24px}.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:26px}.brand{font-weight:800;color:var(--navy)}.brand b{display:inline-grid;place-items:center;width:34px;height:34px;margin-right:8px;border-radius:11px;background:var(--accent);color:#fff}.tools{display:flex;gap:8px}.tools button,.preset{font-size:13px;font-weight:700;border:1px solid var(--line);background:#fff;color:var(--muted);border-radius:10px;padding:9px 12px;cursor:pointer}.tools button:hover,.preset:hover,.preset.active{border-color:var(--accent);color:var(--accent);background:#f3f7ff}.hero{display:grid;grid-template-columns:1fr auto;gap:22px;align-items:end;margin-bottom:22px}.eyebrow{font-size:13px;font-weight:800;letter-spacing:.1em;color:var(--accent)}h1{font-size:38px;letter-spacing:-.05em;margin:5px 0 8px;color:var(--navy)}.subtitle{color:var(--muted);line-height:1.7}.hero-eq{padding:15px 20px;border-radius:16px;background:#f3f8ff;border:1px solid #cfe0f7;color:var(--navy);font-size:19px}.grid{display:grid;grid-template-columns:410px 1fr;gap:20px}.card{background:var(--panel);border:1px solid var(--line);border-radius:22px;box-shadow:0 8px 24px rgba(27,52,111,.08);padding:18px}h2{margin:0 0 16px;font-size:20px}.presets{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:4px 0 18px}.preset{text-align:left}.preset strong{display:block;color:var(--navy);margin-bottom:2px}.control{margin-bottom:17px}.label-row{display:flex;justify-content:space-between;gap:12px;margin-bottom:8px;font-weight:700}.value{color:var(--accent)}input[type=range]{width:100%;accent-color:var(--accent);cursor:pointer}.scale{display:flex;justify-content:space-between;color:#8a97ad;font-size:11px}.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}.stat{border:1px solid var(--line);border-radius:16px;padding:13px;background:#fbfdff}.stat.primary{background:#f3f7ff;border-color:#c7d8ff}.stat small{display:block;color:var(--muted);margin-bottom:5px}.stat b{font-size:21px;color:var(--navy);word-break:break-word}.state{margin-top:12px;padding:12px 14px;border-radius:14px;color:#fff;font-size:17px;font-weight:800;display:flex;justify-content:space-between;align-items:center}.state small{font-size:12px;font-weight:700;opacity:.9}.formula{margin-top:15px;padding:14px;border-radius:16px;background:#f4f8ff;border:1px dashed #bdd1ff;line-height:1.9;text-align:center;font-size:15px;overflow-x:auto}.note{margin-top:15px;padding:12px 14px;border-radius:14px;background:#fff8ec;border:1px solid #f1dba7;color:var(--warn);line-height:1.65;font-size:14px}.legend{display:flex;gap:13px;flex-wrap:wrap;margin-bottom:12px;color:var(--muted);font-size:13px}.swatch{width:12px;height:12px;border-radius:4px;display:inline-block;margin-right:5px;vertical-align:-1px}.viewer{display:grid;gap:16px}canvas{width:100%;border:1px solid var(--line);border-radius:18px;background:#fbfdff}.relation{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}.rel{padding:12px 8px;border:1px solid var(--line);border-radius:14px;text-align:center;background:#fbfdff}.rel small{display:block;color:var(--muted);font-size:11px;margin-bottom:4px}.rel b{font-size:17px;color:var(--navy)}.thresholds{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center}.threshold{padding:13px;border-radius:15px;border:1px solid var(--line);background:#fbfdff;text-align:center}.threshold small{display:block;color:var(--muted);margin-bottom:4px}.threshold b{color:var(--navy);font-size:19px}.arrow{font-weight:900;color:var(--accent)}.caption{color:var(--muted);line-height:1.7;font-size:14px}.tag{display:inline-block;padding:3px 8px;border-radius:999px;background:#eaf1ff;color:var(--accent);font-weight:800;font-size:12px;margin-right:5px}
+    @media(max-width:1000px){.grid,.hero{grid-template-columns:1fr}.hero-eq{justify-self:start}}@media(max-width:620px){.wrap{padding:15px}.topbar{align-items:flex-start;gap:10px}.brand{font-size:13px}.tools button{padding:8px}.hero h1{font-size:31px}.presets,.stat-grid,.relation{grid-template-columns:1fr 1fr}.thresholds{grid-template-columns:1fr}.arrow{transform:rotate(90deg)}.card{padding:15px}}@media print{.topbar,.presets{display:none}.wrap{padding:0}.card{box-shadow:none}.grid{grid-template-columns:38% 62%;gap:10px}}@media(prefers-reduced-motion:reduce){*{transition:none!important}}
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <h1>레이놀즈수 관내유동 시뮬레이터</h1>
-    <div class="subtitle">
-      원형 배관 내부 유동에 대해 <strong>Re = ρVD/μ = VD/ν</strong>를 계산하고, 유동 상태를 <strong>층류</strong>, <strong>천이영역</strong>, <strong>난류</strong>로 판정하는 시뮬레이터입니다. 파이프 관로의 천이영역은 <strong>2100 &lt; Re &lt; 4000</strong> 기준을 적용했습니다.
-    </div>
+  <main class="wrap">
+    <div class="topbar"><div class="brand"><b>FL</b>Fluid Lab · Interactive mechanics</div><div class="tools"><button id="pauseBtn">Ⅱ 일시정지</button><button id="resetBtn">↺ 초기화</button><button id="fullBtn">⛶ 전체화면</button></div></div>
+    <section class="hero"><div><div class="eyebrow">CHAPTER 5 · SECTION 5.5</div><h1>레이놀즈수 시뮬레이터</h1><div class="subtitle">관성력과 점성력의 비로 관내유동의 층류·천이·난류 상태를 판정합니다.</div></div><div class="hero-eq">\(Re=\dfrac{\rho VD}{\mu}=\dfrac{VD}{\nu}\)</div></section>
 
-    <div class="grid">
-      <div class="card">
+    <section class="grid">
+      <aside class="card">
         <h2>조작 패널</h2>
-
-        <div class="control-group">
-          <div class="label-row">
-            <span>평균유속 V</span>
-            <span class="value" id="vValue">1.00 m/s</span>
-          </div>
-          <input id="vSlider" type="range" min="0.01" max="8.00" step="0.01" value="1.00" />
+        <div class="presets">
+          <button class="preset" data-preset="water"><strong>물 배관</strong>일반적인 난류</button>
+          <button class="preset" data-preset="transition"><strong>천이 실험</strong>\(Re\approx3000\)</button>
+          <button class="preset" data-preset="oil"><strong>점성유 배관</strong>저속 층류</button>
+          <button class="preset" data-preset="air"><strong>공기 덕트</strong>고속 난류</button>
         </div>
-
-        <div class="control-group">
-          <div class="label-row">
-            <span>관지름 D</span>
-            <span class="value" id="dValue">0.050 m</span>
-          </div>
-          <input id="dSlider" type="range" min="0.005" max="0.300" step="0.001" value="0.050" />
-        </div>
-
-        <div class="control-group">
-          <div class="label-row">
-            <span>유체 밀도 ρ</span>
-            <span class="value" id="rhoValue">1000.0 kg/m³</span>
-          </div>
-          <input id="rhoSlider" type="range" min="0.5" max="1500" step="0.5" value="1000" />
-        </div>
-
-        <div class="control-group">
-          <div class="label-row">
-            <span>점성계수 μ</span>
-            <span class="value" id="muValue">0.0010 Pa·s</span>
-          </div>
-          <input id="muSlider" type="range" min="0.00001" max="0.05000" step="0.00001" value="0.00100" />
-        </div>
-
+        <div class="control"><div class="label-row"><span>평균유속 \(V\)</span><span class="value" id="vValue"></span></div><input id="v" type="range" min="0.001" max="20" step="0.001" value="1"></div>
+        <div class="control"><div class="label-row"><span>관지름 \(D\)</span><span class="value" id="dValue"></span></div><input id="d" type="range" min="0.005" max="0.3" step="0.001" value="0.05"></div>
+        <div class="control"><div class="label-row"><span>유체 밀도 \(\rho\)</span><span class="value" id="rhoValue"></span></div><input id="rho" type="range" min="0.5" max="1400" step="0.5" value="998"></div>
+        <div class="control"><div class="label-row"><span>점성계수 \(\mu\)</span><span class="value" id="muValue"></span></div><input id="muLog" type="range" min="-5" max="0" step="0.01" value="-3"><div class="scale"><span>0.00001</span><span>로그 눈금</span><span>1 Pa·s</span></div></div>
         <div class="stat-grid">
-          <div class="stat">
-            <div class="stat-title">동점성계수 ν</div>
-            <div class="stat-value" id="nuStat">1.00e-6 m²/s</div>
-          </div>
-          <div class="stat">
-            <div class="stat-title">레이놀즈수 Re</div>
-            <div class="stat-value" id="reStat">50,000</div>
-          </div>
-          <div class="stat">
-            <div class="stat-title">판정 기준</div>
-            <div class="stat-value" id="rangeStat">Re &gt; 4000</div>
-          </div>
-          <div class="stat">
-            <div class="stat-title">상대 거동</div>
-            <div class="stat-value" id="trendStat">혼합 큼</div>
-          </div>
+          <div class="stat"><small>동점성계수 \(\nu\)</small><b id="nuStat"></b></div><div class="stat primary"><small>레이놀즈수 \(Re\)</small><b id="reStat"></b></div>
+          <div class="stat"><small>유량 \(Q\)</small><b id="qStat"></b></div><div class="stat"><small>관성력 / 점성력</small><b id="ratioStat"></b></div>
         </div>
+        <div class="state" id="state"><span id="stateName"></span><small id="stateRange"></small></div>
+        <div class="formula" id="formula"></div>
+        <div class="note" id="note"></div>
+      </aside>
 
-        <div id="stateBadge" class="state-badge">난류</div>
-
-        <div class="formula" id="formulaBox">
-          Re = ρVD/μ = 1000×1.00×0.050/0.0010 = 50,000<br>
-          ν = μ/ρ = 0.0010/1000 = 1.00×10⁻⁶ m²/s
+      <section class="card">
+        <h2>레이놀즈 염료 실험</h2>
+        <div class="legend"><span><i class="swatch" style="background:var(--green)"></i>층류</span><span><i class="swatch" style="background:var(--orange)"></i>천이영역</span><span><i class="swatch" style="background:var(--red)"></i>난류</span><span><i class="swatch" style="background:var(--blue)"></i>주 흐름</span></div>
+        <div class="viewer">
+          <canvas id="flow" width="900" height="360" aria-label="레이놀즈 염료 실험의 유동 상태 애니메이션"></canvas>
+          <div class="relation"><div class="rel"><small>밀도</small><b id="rhoRel"></b></div><div class="rel"><small>유속</small><b id="vRel"></b></div><div class="rel"><small>관지름</small><b id="dRel"></b></div><div class="rel"><small>점성계수</small><b id="muRel"></b></div></div>
+          <canvas id="gauge" width="900" height="250" aria-label="레이놀즈수 유동영역 게이지"></canvas>
+          <div class="thresholds"><div class="threshold"><small>층류 한계 유속</small><b id="v2100"></b></div><div class="arrow">→ 현재 유속 →</div><div class="threshold"><small>난류 시작 유속</small><b id="v4000"></b></div></div>
+          <div class="caption"><span class="tag">교재 기준</span>원형 관내유동에서 \(Re&lt;2100\)은 층류, \(2100\le Re\le4000\)은 천이영역, \(Re&gt;4000\)은 난류로 분류합니다. 실제 천이는 입구조건과 관의 거칠기, 교란에 따라 달라질 수 있습니다.</div>
         </div>
-
-        <div class="note-box" id="noteBox">
-          현재 조건은 난류입니다. 관 내부 혼합이 크고 유속 분포가 비교적 평탄해지는 경향이 있습니다.
-        </div>
-      </div>
-
-      <div class="card">
-        <h2>시각화</h2>
-        <div class="legend">
-          <span><span class="swatch" style="background:#21a366"></span>층류</span>
-          <span><span class="swatch" style="background:#ff8c42"></span>천이영역</span>
-          <span><span class="swatch" style="background:#d64545"></span>난류</span>
-          <span><span class="swatch" style="background:#7fb7ff"></span>파이프 내 유동</span>
-        </div>
-
-        <div class="viewer-grid">
-          <svg viewBox="0 0 980 500" aria-label="레이놀즈수 관내유동 시각화">
-            <defs>
-              <marker id="arrowBlueRe" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
-                <path d="M 0 0 L 10 5 L 0 10 z" fill="#2449d8"></path>
-              </marker>
-            </defs>
-
-            <rect x="80" y="150" width="720" height="180" rx="90" fill="#d9ecff" stroke="#2f3a4f" stroke-width="8" />
-            <rect x="80" y="180" width="720" height="120" rx="60" fill="#bfe0ff" opacity="0.9" />
-            <g id="streamGroup"></g>
-            <g id="particleGroup"></g>
-
-            <line x1="120" y1="120" x2="250" y2="120" stroke="#2449d8" stroke-width="4" marker-end="url(#arrowBlueRe)" />
-            <text id="vPipeLabel" x="266" y="128" font-size="24" fill="#24324f" font-weight="700">V = 1.00 m/s</text>
-
-            <line x1="840" y1="160" x2="840" y2="320" stroke="#2449d8" stroke-width="4" marker-start="url(#arrowBlueRe)" marker-end="url(#arrowBlueRe)" />
-            <text id="dPipeLabel" x="856" y="246" font-size="24" fill="#24324f" font-weight="700">D = 0.050 m</text>
-
-            <text id="stateLabel" x="95" y="390" font-size="30" fill="#24324f" font-weight="800">유동 상태: 난류</text>
-            <text id="reLabel" x="95" y="425" font-size="26" fill="#24324f" font-weight="700">Re = 50,000</text>
-          </svg>
-
-          <canvas id="graph" width="920" height="330"></canvas>
-          <div class="caption">
-            게이지는 현재 레이놀즈수가 어느 영역에 있는지를 보여줍니다. 기준은 <strong>Re &lt; 2100: 층류</strong>, <strong>2100 &lt; Re &lt; 4000: 천이영역</strong>, <strong>Re &gt; 4000: 난류</strong>입니다.
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+      </section>
+    </section>
+  </main>
 
   <script>
-    const vSlider = document.getElementById('vSlider');
-    const dSlider = document.getElementById('dSlider');
-    const rhoSlider = document.getElementById('rhoSlider');
-    const muSlider = document.getElementById('muSlider');
-
-    const vValue = document.getElementById('vValue');
-    const dValue = document.getElementById('dValue');
-    const rhoValue = document.getElementById('rhoValue');
-    const muValue = document.getElementById('muValue');
-
-    const nuStat = document.getElementById('nuStat');
-    const reStat = document.getElementById('reStat');
-    const rangeStat = document.getElementById('rangeStat');
-    const trendStat = document.getElementById('trendStat');
-    const formulaBox = document.getElementById('formulaBox');
-    const noteBox = document.getElementById('noteBox');
-    const stateBadge = document.getElementById('stateBadge');
-
-    const streamGroup = document.getElementById('streamGroup');
-    const particleGroup = document.getElementById('particleGroup');
-    const vPipeLabel = document.getElementById('vPipeLabel');
-    const dPipeLabel = document.getElementById('dPipeLabel');
-    const stateLabel = document.getElementById('stateLabel');
-    const reLabel = document.getElementById('reLabel');
-
-    const canvas = document.getElementById('graph');
-    const ctx = canvas.getContext('2d');
-
-    let particles = [];
-    let currentState = 'turbulent';
-    let currentSpeed = 1;
-
-    function fmt(num, digits = 2) { return Number(num).toFixed(digits); }
-    function sci(num) { return num.toExponential(2); }
-    function comma(num) { return Math.round(num).toLocaleString(); }
-
-    function classifyRe(Re) {
-      if (Re < 2100) return 'laminar';
-      if (Re > 4000) return 'turbulent';
-      return 'transition';
-    }
-
-    function stateInfo(state) {
-      if (state === 'laminar') {
-        return {
-          name: '층류', color: '#21a366', range: 'Re < 2100', trend: '질서정연',
-          note: '층류에서는 유체층이 서로 거의 섞이지 않고 층을 이루며 흐릅니다. 속도 분포는 포물선형에 가까운 경향을 가집니다.'
-        };
-      }
-      if (state === 'transition') {
-        return {
-          name: '천이영역', color: '#ff8c42', range: '2100 < Re < 4000', trend: '불안정',
-          note: '천이영역에서는 층류와 난류 성질이 함께 나타나며, 작은 교란에 따라 유동 상태가 달라질 수 있습니다.'
-        };
-      }
-      return {
-        name: '난류', color: '#d64545', range: 'Re > 4000', trend: '혼합 큼',
-        note: '난류에서는 유동이 불규칙하게 요동하고 혼합이 크게 발생합니다. 배관 내부 속도 분포는 중심부가 비교적 평탄해지는 경향이 있습니다.'
-      };
-    }
-
-    function initParticles() {
-      particles = [];
-      for (let i = 0; i < 26; i++) {
-        particles.push({
-          x: 100 + Math.random() * 660,
-          y: 190 + Math.random() * 100,
-          seed: Math.random() * Math.PI * 2,
-          r: 4 + Math.random() * 2
-        });
-      }
-    }
-
-    function drawStreams(state) {
-      streamGroup.innerHTML = '';
-      if (state === 'laminar') {
-        for (let i = 0; i < 7; i++) {
-          const y = 195 + i * 15;
-          const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-          line.setAttribute('d', `M 110 ${y} C 280 ${y}, 500 ${y}, 770 ${y}`);
-          line.setAttribute('fill', 'none');
-          line.setAttribute('stroke', '#21a366');
-          line.setAttribute('stroke-width', '3');
-          streamGroup.appendChild(line);
-        }
-      } else if (state === 'transition') {
-        for (let i = 0; i < 7; i++) {
-          const y = 195 + i * 15;
-          const amp = 4 + (i % 2) * 4;
-          const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-          line.setAttribute('d', `M 110 ${y} C 240 ${y-amp}, 340 ${y+amp}, 450 ${y} S 640 ${y-amp}, 770 ${y+amp}`);
-          line.setAttribute('fill', 'none');
-          line.setAttribute('stroke', '#ff8c42');
-          line.setAttribute('stroke-width', '3');
-          streamGroup.appendChild(line);
-        }
-      } else {
-        for (let i = 0; i < 7; i++) {
-          const y = 195 + i * 15;
-          const amp = 10 + (i % 3) * 5;
-          const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-          line.setAttribute('d', `M 110 ${y} C 190 ${y-amp}, 260 ${y+amp}, 340 ${y-amp} S 470 ${y+amp}, 560 ${y-amp} S 690 ${y+amp}, 770 ${y}`);
-          line.setAttribute('fill', 'none');
-          line.setAttribute('stroke', '#d64545');
-          line.setAttribute('stroke-width', '3');
-          streamGroup.appendChild(line);
-        }
-      }
-    }
-
-    function drawParticles() {
-      particleGroup.innerHTML = '';
-      particles.forEach((p, idx) => {
-        let yy = p.y;
-        if (currentState === 'laminar') {
-          yy += Math.sin(p.seed + performance.now() * 0.001) * 0.8;
-        } else if (currentState === 'transition') {
-          yy += Math.sin(p.seed + performance.now() * 0.003 + idx) * 4;
-        } else {
-          yy += Math.sin(p.seed + performance.now() * 0.006 + idx) * 10;
-        }
-        yy = Math.min(Math.max(yy, 190), 290);
-        const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-        c.setAttribute('cx', p.x);
-        c.setAttribute('cy', yy);
-        c.setAttribute('r', p.r);
-        c.setAttribute('fill', currentState === 'laminar' ? '#21a366' : currentState === 'transition' ? '#ff8c42' : '#d64545');
-        c.setAttribute('opacity', '0.85');
-        particleGroup.appendChild(c);
-      });
-    }
-
-    function animate() {
-      particles.forEach((p, idx) => {
-        const base = 0.8 + currentSpeed * 0.6;
-        const multiplier = currentState === 'laminar' ? 0.7 : currentState === 'transition' ? 1.0 : 1.25;
-        p.x += base * multiplier;
-        if (p.x > 780) p.x = 100;
-      });
-      drawParticles();
-      requestAnimationFrame(animate);
-    }
-
-    function drawGauge(Re) {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      const pad = { left: 70, right: 40, top: 40, bottom: 80 };
-      const w = canvas.width - pad.left - pad.right;
-      const y = 130;
-      const h = 34;
-
-      const maxRe = 10000;
-      const clamped = Math.min(Re, maxRe);
-      const x = pad.left + (clamped / maxRe) * w;
-
-      const x2100 = pad.left + (2100 / maxRe) * w;
-      const x4000 = pad.left + (4000 / maxRe) * w;
-
-      ctx.fillStyle = '#21a366';
-      ctx.fillRect(pad.left, y, x2100 - pad.left, h);
-      ctx.fillStyle = '#ff8c42';
-      ctx.fillRect(x2100, y, x4000 - x2100, h);
-      ctx.fillStyle = '#d64545';
-      ctx.fillRect(x4000, y, pad.left + w - x4000, h);
-      ctx.strokeStyle = '#24324f';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(pad.left, y, w, h);
-
-      ctx.fillStyle = '#24324f';
-      ctx.font = 'bold 14px Segoe UI';
-      ctx.fillText('층류', pad.left + 30, y - 10);
-      ctx.fillText('천이영역', x2100 + 20, y - 10);
-      ctx.fillText('난류', x4000 + 50, y - 10);
-
-      ctx.beginPath();
-      ctx.moveTo(x, y + h + 8);
-      ctx.lineTo(x - 9, y + h + 24);
-      ctx.lineTo(x + 9, y + h + 24);
-      ctx.closePath();
-      ctx.fillStyle = currentState === 'laminar' ? '#21a366' : currentState === 'transition' ? '#ff8c42' : '#d64545';
-      ctx.fill();
-
-      ctx.font = 'bold 16px Segoe UI';
-      ctx.fillStyle = '#24324f';
-      ctx.fillText(`현재 Re = ${comma(Re)}`, Math.max(pad.left, Math.min(x - 60, pad.left + w - 150)), y + h + 48);
-
-      ctx.font = '14px Segoe UI';
-      ctx.fillText('0', pad.left - 4, y + h + 60);
-      ctx.fillText('2100', x2100 - 15, y + h + 60);
-      ctx.fillText('4000', x4000 - 15, y + h + 60);
-      ctx.fillText('10000+', pad.left + w - 24, y + h + 60);
-
-      // secondary bar chart
-      const barBaseY = 280;
-      const barMaxH = 90;
-      const nuScaled = Math.min(1, (parseFloat(muSlider.value) / parseFloat(rhoSlider.value)) / 0.00002);
-      const vScaled = Math.min(1, parseFloat(vSlider.value) / 8);
-      const dScaled = Math.min(1, parseFloat(dSlider.value) / 0.3);
-      const items = [
-        { label: 'V', val: vScaled, color: '#7fb7ff' },
-        { label: 'D', val: dScaled, color: '#2449d8' },
-        { label: 'ν 영향(역)', val: nuScaled, color: '#ff8c42' }
-      ];
-      items.forEach((it, i) => {
-        const bx = pad.left + 120 + i * 180;
-        const bh = it.val * barMaxH;
-        ctx.fillStyle = it.color;
-        ctx.fillRect(bx, barBaseY - bh, 80, bh);
-        ctx.strokeStyle = '#24324f';
-        ctx.strokeRect(bx, barBaseY - bh, 80, bh);
-        ctx.fillStyle = '#24324f';
-        ctx.fillText(it.label, bx + 24, barBaseY + 20);
-      });
-      ctx.fillText('레이놀즈수는 V, D가 커질수록 증가하고, ν가 커질수록 감소', pad.left + 120, 320);
-    }
-
-    function update() {
-      const V = parseFloat(vSlider.value);
-      const D = parseFloat(dSlider.value);
-      const rho = parseFloat(rhoSlider.value);
-      const mu = parseFloat(muSlider.value);
-      const nu = mu / rho;
-      const Re = rho * V * D / mu;
-      const state = classifyRe(Re);
-      const info = stateInfo(state);
-
-      currentState = state;
-      currentSpeed = V;
-
-      vValue.textContent = `${fmt(V,2)} m/s`;
-      dValue.textContent = `${fmt(D,3)} m`;
-      rhoValue.textContent = `${fmt(rho,1)} kg/m³`;
-      muValue.textContent = `${fmt(mu,5)} Pa·s`;
-
-      nuStat.textContent = `${sci(nu)} m²/s`;
-      reStat.textContent = `${comma(Re)}`;
-      rangeStat.innerHTML = info.range;
-      trendStat.textContent = info.trend;
-
-      stateBadge.textContent = info.name;
-      stateBadge.style.background = info.color;
-
-      formulaBox.innerHTML =
-        `Re = ρVD/μ = ${fmt(rho,1)}×${fmt(V,2)}×${fmt(D,3)}/${fmt(mu,5)} = ${comma(Re)}<br>` +
-        `ν = μ/ρ = ${fmt(mu,5)}/${fmt(rho,1)} = ${sci(nu)} m²/s<br>` +
-        `판정: ${info.range}`;
-
-      noteBox.innerHTML = info.note;
-
-      vPipeLabel.textContent = `V = ${fmt(V,2)} m/s`;
-      dPipeLabel.textContent = `D = ${fmt(D,3)} m`;
-      stateLabel.textContent = `유동 상태: ${info.name}`;
-      stateLabel.setAttribute('fill', info.color);
-      reLabel.textContent = `Re = ${comma(Re)}`;
-
-      drawStreams(state);
-      drawGauge(Re);
-    }
-
-    [vSlider, dSlider, rhoSlider, muSlider].forEach(el => el.addEventListener('input', update));
-    initParticles();
-    update();
-    animate();
+    const $=id=>document.getElementById(id),controls=['v','d','rho','muLog'].map($),flow=$('flow'),fc=flow.getContext('2d'),gauge=$('gauge'),gc=gauge.getContext('2d');let stateData={Re:0,state:'laminar',V:1,D:.05},running=true,last=0,phase=0,mathJob=Promise.resolve();
+    const fmt=(n,d=2)=>Number(n).toLocaleString('ko-KR',{minimumFractionDigits:d,maximumFractionDigits:d});const comma=n=>Math.round(n).toLocaleString('ko-KR');
+    function typeset(el){if(!window.MathJax?.typesetPromise)return;mathJob=mathJob.then(()=>MathJax.typesetClear?.([el])).then(()=>MathJax.typesetPromise([el])).catch(()=>{})}
+    function classify(Re){return Re<2100?'laminar':Re<=4000?'transition':'turbulent'}
+    const info={laminar:{name:'층류',range:'Re < 2100',color:'#21a366',note:'염료선이 거의 섞이지 않고 가늘게 유지됩니다. 점성력의 영향이 상대적으로 큽니다.'},transition:{name:'천이영역',range:'2100 ≤ Re ≤ 4000',color:'#ff8c42',note:'염료선이 흔들리기 시작하며 작은 교란에 따라 층류와 난류 특성이 번갈아 나타납니다.'},turbulent:{name:'난류',range:'Re > 4000',color:'#d64545',note:'염료가 관 전체로 빠르게 확산됩니다. 관성력과 불규칙한 혼합의 영향이 큽니다.'}};
+    function drawFlow(t){const {state,V,D}=stateData,I=info[state],W=flow.width,H=flow.height;fc.clearRect(0,0,W,H);fc.fillStyle='#f8fbff';fc.fillRect(0,0,W,H);const y=95,h=180,r=h/2;fc.fillStyle='#d9ecff';fc.strokeStyle='#16324f';fc.lineWidth=7;fc.beginPath();fc.roundRect(45,y,810,h,r);fc.fill();fc.stroke();fc.fillStyle='#16324f';fc.font='700 18px Segoe UI';fc.fillText(`V = ${fmt(V,3)} m/s`,70,55);fc.fillText(`D = ${fmt(D,3)} m`,700,55);fc.fillStyle='#60708f';fc.font='14px Segoe UI';fc.fillText('염료 주입',55,318);fc.strokeStyle='#44506d';fc.lineWidth=7;fc.beginPath();fc.moveTo(105,40);fc.lineTo(105,181);fc.stroke();fc.fillStyle=I.color;fc.beginPath();fc.arc(105,185,7,0,Math.PI*2);fc.fill();
+      const cy=y+h/2;fc.save();fc.beginPath();fc.roundRect(48,y+4,804,h-8,r-4);fc.clip();if(state==='laminar'){fc.strokeStyle=I.color;fc.lineWidth=5;fc.beginPath();for(let x=105;x<855;x+=4){const yy=cy+Math.sin(x*.018+phase)*.6;x===105?fc.moveTo(x,yy):fc.lineTo(x,yy)}fc.stroke();for(let j=-3;j<=3;j++){fc.strokeStyle=`rgba(36,73,216,${.15+Math.abs(j)*.03})`;fc.lineWidth=2;fc.beginPath();fc.moveTo(70,cy+j*20);fc.lineTo(850,cy+j*20);fc.stroke()}}else if(state==='transition'){for(let k=0;k<3;k++){fc.strokeStyle=`rgba(255,140,66,${.75-k*.2})`;fc.lineWidth=5-k;fc.beginPath();for(let x=105;x<855;x+=4){const amp=5+(x-105)/750*18,yy=cy+Math.sin(x*.035+phase+k)*amp;x===105?fc.moveTo(x,yy):fc.lineTo(x,yy)}fc.stroke()}}else{for(let i=0;i<145;i++){const x=105+((i*43+phase*28)%(760)),spread=Math.min(78,(x-105)*.12),yy=cy+Math.sin(i*7.17+phase*2.1)*spread*.65+(Math.sin(i*2.3+phase*3))*spread*.35;fc.fillStyle=`rgba(214,69,69,${.25+(i%5)*.12})`;fc.beginPath();fc.arc(x,yy,2+(i%3),0,Math.PI*2);fc.fill()}}fc.restore();fc.fillStyle=I.color;fc.font='800 25px Segoe UI';fc.fillText(`${I.name} · Re = ${comma(stateData.Re)}`,55,335)}
+    function animate(ts){if(running){const dt=Math.min((ts-last||16)/1000,.05);phase+=dt*(1+Math.min(stateData.V,8)*.8);drawFlow(ts)}last=ts;requestAnimationFrame(animate)}
+    function drawGauge(Re,state){const W=gauge.width,H=gauge.height,p={l:70,r:35},y=92,h=38,w=W-p.l-p.r,max=10000,x=v=>p.l+Math.min(v,max)/max*w,x21=x(2100),x40=x(4000),cur=x(Re);gc.clearRect(0,0,W,H);gc.fillStyle='#21a366';gc.fillRect(p.l,y,x21-p.l,h);gc.fillStyle='#ff8c42';gc.fillRect(x21,y,x40-x21,h);gc.fillStyle='#d64545';gc.fillRect(x40,y,p.l+w-x40,h);gc.strokeStyle='#16324f';gc.lineWidth=2;gc.strokeRect(p.l,y,w,h);gc.fillStyle='#16324f';gc.font='700 15px Segoe UI';gc.fillText('층류',p.l+45,y-13);gc.fillText('천이영역',x21+35,y-13);gc.fillText('난류',x40+80,y-13);gc.fillStyle=info[state].color;gc.beginPath();gc.moveTo(cur,y+h+8);gc.lineTo(cur-10,y+h+27);gc.lineTo(cur+10,y+h+27);gc.closePath();gc.fill();gc.fillStyle='#16324f';gc.font='800 18px Segoe UI';gc.fillText(`현재 Re = ${comma(Re)}${Re>max?'  (게이지 범위 초과)':''}`,Math.max(p.l,Math.min(cur-85,W-260)),y+h+55);gc.font='14px Segoe UI';[['0',p.l],['2100',x21],['4000',x40],['10000+',p.l+w]].forEach(([s,xx])=>gc.fillText(s,xx-15,y+h+82))}
+    function update(){const V=+$('v').value,D=+$('d').value,rho=+$('rho').value,mu=10**(+$('muLog').value),nu=mu/rho,Re=rho*V*D/mu,Q=Math.PI*D*D/4*V,state=classify(Re),I=info[state],Vc21=2100*mu/(rho*D),Vc40=4000*mu/(rho*D);stateData={Re,state,V,D};
+      $('vValue').textContent=`${fmt(V,3)} m/s`;$('dValue').textContent=`${fmt(D,3)} m`;$('rhoValue').textContent=`${fmt(rho,1)} kg/m³`;$('muValue').textContent=mu<.01?`${fmt(mu*1000,3)} mPa·s`:`${fmt(mu,4)} Pa·s`;$('nuStat').textContent=`${nu.toExponential(3)} m²/s`;$('reStat').textContent=comma(Re);$('qStat').textContent=Q<.01?`${fmt(Q*1000,2)} L/s`:`${fmt(Q,3)} m³/s`;$('ratioStat').textContent=`${comma(Re)} : 1`;$('stateName').textContent=I.name;$('stateRange').textContent=I.range;$('state').style.background=I.color;$('note').innerHTML=I.note;
+      $('formula').innerHTML=`\\[Re=\\frac{\\rho VD}{\\mu}=\\frac{(${fmt(rho,1)})(${fmt(V,3)})(${fmt(D,3)})}{${mu.toExponential(3)}}=${comma(Re)}\\]\\[\\nu=\\frac{\\mu}{\\rho}=${nu.toExponential(3)}\\,\\mathrm{m^2/s},\\qquad Q=\\frac{\\pi D^2}{4}V=${Q.toExponential(3)}\\,\\mathrm{m^3/s}\\]`;typeset($('formula'));
+      $('rhoRel').textContent=`ρ ${fmt(rho,1)} ↑ Re`;$('vRel').textContent=`V ${fmt(V,3)} ↑ Re`;$('dRel').textContent=`D ${fmt(D,3)} ↑ Re`;$('muRel').textContent=`μ ${mu.toExponential(2)} ↓ Re`;$('v2100').textContent=`${fmt(Vc21,3)} m/s`;$('v4000').textContent=`${fmt(Vc40,3)} m/s`;drawGauge(Re,state);drawFlow(performance.now())}
+    const presets={water:{V:1,D:.05,rho:998,mu:.001002},transition:{V:.06024,D:.05,rho:998,mu:.001002},oil:{V:.05,D:.02,rho:870,mu:.25},air:{V:10,D:.1,rho:1.204,mu:1.81e-5}};
+    function applyPreset(name){const p=presets[name];$('v').value=p.V;$('d').value=p.D;$('rho').value=p.rho;$('muLog').value=Math.log10(p.mu);document.querySelectorAll('.preset').forEach(b=>b.classList.toggle('active',b.dataset.preset===name));update()}
+    document.querySelectorAll('.preset').forEach(b=>b.addEventListener('click',()=>applyPreset(b.dataset.preset)));controls.forEach(el=>el.addEventListener('input',()=>{document.querySelectorAll('.preset').forEach(b=>b.classList.remove('active'));update()}));$('pauseBtn').addEventListener('click',e=>{running=!running;e.currentTarget.textContent=running?'Ⅱ 일시정지':'▶ 재생';if(running)last=performance.now()});$('resetBtn').addEventListener('click',()=>applyPreset('water'));$('fullBtn').addEventListener('click',()=>document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen());applyPreset('water');requestAnimationFrame(animate);
   </script>
 </body>
 </html>
