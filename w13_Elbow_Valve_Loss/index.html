@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>곡관·밸브 부차손실 시뮬레이터</title>
+  <title>8.4 곡관·밸브 부차손실 시뮬레이터 | Fluid Lab</title>
+  <script>window.MathJax={tex:{inlineMath:[['\\(','\\)']],displayMath:[['\\[','\\]']]},options:{skipHtmlTags:['script','noscript','style','textarea','pre']}};</script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
   <style>
     :root {
       --bg: #f4f7fb;
@@ -20,6 +22,7 @@
       --warn-bg: #fff8ec;
       --warn-line: #f1dba7;
       --warn-text: #7a5a05;
+      --navy: #16324f;
     }
 
     * { box-sizing: border-box; }
@@ -29,9 +32,9 @@
       background: linear-gradient(180deg, #eef3fb 0%, #f8fbff 100%);
       color: var(--text);
     }
-    .wrap { max-width: 1280px; margin: 0 auto; padding: 24px; }
-    h1 { margin: 0 0 8px; font-size: 32px; }
-    .subtitle { color: var(--muted); line-height: 1.75; margin-bottom: 20px; }
+    button,input,select{font:inherit}.wrap { max-width: 1280px; margin: 0 auto; padding: 24px; }
+    .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:26px}.brand{font-weight:800;color:var(--navy)}.brand b{display:inline-grid;place-items:center;width:34px;height:34px;margin-right:8px;border-radius:11px;background:var(--accent);color:#fff}.tools{display:flex;gap:8px}.tools button,.preset{font-size:13px;font-weight:700;border:1px solid var(--line);background:#fff;color:var(--muted);border-radius:10px;padding:9px 12px;cursor:pointer}.tools button:hover,.preset:hover,.preset.active{border-color:var(--accent);color:var(--accent);background:#f3f7ff}
+    .hero{display:grid;grid-template-columns:1fr auto;gap:22px;align-items:end;margin-bottom:22px}.eyebrow{font-size:13px;font-weight:800;letter-spacing:.1em;color:var(--accent)}h1{font-size:38px;letter-spacing:-.05em;margin:5px 0 8px;color:var(--navy)}.subtitle{color:var(--muted);line-height:1.7}.hero-eq{padding:15px 20px;border-radius:16px;background:#f3f8ff;border:1px solid #cfe0f7;color:var(--navy);font-size:18px}
     .grid { display: grid; grid-template-columns: 420px 1fr; gap: 20px; }
     .card {
       background: var(--panel);
@@ -41,6 +44,7 @@
       padding: 18px;
     }
     h2 { margin: 0 0 16px; font-size: 20px; }
+    .presets{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:4px 0 18px}.preset{text-align:left}.preset strong{display:block;color:var(--navy);margin-bottom:2px}
     .control-group { margin-bottom: 18px; }
     .label-row { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 8px; font-weight: 700; }
     .value { color: var(--accent); }
@@ -57,6 +61,7 @@
     }
     .stat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 10px; }
     .stat { border: 1px solid var(--line); border-radius: 16px; padding: 14px; background: #fbfdff; }
+    .stat.primary{background:#fff3f1;border-color:#f1cbc5}
     .stat-title { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
     .stat-value { font-size: 23px; font-weight: 800; word-break: break-word; }
     .formula {
@@ -80,7 +85,7 @@
     }
     .state-badge {
       margin-top: 12px;
-      display: inline-block;
+      display: flex;justify-content:space-between;
       padding: 10px 14px;
       border-radius: 999px;
       color: white;
@@ -94,19 +99,22 @@
     svg, canvas { width: 100%; max-width: 100%; border: 1px solid var(--line); border-radius: 18px; background: #fff; display: block; }
     svg { background: #fbfdff; }
     .caption { color: var(--muted); line-height: 1.7; font-size: 14px; }
-    @media (max-width: 1000px) { .grid { grid-template-columns: 1fr; } }
+    .share-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.share{padding:11px 8px;border:1px solid var(--line);border-radius:14px;text-align:center;background:#fbfdff}.share small{display:block;color:var(--muted);font-size:11px;margin-bottom:4px}.share b{font-size:16px;color:var(--navy)}.compare{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center}.compare-card{padding:12px;border:1px solid var(--line);border-radius:14px;text-align:center}.compare-card small{display:block;color:var(--muted);margin-bottom:5px}.compare-card b{color:var(--navy);font-size:17px}.arrow{color:var(--accent);font-weight:900}.tag{display:inline-block;padding:3px 8px;border-radius:999px;background:#eaf1ff;color:var(--accent);font-weight:800;font-size:12px;margin-right:5px}
+    @media (max-width: 1000px) { .grid,.hero { grid-template-columns: 1fr; }.hero-eq{justify-self:start} }
+    @media(max-width:620px){.wrap{padding:15px}.topbar{align-items:flex-start;gap:10px}.brand{font-size:13px}.tools button{padding:8px}h1{font-size:30px}.presets,.stat-grid,.share-grid{grid-template-columns:1fr 1fr}.compare{grid-template-columns:1fr}.arrow{transform:rotate(90deg)}.card{padding:15px}}
+    @media print{.topbar,.presets{display:none}.wrap{padding:0}.card{box-shadow:none}.grid{grid-template-columns:38% 62%;gap:10px}}
+    @media(prefers-reduced-motion:reduce){*{transition:none!important}}
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <h1>곡관·밸브 부차손실 시뮬레이터</h1>
-    <div class="subtitle">
-      배관 부속품에서 발생하는 <strong>부차손실</strong>을 계산합니다. 곡관, 게이트밸브, 글로브밸브, 체크밸브 등의 손실계수 <strong>K</strong>를 합산하고, <strong>h<sub>m</sub> = ΣK · V²/2g</strong>로 전체 부차손실수두를 구합니다.
-    </div>
+  <main class="wrap">
+    <div class="topbar"><div class="brand"><b>FL</b>Fluid Lab · Interactive mechanics</div><div class="tools"><button id="pauseBtn">Ⅱ 일시정지</button><button id="resetBtn">↺ 초기화</button><button id="fullBtn">⛶ 전체화면</button></div></div>
+    <section class="hero"><div><div class="eyebrow">CHAPTER 8 · SECTION 8.4</div><h1>곡관·밸브 부차손실 시뮬레이터</h1><div class="subtitle">배관 부속품의 방향 변화와 유로 저항이 만드는 손실을 비교하고, 전체 손실계수로 합산합니다.</div></div><div class="hero-eq">\(h_m=\sum K\dfrac{V^2}{2g},\qquad \Delta P=\rho gh_m\)</div></section>
 
     <div class="grid">
       <div class="card">
         <h2>조작 패널</h2>
+        <div class="presets"><button class="preset" data-preset="standard"><strong>기준 배관</strong>곡관 2 + 글로브 1</button><button class="preset" data-preset="low"><strong>저손실 배관</strong>완전개방 볼밸브</button><button class="preset" data-preset="many"><strong>곡관 다수</strong>90° 곡관 10개</button><button class="preset" data-preset="compare"><strong>밸브 3개</strong>종류별 비교</button></div>
 
         <div class="control-group">
           <div class="label-row"><span>유량 Q</span><span class="value" id="qValue">0.0200 m³/s</span></div>
@@ -158,10 +166,12 @@
           <div class="stat"><div class="stat-title">평균유속 V</div><div class="stat-value" id="vStat">2.55 m/s</div></div>
           <div class="stat"><div class="stat-title">속도수두 V²/2g</div><div class="stat-value" id="vhStat">0.331 m</div></div>
           <div class="stat"><div class="stat-title">전체 손실계수 ΣK</div><div class="stat-value" id="sumKStat">11.80</div></div>
-          <div class="stat"><div class="stat-title">부차손실수두 hm</div><div class="stat-value" id="hmStat">3.91 m</div></div>
+          <div class="stat primary"><div class="stat-title">부차손실수두 \(h_m\)</div><div class="stat-value" id="hmStat">3.91 m</div></div>
+          <div class="stat"><div class="stat-title">압력손실 \(\Delta P\)</div><div class="stat-value" id="dpStat">38.3 kPa</div></div>
+          <div class="stat"><div class="stat-title">지배 손실</div><div class="stat-value" id="dominantStat">밸브</div></div>
         </div>
 
-        <div id="stateBadge" class="state-badge">부차손실 큼</div>
+        <div id="stateBadge" class="state-badge"><span id="lossLevel">부차손실 큼</span><small id="lossRatio">밸브 85%</small></div>
 
         <div class="formula" id="formulaBox">
           ΣK = 곡관 2×0.90 + 밸브 1×10.00 = 11.80<br>
@@ -226,13 +236,15 @@
           </svg>
 
           <canvas id="graph" width="920" height="330"></canvas>
+          <div class="share-grid"><div class="share"><small>곡관 손실 비율</small><b id="elbowShare">15%</b></div><div class="share"><small>밸브 손실 비율</small><b id="valveShare">85%</b></div><div class="share"><small>등가 직관 길이</small><b id="equivHint">\(L_e/D=\sum K/f\)</b></div></div>
+          <div class="compare"><div class="compare-card"><small>현재 유량</small><b id="currentLoss"></b></div><span class="arrow">유량 2배 →</span><div class="compare-card"><small>같은 \(K\), \(D\)일 때</small><b id="doubleLoss"></b></div></div>
           <div class="caption">
-            곡관과 밸브 손실은 배관의 길이 때문이 아니라 <strong>유동 방향 변화, 유로 축소, 박리, 와류</strong> 때문에 발생합니다. 계산할 때는 각 부속품의 K를 합산한 뒤 속도수두를 곱합니다.
+            <span class="tag">부차손실</span>곡관과 밸브 손실은 <strong>유동 방향 변화, 유로 축소, 박리, 와류</strong> 때문에 발생합니다. 각 부속품의 \(K\)를 더한 뒤 속도수두를 곱합니다.
           </div>
         </div>
       </div>
     </div>
-  </div>
+  </main>
 
   <script>
     const g = 9.81;
@@ -267,6 +279,8 @@
     const vhStat = document.getElementById('vhStat');
     const sumKStat = document.getElementById('sumKStat');
     const hmStat = document.getElementById('hmStat');
+    const dpStat = document.getElementById('dpStat');
+    const dominantStat = document.getElementById('dominantStat');
     const formulaBox = document.getElementById('formulaBox');
     const noteBox = document.getElementById('noteBox');
     const stateBadge = document.getElementById('stateBadge');
@@ -285,10 +299,16 @@
 
     let particles = [];
     let currentV = 2.5;
+    let running = true;
+    let mathJob = Promise.resolve();
 
     function fmt(num, digits = 2) { return Number(num).toFixed(digits); }
     function comma(num, digits = 0) { return Number(num).toLocaleString(undefined, { maximumFractionDigits: digits }); }
     function area(D) { return Math.PI * D * D / 4; }
+    function typeset(el) {
+      if (!window.MathJax?.typesetPromise) return;
+      mathJob = mathJob.then(() => MathJax.typesetClear?.([el])).then(() => MathJax.typesetPromise([el])).catch(() => {});
+    }
 
     function initParticles() {
       particles = [];
@@ -328,11 +348,13 @@
     }
 
     function animate() {
-      particles.forEach(p => {
-        p.t += 0.0015 + currentV * 0.00045;
-        if (p.t > 1) p.t = 0;
-      });
-      drawParticles();
+      if (running) {
+        particles.forEach(p => {
+          p.t += 0.0015 + Math.min(currentV, 12) * 0.00045;
+          if (p.t > 1) p.t = 0;
+        });
+        drawParticles();
+      }
       requestAnimationFrame(animate);
     }
 
@@ -456,14 +478,22 @@
       vhStat.textContent = `${fmt(velocityHead,3)} m`;
       sumKStat.textContent = fmt(sumK,2);
       hmStat.textContent = `${fmt(hm,2)} m`;
+      dpStat.textContent = dp >= 1000000 ? `${fmt(dp / 1000000,2)} MPa` : `${fmt(dp / 1000,1)} kPa`;
+      const dominant = sumK === 0 ? '없음' : elbowKsum > valveKsum ? '곡관' : valveKsum > elbowKsum ? '밸브' : '동일';
+      dominantStat.textContent = dominant;
 
-      stateBadge.textContent = hm >= 5 ? '부차손실 큼' : hm >= 1 ? '부차손실 중간' : '부차손실 작음';
+      document.getElementById('lossLevel').textContent = hm >= 5 ? '부차손실 큼' : hm >= 1 ? '부차손실 중간' : '부차손실 작음';
       stateBadge.style.background = hm >= 5 ? '#d64545' : hm >= 1 ? '#ff8c42' : '#21a366';
+      const elbowPct = sumK ? elbowKsum / sumK * 100 : 0;
+      const valvePct = sumK ? valveKsum / sumK * 100 : 0;
+      document.getElementById('lossRatio').textContent = sumK ? `${dominant} ${fmt(Math.max(elbowPct,valvePct),0)}%` : '부속품 없음';
 
       formulaBox.innerHTML =
-        `ΣK = 곡관 ${elbowN}×${fmt(elbowK,2)} + 밸브 ${valveN}×${fmt(valveK,2)} = ${fmt(sumK,2)}<br>` +
-        `hm = ΣK·V²/2g = ${fmt(sumK,2)}×${fmt(velocityHead,3)} = ${fmt(hm,2)} m<br>` +
-        `ΔP = ρghm = ${comma(rho)}×9.81×${fmt(hm,2)} = ${fmt(dp / 1000,2)} kPa`;
+        `\\[A=\\frac{\\pi D^2}{4},\\qquad V=\\frac QA=${fmt(V,2)}\\,\\mathrm{m/s}\\]` +
+        `\\[\\sum K=(${elbowN})(${fmt(elbowK,2)})+(${valveN})(${fmt(valveK,2)})=${fmt(sumK,2)}\\]` +
+        `\\[h_m=\\sum K\\frac{V^2}{2g}=(${fmt(sumK,2)})(${fmt(velocityHead,3)})=${fmt(hm,2)}\\,\\mathrm m\\]` +
+        `\\[\\Delta P=\\rho gh_m=${fmt(dp / 1000,2)}\\,\\mathrm{kPa}\\]`;
+      typeset(formulaBox);
 
       noteBox.innerHTML = valveInfo.note + ' 곡관 개수와 밸브 개수가 증가하면 ΣK가 증가하여 전체 부차손실이 커집니다.';
 
@@ -478,12 +508,27 @@
 
       drawLossMarks(elbowN, valveN, elbowK, valveK);
       drawGraph(elbowLoss, valveLoss, hm, elbowKsum, valveKsum, dp);
+      document.getElementById('elbowShare').textContent = `${fmt(elbowPct,0)}%`;
+      document.getElementById('valveShare').textContent = `${fmt(valvePct,0)}%`;
+      document.getElementById('currentLoss').textContent = `hₘ = ${fmt(hm,2)} m`;
+      document.getElementById('doubleLoss').textContent = `hₘ = ${fmt(hm*4,2)} m`;
     }
 
-    [qSlider, dSlider, elbowSlider, elbowKSlider, valveTypeSelect, valveSlider, customKSlider, rhoSlider].forEach(el => el.addEventListener('input', update));
+    const presets = {
+      standard:{Q:.02,D:.1,en:2,ek:.9,type:'globe',vn:1,rho:999},
+      low:{Q:.02,D:.1,en:2,ek:.25,type:'ball',vn:1,rho:999},
+      many:{Q:.02,D:.1,en:10,ek:.9,type:'gate',vn:0,rho:999},
+      compare:{Q:.02,D:.1,en:0,ek:.9,type:'gate',vn:3,rho:999}
+    };
+    function applyPreset(name){const p=presets[name];qSlider.value=p.Q;dSlider.value=p.D;elbowSlider.value=p.en;elbowKSlider.value=p.ek;valveTypeSelect.value=p.type;valveSlider.value=p.vn;rhoSlider.value=p.rho;document.querySelectorAll('.preset').forEach(b=>b.classList.toggle('active',b.dataset.preset===name));update()}
+    document.querySelectorAll('.preset').forEach(b=>b.addEventListener('click',()=>applyPreset(b.dataset.preset)));
+    [qSlider, dSlider, elbowSlider, elbowKSlider, valveTypeSelect, valveSlider, customKSlider, rhoSlider].forEach(el => el.addEventListener('input', () => {document.querySelectorAll('.preset').forEach(b=>b.classList.remove('active'));update()}));
     valveTypeSelect.addEventListener('change', update);
+    document.getElementById('pauseBtn').addEventListener('click',e=>{running=!running;e.currentTarget.textContent=running?'Ⅱ 일시정지':'▶ 재생'});
+    document.getElementById('resetBtn').addEventListener('click',()=>applyPreset('standard'));
+    document.getElementById('fullBtn').addEventListener('click',()=>document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen());
     initParticles();
-    update();
+    applyPreset('standard');
     animate();
   </script>
 </body>
